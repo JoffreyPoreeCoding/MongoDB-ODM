@@ -3,7 +3,7 @@
     "description": "A small MongoDB ODM",
     "type": "library",
     "require": {
-		"doctrine/annotations": "1.2.*"
+        "doctrine/annotations": "1.2.*",
         "mongodb/mongodb": "^1.0",
         "php": ">=5.4"
     },
@@ -14,12 +14,12 @@
         }
     ],
     "minimum-stability": "dev",
-	"autoload": {
-		"psr-4": {
-			"JPC\\": "src/"
-		},
-		"psr-0": {
-			"JPC\\" : "src/"
-		}
-	}
+    "autoload": {
+        "psr-4": {
+            "JPC\\": "src/"
+        },
+        "psr-0": {
+            "JPC\\": "src/"
+        }
+    }
 }
