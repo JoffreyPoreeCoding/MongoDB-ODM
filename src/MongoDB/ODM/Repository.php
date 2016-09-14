@@ -3,13 +3,14 @@
 namespace JPC\MongoDB\ODM;
 
 use JPC\MongoDB\ODM\DocumentManager;
+use axelitus\Patterns\Creational\Multiton;
 
 /**
  * Allow to find, delete, document in MongoDB
  *
  * @author poree
  */
-class Repository {
+class Repository extends Multiton{
 
     /**
      * Model name
@@ -47,6 +48,10 @@ class Repository {
         $this->hydrator = Hydrator::instance($modelName, DocumentManager::instance()->getReader(), $reflectionClass);
 
         $this->collection = DocumentManager::instance()->getMongoDBDatabase()->selectCollection($collection);
+    }
+    
+    public function getHydrator(){
+        return $this->hydrator;
     }
 
     public function count($filters = [], $options = []) {

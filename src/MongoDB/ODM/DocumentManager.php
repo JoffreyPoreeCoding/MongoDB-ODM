@@ -40,12 +40,6 @@ class DocumentManager extends Singleton {
     private $mongodatabase;
 
     /**
-     * Contain repository list
-     * @var array
-     */
-    private $repositories = [];
-
-    /**
      * Annotation Reader
      * @var CacheReader
      */
@@ -54,10 +48,6 @@ class DocumentManager extends Singleton {
     function __construct($mongouri, $db, $debug = false) {
         $this->mongoclient = new MongoClient($mongouri);
         $this->mongodatabase = $this->mongoclient->selectDatabase($db);
-
-        $this->reader = new CachedReader(
-                new IndexedReader(new AnnotationReader()), new ApcuCache(), $debug = true
-        );
     }
 
     public function addModelPath($identifier, $path) {
@@ -86,7 +76,7 @@ class DocumentManager extends Singleton {
             throw new ModelNotFoundException($modelName);
         }
         
-        return $this->repositories[$modelName][$collection] = new $rep($modelName, $collection, $reflectionClass);
+        return $rep::instance($modelName, $modelName, $collection, $reflectionClass);
     }
 
     public function getMongoDBClient() {
