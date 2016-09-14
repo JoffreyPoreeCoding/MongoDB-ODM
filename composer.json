@@ -3,9 +3,14 @@
     "description": "A small MongoDB ODM",
     "type": "library",
     "require": {
+        "axelitus/design-patterns": "0.3.1",
         "doctrine/annotations": "1.2.*",
+        "doctrine/cache": "1.6.0",
         "mongodb/mongodb": "^1.0",
         "php": ">=5.4"
+    },
+    "require-dev": {
+        "symfony/var-dumper": "*"
     },
     "authors": [
         {
@@ -20,6 +25,7 @@
         },
         "psr-0": {
             "JPC\\": "src/"
-        }
+        },
+        "files": ["src/MongoDB/ODM/register_annotations.php"]
     }
 }

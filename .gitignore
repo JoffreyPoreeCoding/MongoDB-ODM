@@ -1,2 +1,5 @@
 /nbproject/private/
 /vendor/
+/models/
+/index.php
+/composer.lock
