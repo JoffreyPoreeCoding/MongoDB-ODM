@@ -6,12 +6,13 @@ use Doctrine\Common\Cache\ApcuCache;
 use Doctrine\Common\Annotations\CachedReader;
 use Doctrine\Common\Annotations\IndexedReader;
 use Doctrine\Common\Annotations\AnnotationReader;
+use axelitus\Patterns\Creational\Singleton;
 
 /**
  *
  * @author JoffreyP
  */
-class ClassMetadataFactory {
+class ClassMetadataFactory extends Singleton {
 
     /**
      * Salt For Cache
@@ -23,7 +24,7 @@ class ClassMetadataFactory {
      *
      * @var ApcuCache 
      */
-    private $cache;
+    private $annotationsCache;
     
     /**
      *
@@ -38,25 +39,32 @@ class ClassMetadataFactory {
     private $loadedMetadatas = [];
 
     public function __construct() {
-        $this->cache = new ApcuCache();
-        $this->reader = new CachedReader(new IndexedReader(new AnnotationReader()), $this->cache, false);
+        $this->annotationsCache = new ApcuCache();
+        $this->reader = new CachedReader(new IndexedReader(new AnnotationReader()), $this->annotationsCache, false);
     }
     
+    /**
+     * 
+     * @param string $className
+     * @return ClassMetadata
+     */
     public function getMetadataForClass($className){
         if(isset($this->loadedMetadatas[$className])){
             return $this->loadedMetadatas[$className];
         }
         
-        if($this->cache->fetch($className.$this->cacheSalt)){
-            $this->loadedMetadatas[$className] = $this->cache->fetch($className.$this->cacheSalt);
+        if($this->annotationsCache->fetch($className.$this->cacheSalt)){
+            $this->loadedMetadatas[$className] = $this->annotationsCache->fetch($className.$this->cacheSalt);
             return $this->loadedMetadatas[$className];
+            
         }
         
-        $this->loadedMetadatas[$className] = $this->loadMetadataForClass($className);
+        return $this->loadedMetadatas[$className] = $this->loadMetadataForClass($className);
     }
     
     private function loadMetadataForClass($className){
         $classMetadatas = new ClassMetadata($className, $this->reader);
+        $this->annotationsCache->save($className.$this->cacheSalt, $classMetadatas);
         return $classMetadatas;
     }
 
