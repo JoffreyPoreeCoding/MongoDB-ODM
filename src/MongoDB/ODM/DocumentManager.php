@@ -40,24 +40,21 @@ class DocumentManager extends Singleton {
     private $mongodatabase;
 
     /**
-     * Contain repository list
-     * @var array
-     */
-    private $repositories = [];
-
-    /**
      * Annotation Reader
      * @var CacheReader
      */
     private $reader;
+    
+    /**
+     *
+     * @var Tools\ClassMetadataFactory
+     */
+    private $classMetadataFactory;
 
     function __construct($mongouri, $db, $debug = false) {
         $this->mongoclient = new MongoClient($mongouri);
         $this->mongodatabase = $this->mongoclient->selectDatabase($db);
-
-        $this->reader = new CachedReader(
-                new IndexedReader(new AnnotationReader()), new ApcuCache(), $debug = true
-        );
+        $this->classMetadataFactory = Tools\ClassMetadataFactory::instance();
     }
 
     public function addModelPath($identifier, $path) {
@@ -69,12 +66,11 @@ class DocumentManager extends Singleton {
         foreach ($this->modelPaths as $modelPath) {
             if (file_exists($modelPath . "/" . $modelName . ".php")) {
                 require_once $modelPath . "/" . $modelName . ".php";
-                $reflectionClass = new \ReflectionClass($modelName);
-                $classAnnotations = $this->reader->getClassAnnotations($reflectionClass);
-                if (!isset($classAnnotations["JPC\MongoDB\ODM\Annotations\Mapping\Document"])) {
+                $class = $this->classMetadataFactory->getMetadataForClass($modelName);
+                if (!$class->hasClassAnnotation("JPC\MongoDB\ODM\Annotations\Mapping\Document")) {
                     throw new Exception\AnnotationException("Model '$modelName' need to have 'Document' annotation.");
                 } else {
-                    $docAnnotation = $classAnnotations["JPC\MongoDB\ODM\Annotations\Mapping\Document"];
+                    $docAnnotation = $class->getClassAnnotation("JPC\MongoDB\ODM\Annotations\Mapping\Document");
                     $rep = isset($docAnnotation->repositoryClass) ? $docAnnotation->repositoryClass : $rep;
                     $collection = isset($collection) ? $collection : $docAnnotation->collectionName;
                 }
@@ -82,11 +78,11 @@ class DocumentManager extends Singleton {
             }
         }
         
-        if(!isset($classAnnotations)){
+        if(!isset($class)){
             throw new ModelNotFoundException($modelName);
         }
         
-        return $this->repositories[$modelName][$collection] = new $rep($modelName, $collection, $reflectionClass);
+        return $rep::instance($modelName, $class);
     }
 
     public function getMongoDBClient() {
