@@ -32,6 +32,10 @@ class Repository extends Multiton {
         $this->collection = DocumentManager::instance()->getMongoDBDatabase()->selectCollection($classMetadata->getClassAnnotation("JPC\MongoDB\ODM\Annotations\Mapping\Document")->collectionName);
     }
 
+    public function __call($name, $arguments) {
+        dump($name);
+    }
+
     public function getHydrator() {
         return $this->hydrator;
     }
@@ -40,7 +44,7 @@ class Repository extends Multiton {
         return $this->collection->count($filters, $options);
     }
 
-    public function find($id, $options = [], $autopersist = true) {
+    public function find($id, $projections = [], $options = [], $autopersist = true) {
         $result = $this->collection->findOne(["_id" => $id], $options);
 
         $object = new $this->modelName();
@@ -49,7 +53,7 @@ class Repository extends Multiton {
         return $object;
     }
 
-    public function findAll($options = [], $autopersist = true) {
+    public function findAll($projections = [], $sorts = [], $options = [], $autopersist = true) {
         $result = $this->collection->find([], $options);
 
         $objects = [];
@@ -63,8 +67,12 @@ class Repository extends Multiton {
         return $objects;
     }
 
-    public function findBy($filters, $options = [], $autopersist = true) {
+    public function findBy($filters, $projections = [], $sorts = [], $options = [], $autopersist = true) {
+        $this->castAllQueries($filters, $projections, $sorts);
+        
         $result = $this->collection->find($filters, $options);
+        
+        echo "<br/>".(microtime(TRUE) - $GLOBALS["start"]) . " to request Mongo<br/>";
 
         $objects = [];
 
@@ -73,12 +81,12 @@ class Repository extends Multiton {
             $this->hydrator->hydrate($object, $datas);
             $objects[] = $object;
         }
-
+        
         return $objects;
     }
 
-    public function findOneBy($filter = [], $options = [], $autopersist = true) {
-        $result = $this->collection->findOne($filter, $options);
+    public function findOneBy($filters = [], $projections = [], $sorts = [], $options = [], $autopersist = true) {
+        $result = $this->collection->findOne($filters, $options);
 
         $object = new $this->modelName();
         $this->hydrator->hydrate($object, $result);
@@ -100,6 +108,27 @@ class Repository extends Multiton {
         } else {
             return false;
         }
+    }
+
+    private function castMongoQuery($query, $hydrator = null) {
+        if (!isset($hydrator)) {
+            $hydrator = $this->hydrator;
+        }
+        $new_query = [];
+        foreach ($query as $name => $value) {
+            $field = $hydrator->getFieldNameFor($name);
+            if (is_array($value)) {
+                $value = $this->castMongoQuery($value, $this->hydrator->getHydratorForField($field));
+            }
+            $new_query[$field] = $value;
+        }
+        return $new_query;
+    }
+
+    private function castAllQueries(&$filters, &$projection = [], &$sort = []) {
+        $filters = $this->castMongoQuery($filters);
+        $projection = $this->castMongoQuery($projection);
+        $sort = $this->castMongoQuery($sort);
     }
 
 }

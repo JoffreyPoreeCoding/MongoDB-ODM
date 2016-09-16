@@ -55,6 +55,8 @@ class DocumentManager extends Singleton {
         $this->mongoclient = new MongoClient($mongouri);
         $this->mongodatabase = $this->mongoclient->selectDatabase($db);
         $this->classMetadataFactory = Tools\ClassMetadataFactory::instance();
+        
+        echo "<br/>".(microtime(TRUE) - $GLOBALS["start"]) . " to create DM<br/>";
     }
 
     public function addModelPath($identifier, $path) {
@@ -81,6 +83,8 @@ class DocumentManager extends Singleton {
         if(!isset($class)){
             throw new ModelNotFoundException($modelName);
         }
+        
+        echo "<br/>".(microtime(TRUE) - $GLOBALS["start"]) . " to create REP<br/>";
         
         return $rep::instance($modelName, $class);
     }

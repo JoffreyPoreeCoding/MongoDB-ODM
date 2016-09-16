@@ -38,3 +38,11 @@ class Field {
 class EmbeddedDocument {
     public $document;
 }
+
+/**
+ * @Annotation
+ * @Target("PROPERTY")
+ */
+class MultiEmbeddedDocument {
+    public $document;
+}
