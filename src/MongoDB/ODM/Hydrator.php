@@ -63,7 +63,8 @@ class Hydrator extends Multiton {
                 $value = $prop->getValue($object);
 
                 if (isset($value) && is_object($value) && $this->classMetadata->hasPropertyAnnotation($name, "JPC\MongoDB\ODM\Annotations\Mapping\EmbeddedDocument")) {
-                    $hydrator = Hydrator::instance($this->classMetadata->getPropertyAnnotation($name, "JPC\MongoDB\ODM\Annotations\Mapping\EmbeddedDocument")->document);
+                    $embeddedClass = $this->classMetadata->getPropertyAnnotation($name, "JPC\MongoDB\ODM\Annotations\Mapping\EmbeddedDocument")->document;
+                    $hydrator = $this->getHydratorForEmbedded($embeddedClass);
                     $value = $hydrator->unhydrate($value);
                 }
 
@@ -77,7 +78,7 @@ class Hydrator extends Multiton {
                 }
             }
 
-            if (isset($value)) {
+            if (isset($value) && $this->classMetadata->hasPropertyAnnotation($name, "JPC\MongoDB\ODM\Annotations\Mapping\Field")) {
                 $datas[$this->classMetadata->getPropertyAnnotation($name, "JPC\MongoDB\ODM\Annotations\Mapping\Field")->name] = $value;
             }
         }

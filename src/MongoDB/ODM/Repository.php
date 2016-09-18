@@ -4,6 +4,7 @@ namespace JPC\MongoDB\ODM;
 
 use JPC\MongoDB\ODM\DocumentManager;
 use axelitus\Patterns\Creational\Multiton;
+use JPC\MongoDB\ODM\ObjectManager;
 
 /**
  * Allow to find, delete, document in MongoDB
@@ -24,16 +25,20 @@ class Repository extends Multiton {
      */
     private $collection;
 
+    /**
+     * Object Manager
+     * @var ObjectManager
+     */
+    private $om;
+
     public function __construct($classMetadata) {
         $this->modelName = $classMetadata->getName();
 
         $this->hydrator = Hydrator::instance($this->modelName, $classMetadata);
 
         $this->collection = DocumentManager::instance()->getMongoDBDatabase()->selectCollection($classMetadata->getClassAnnotation("JPC\MongoDB\ODM\Annotations\Mapping\Document")->collectionName);
-    }
 
-    public function __call($name, $arguments) {
-        dump($name);
+        $this->om = ObjectManager::instance();
     }
 
     public function getHydrator() {
@@ -50,6 +55,10 @@ class Repository extends Multiton {
         $object = new $this->modelName();
         $this->hydrator->hydrate($object, $result);
 
+        if ($autopersist) {
+            $this->om->addObject($object, ObjectManager::OBJ_MANAGED);
+        }
+
         return $object;
     }
 
@@ -62,6 +71,10 @@ class Repository extends Multiton {
             $object = new $this->modelName();
             $this->hydrator->hydrate($object, $datas);
             $objects[] = $object;
+
+            if ($autopersist) {
+                $this->om->addObject($object, ObjectManager::OBJ_MANAGED);
+            }
         }
 
         return $objects;
@@ -69,10 +82,10 @@ class Repository extends Multiton {
 
     public function findBy($filters, $projections = [], $sorts = [], $options = [], $autopersist = true) {
         $this->castAllQueries($filters, $projections, $sorts);
-        
+
         $result = $this->collection->find($filters, $options);
-        
-        echo "<br/>".(microtime(TRUE) - $GLOBALS["start"]) . " to request Mongo<br/>";
+
+        echo "<br/>" . (microtime(TRUE) - $GLOBALS["start"]) . " to request Mongo<br/>";
 
         $objects = [];
 
@@ -80,8 +93,12 @@ class Repository extends Multiton {
             $object = new $this->modelName();
             $this->hydrator->hydrate($object, $datas);
             $objects[] = $object;
+
+            if ($autopersist) {
+                $this->om->addObject($object, ObjectManager::OBJ_MANAGED);
+            }
         }
-        
+
         return $objects;
     }
 
@@ -89,7 +106,12 @@ class Repository extends Multiton {
         $result = $this->collection->findOne($filters, $options);
 
         $object = new $this->modelName();
+        
         $this->hydrator->hydrate($object, $result);
+
+        if ($autopersist) {
+            $this->om->addObject($object, ObjectManager::OBJ_MANAGED);
+        }
 
         return $object;
     }
@@ -129,6 +151,14 @@ class Repository extends Multiton {
         $filters = $this->castMongoQuery($filters);
         $projection = $this->castMongoQuery($projection);
         $sort = $this->castMongoQuery($sort);
+    }
+    
+    /**
+     * 
+     * @return \MongoDB\Collection
+     */
+    public function getCollection(){
+        return $this->collection;
     }
 
 }
