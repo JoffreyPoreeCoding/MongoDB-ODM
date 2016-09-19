@@ -14,7 +14,7 @@ class ArrayContainer {
     
     private $array;
     
-    private $added;
+    private $added = [];
     
     function __construct($array = []) {
         $this->array = $array;
@@ -22,7 +22,8 @@ class ArrayContainer {
     
     public function __debugInfo(){
         return [
-            "array" => $this->array
+            "array" => $this->array,
+            "added" => $this->added
         ];
     }
     
@@ -47,6 +48,12 @@ class ArrayContainer {
     
     public function getArray(){
         return $this->array;
+    }
+    
+    public function getUpdateInfos(){
+        return [
+            "added" => $this->added
+        ];
     }
 
 }

@@ -5,6 +5,7 @@ namespace JPC\MongoDB\ODM;
 use JPC\MongoDB\ODM\DocumentManager;
 use axelitus\Patterns\Creational\Multiton;
 use JPC\MongoDB\ODM\ObjectManager;
+use Doctrine\Common\Cache\ApcuCache;
 
 /**
  * Allow to find, delete, document in MongoDB
@@ -31,6 +32,13 @@ class Repository extends Multiton {
      */
     private $om;
 
+    /**
+     * Cache for object changes
+     * @var ApcuCache 
+     */
+    private $objectCache;
+    private $arrayObjCache = [];
+
     public function __construct($classMetadata) {
         $this->modelName = $classMetadata->getName();
 
@@ -39,6 +47,8 @@ class Repository extends Multiton {
         $this->collection = DocumentManager::instance()->getMongoDBDatabase()->selectCollection($classMetadata->getClassAnnotation("JPC\MongoDB\ODM\Annotations\Mapping\Document")->collectionName);
 
         $this->om = ObjectManager::instance();
+
+        $this->objectCache = new ApcuCache();
     }
 
     public function getHydrator() {
@@ -106,12 +116,14 @@ class Repository extends Multiton {
         $result = $this->collection->findOne($filters, $options);
 
         $object = new $this->modelName();
-        
+
         $this->hydrator->hydrate($object, $result);
 
         if ($autopersist) {
             $this->om->addObject($object, ObjectManager::OBJ_MANAGED);
         }
+
+        $this->cacheObject($object);
 
         return $object;
     }
@@ -152,12 +164,48 @@ class Repository extends Multiton {
         $projection = $this->castMongoQuery($projection);
         $sort = $this->castMongoQuery($sort);
     }
-    
+
+    private function cacheObject($object) {
+        $this->objectCache->save(spl_object_hash($object), $this->hydrator->unhydrate($object), 120);
+    }
+
+    private function uncacheObject($object) {
+        return $this->objectCache->fetch(spl_object_hash($object));
+    }
+
+    public function getObjectChanges($object) {
+        $new_datas = $this->hydrator->unhydrate($object);
+        $old_datas = $this->uncacheObject($object);
+
+        $changes = $this->compareDatas($new_datas, $old_datas);
+
+        dump($changes);
+    }
+
+    public function compareDatas($new, $old) {
+        $changes = [];
+        foreach ($new as $key => $value) {
+            if (is_array($value)) {
+                $array_changes = $this->compareDatas($value, $old[$key]);
+                if (!empty($array_changes)) {
+                    $changes[$key] = $array_changes;
+                }
+            } else if (isset($old[$key]) && $value != $old[$key]) {
+                $changes[$key] = $value;
+            }
+        }
+        return $changes;
+    }
+
+    public function compareValues($a, $b) {
+        dump($a, $b);
+    }
+
     /**
      * 
      * @return \MongoDB\Collection
      */
-    public function getCollection(){
+    public function getCollection() {
         return $this->collection;
     }
 

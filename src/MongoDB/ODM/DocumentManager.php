@@ -45,18 +45,26 @@ class DocumentManager extends Singleton {
      * @var CacheReader
      */
     private $reader;
-    
+
     /**
      * Object Manager
      * @var ObjectManager
      */
     private $om;
-    
+
     /**
      *
      * @var Tools\ClassMetadataFactory
      */
     private $classMetadataFactory;
+    
+    const UPDATE_STATEMENT_MODIFIER = 0;
+    
+    /**
+     * Modifiers
+     * @var array of callable 
+     */
+    private $modifiers = [];
 
     function __construct($mongouri, $db, $debug = false) {
         $this->mongoclient = new MongoClient($mongouri);
@@ -85,11 +93,11 @@ class DocumentManager extends Singleton {
                 break;
             }
         }
-        
-        if(!isset($class)){
+
+        if (!isset($class)) {
             throw new ModelNotFoundException($modelName);
         }
-        
+
         return $rep::instance($modelName, $class);
     }
 
@@ -104,72 +112,100 @@ class DocumentManager extends Singleton {
     public function getReader() {
         return $this->reader;
     }
-    
-    public function persist($object){
+
+    public function persist($object) {
         $this->om->addObject($object);
     }
-    
-    public function delete($object){
+
+    public function delete($object) {
         $this->om->setObjectState($object, ObjectManager::OBJ_REMOVED);
     }
-    
-    public function flush(){
+
+    public function flush() {
         $removeObjs = $this->om->getObject(ObjectManager::OBJ_REMOVED);
         foreach ($removeObjs as $object) {
             $this->doRemove($object);
         }
-        
+
         $updateObjs = $this->om->getObject(ObjectManager::OBJ_MANAGED);
         foreach ($updateObjs as $object) {
             $this->update($object);
         }
-        
+
         $newObjs = $this->om->getObject(ObjectManager::OBJ_NEW);
         foreach ($newObjs as $object) {
             $this->insert($object);
         }
-        
     }
-    
-    private function insert($object){
+
+    private function insert($object) {
         $rep = $this->getRepository(get_class($object));
         $collection = $rep->getCollection();
-        
+
         $hydrator = $rep->getHydrator();
-        
+
         $datas = $hydrator->unhydrate($object);
         $res = $collection->insertOne($datas);
-        
-        if($res->isAcknowledged()){
+
+        if ($res->isAcknowledged()) {
             $hydrator->hydrate($object, ["_id" => $res->getInsertedId()]);
             $this->om->setObjectState($object, ObjectManager::OBJ_MANAGED);
         }
     }
-    
-    private function update($object){
+
+    private function update($object) {
         $rep = $this->getRepository(get_class($object));
         $collection = $rep->getCollection();
+
+        $diffs = $rep->getObjectChanges($object);
+
+        $update = $this->createUpdateQueryStatement($datas);
         
-        $hydrator = $rep->getHydrator();
-        
-        $datas = $hydrator->unhydrate($object);
-        
-        $res = $collection->updateOne(["_id" => $object->getId()], ['$set' => $datas]);
-        
-        if($res->isAcknowledged()){
+        if(isset($this->modifiers[self::UPDATE_STATEMENT_MODIFIER])){
+            foreach ( $this->modifiers[self::UPDATE_STATEMENT_MODIFIER] as $callback) {
+                call_user_func($callback, $update);
+            }
+        }
+
+        $res = $collection->updateOne(["_id" => $object->getId()], $update);
+
+        if ($res->isAcknowledged()) {
             //ACTION IF ACKNOLEDGED
         }
     }
-    
-    private function doRemove($object){
+
+    private function doRemove($object) {
         $rep = $this->getRepository(get_class($object));
         $collection = $rep->getCollection();
-        
+
         $res = $collection->deleteOne(["_id" => $object->getId()]);
-        
-        if($res->isAcknowledged()){
+
+        if ($res->isAcknowledged()) {
             $this->om->removeObject($object);
         }
     }
 
+    private function createUpdateQueryStatement($datas) {
+        $update = [];
+
+        $update['$set'] = [];
+        foreach ($datas as $key => $value) {
+            //If push statement Needed
+            if (is_array($value) and array_key_exists('$push', $value)) {
+                foreach ($value['$push'] as $embeddedPush) {
+                    foreach ($embeddedPush as $attrName => $attrValue) {
+                        if(null === $attrValue){
+                            unset($embeddedPush[$attrName]);
+                        }
+                    }
+                    $update['$push'][$key]['$each'][] = $embeddedPush;
+                }
+            } 
+            else if(isset($value)) {
+                $update['$set'][$key] = $value;
+            }
+        }
+        
+        return $update;
+    }
 }
