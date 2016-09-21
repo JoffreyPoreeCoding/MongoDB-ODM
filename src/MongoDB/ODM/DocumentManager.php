@@ -57,9 +57,9 @@ class DocumentManager extends Singleton {
      * @var Tools\ClassMetadataFactory
      */
     private $classMetadataFactory;
-    
+
     const UPDATE_STATEMENT_MODIFIER = 0;
-    
+
     /**
      * Modifiers
      * @var array of callable 
@@ -159,10 +159,10 @@ class DocumentManager extends Singleton {
 
         $diffs = $rep->getObjectChanges($object);
 
-        $update = $this->createUpdateQueryStatement($datas);
-        
-        if(isset($this->modifiers[self::UPDATE_STATEMENT_MODIFIER])){
-            foreach ( $this->modifiers[self::UPDATE_STATEMENT_MODIFIER] as $callback) {
+        $update = $this->createUpdateQueryStatement($diffs);
+
+        if (isset($this->modifiers[self::UPDATE_STATEMENT_MODIFIER])) {
+            foreach ($this->modifiers[self::UPDATE_STATEMENT_MODIFIER] as $callback) {
                 call_user_func($callback, $update);
             }
         }
@@ -190,22 +190,55 @@ class DocumentManager extends Singleton {
 
         $update['$set'] = [];
         foreach ($datas as $key => $value) {
-            //If push statement Needed
-            if (is_array($value) and array_key_exists('$push', $value)) {
-                foreach ($value['$push'] as $embeddedPush) {
-                    foreach ($embeddedPush as $attrName => $attrValue) {
-                        if(null === $attrValue){
-                            unset($embeddedPush[$attrName]);
-                        }
+            $push = null;
+            if (is_array($value)) {
+                $push = $this->checkPush($value, $key);
+                if ($push != null) {
+                    foreach ($push as $field => $fieldValue) {
+                        $update['$push'][$field] = ['$each' => $fieldValue];
                     }
-                    $update['$push'][$key]['$each'][] = $embeddedPush;
+                } else {
+                    $update['$set']  += $this->aggregArray($value, $key);
                 }
-            } 
-            else if(isset($value)) {
+            } else {
                 $update['$set'][$key] = $value;
             }
         }
-        
+
+        if (empty($update['$set'])) {
+            unset($update['$set']);
+        }
+
         return $update;
     }
+
+    private function checkPush($array, $prefix = '') {
+        foreach ($array as $key => $value) {
+            if ($key === '$push') {
+                $return = [];
+                foreach ($value as $toPush) {
+                    $return[] = $toPush;
+                }
+                return [$prefix => $return];
+            } else if (is_array($value)) {
+                if (null != ($push = $this->checkPush($value, $prefix . '.' . $key))) {
+                    return $push;
+                }
+            }
+        }
+    }
+
+    private function aggregArray($datas, $prefix = '') {
+        $new = [];
+        foreach ($datas as $key => $value) {
+            if (is_array($value)) {
+                $new = $this->aggregArray($value, $prefix.'.'.$key);
+            } else {
+                $new[$prefix.'.'.$key] = $value;
+            }
+        }
+        
+        return $new;
+    }
+
 }

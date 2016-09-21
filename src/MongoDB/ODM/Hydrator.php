@@ -77,6 +77,7 @@ class Hydrator extends Multiton {
                 $prop = $this->classMetadata->getProperty($name);
                 $prop->setAccessible(true);
                 $value = $prop->getValue($object);
+                
 
                 if (is_object($value) && $this->classMetadata->hasPropertyAnnotation($name, "JPC\MongoDB\ODM\Annotations\Mapping\EmbeddedDocument")) {
                     $embeddedClass = $this->classMetadata->getPropertyAnnotation($name, "JPC\MongoDB\ODM\Annotations\Mapping\EmbeddedDocument")->document;
@@ -96,7 +97,12 @@ class Hydrator extends Multiton {
                 if(is_a($value, "MongoDB\BSON\UTCDateTime")){
                     $value = $value->toDateTime();
                 }
+                
+                if(is_a($value, "MongoDB\BSON\ObjectId")){
+                    $value = (string)$value;
+                }
             }
+            
 
             if ($this->classMetadata->hasPropertyAnnotation($name, "JPC\MongoDB\ODM\Annotations\Mapping\Field")) {
                 $datas[$this->classMetadata->getPropertyAnnotation($name, "JPC\MongoDB\ODM\Annotations\Mapping\Field")->name] = $value;

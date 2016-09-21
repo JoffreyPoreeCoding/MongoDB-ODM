@@ -59,20 +59,18 @@ class Repository extends Multiton {
         return $this->collection->count($filters, $options);
     }
 
-    public function find($id, $projections = [], $options = [], $autopersist = true) {
+    public function find($id, $projections = [], $options = []) {
         $result = $this->collection->findOne(["_id" => $id], $options);
 
         $object = new $this->modelName();
         $this->hydrator->hydrate($object, $result);
 
-        if ($autopersist) {
-            $this->om->addObject($object, ObjectManager::OBJ_MANAGED);
-        }
+        $this->om->addObject($object, ObjectManager::OBJ_MANAGED);
 
         return $object;
     }
 
-    public function findAll($projections = [], $sorts = [], $options = [], $autopersist = true) {
+    public function findAll($projections = [], $sorts = [], $options = []) {
         $result = $this->collection->find([], $options);
 
         $objects = [];
@@ -82,15 +80,13 @@ class Repository extends Multiton {
             $this->hydrator->hydrate($object, $datas);
             $objects[] = $object;
 
-            if ($autopersist) {
-                $this->om->addObject($object, ObjectManager::OBJ_MANAGED);
-            }
+            $this->om->addObject($object, ObjectManager::OBJ_MANAGED);
         }
 
         return $objects;
     }
 
-    public function findBy($filters, $projections = [], $sorts = [], $options = [], $autopersist = true) {
+    public function findBy($filters, $projections = [], $sorts = [], $options = []) {
         $this->castAllQueries($filters, $projections, $sorts);
 
         $result = $this->collection->find($filters, $options);
@@ -104,24 +100,20 @@ class Repository extends Multiton {
             $this->hydrator->hydrate($object, $datas);
             $objects[] = $object;
 
-            if ($autopersist) {
-                $this->om->addObject($object, ObjectManager::OBJ_MANAGED);
-            }
+            $this->om->addObject($object, ObjectManager::OBJ_MANAGED);
         }
 
         return $objects;
     }
 
-    public function findOneBy($filters = [], $projections = [], $sorts = [], $options = [], $autopersist = true) {
+    public function findOneBy($filters = [], $projections = [], $sorts = [], $options = []) {
         $result = $this->collection->findOne($filters, $options);
 
         $object = new $this->modelName();
 
         $this->hydrator->hydrate($object, $result);
 
-        if ($autopersist) {
-            $this->om->addObject($object, ObjectManager::OBJ_MANAGED);
-        }
+        $this->om->addObject($object, ObjectManager::OBJ_MANAGED);
 
         $this->cacheObject($object);
 
@@ -179,21 +171,35 @@ class Repository extends Multiton {
 
         $changes = $this->compareDatas($new_datas, $old_datas);
 
-        dump($changes);
+        return $changes;
     }
 
     public function compareDatas($new, $old) {
         $changes = [];
         foreach ($new as $key => $value) {
             if (is_array($value)) {
-                $array_changes = $this->compareDatas($value, $old[$key]);
-                if (!empty($array_changes)) {
-                    $changes[$key] = $array_changes;
+                $compare = true;
+                if (is_int(key($value))) {
+                    $diff = array_diff_key($value, $old[$key]);
+                    if (!empty($diff)) {
+                        foreach ($diff as $diffKey => $diffValue) {
+                            $changes[$key]['$push'][$diffKey] = $diffValue;
+                        }
+                        $compare = false;
+                    }
+                }
+
+                if ($compare) {
+                    $array_changes = $this->compareDatas($value, $old[$key]);
+                    if (!empty($array_changes)) {
+                        $changes[$key] = $array_changes;
+                    }
                 }
             } else if (isset($old[$key]) && $value != $old[$key]) {
                 $changes[$key] = $value;
             }
         }
+
         return $changes;
     }
 
