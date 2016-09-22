@@ -51,6 +51,7 @@ class ObjectManager extends Singleton {
         unset($this->objectStates[$oid]);
         unset($this->objects[$oid]);
     }
+    
     public function setObjectState($object, $state){
         $oid = spl_object_hash($object);
         
@@ -78,6 +79,7 @@ class ObjectManager extends Singleton {
         
         return null;
     }
+    
     
     public function getObject($state = null){
         if(!isset($state)){

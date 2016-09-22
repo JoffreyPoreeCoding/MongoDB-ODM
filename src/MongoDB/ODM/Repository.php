@@ -90,9 +90,6 @@ class Repository extends Multiton {
         $this->castAllQueries($filters, $projections, $sorts);
 
         $result = $this->collection->find($filters, $options);
-
-        echo "<br/>" . (microtime(TRUE) - $GLOBALS["start"]) . " to request Mongo<br/>";
-
         $objects = [];
 
         foreach ($result as $datas) {
@@ -158,11 +155,11 @@ class Repository extends Multiton {
     }
 
     private function cacheObject($object) {
-        $this->objectCache->save(spl_object_hash($object), $this->hydrator->unhydrate($object), 120);
+        $this->objectCache->save(spl_object_hash($object), json_encode($this->hydrator->unhydrate($object)), 120);
     }
 
     private function uncacheObject($object) {
-        return $this->objectCache->fetch(spl_object_hash($object));
+        return json_decode($this->objectCache->fetch(spl_object_hash($object)));
     }
 
     public function getObjectChanges($object) {

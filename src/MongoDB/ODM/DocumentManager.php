@@ -117,8 +117,19 @@ class DocumentManager extends Singleton {
         $this->om->addObject($object);
     }
 
+    public function unpersist($object) {
+        $this->om->removeObject($object);
+    }
+
     public function delete($object) {
         $this->om->setObjectState($object, ObjectManager::OBJ_REMOVED);
+    }
+
+    public function refresh($object) {
+        $rep = $this->getRepository(get_class($object));
+        $collection = $rep->getCollection();
+        $datas = $collection->findOne(["_id" => $object->getId()]);
+        $rep->getHydrator()->hydrate($object, $datas);
     }
 
     public function flush() {
@@ -160,6 +171,7 @@ class DocumentManager extends Singleton {
 
         $diffs = $rep->getObjectChanges($object);
 
+
         $update = $this->createUpdateQueryStatement($diffs);
 
         if (isset($this->modifiers[self::UPDATE_STATEMENT_MODIFIER])) {
@@ -168,10 +180,11 @@ class DocumentManager extends Singleton {
             }
         }
 
-        $res = $collection->updateOne(["_id" => $object->getId()], $update);
-
-        if ($res->isAcknowledged()) {
-            //ACTION IF ACKNOLEDGED
+        if (!empty($update)) {
+            $res = $collection->updateOne(["_id" => $object->getId()], $update);
+            if ($res->isAcknowledged()) {
+                //ACTION IF ACKNOLEDGED
+            }
         }
     }
 
@@ -199,7 +212,7 @@ class DocumentManager extends Singleton {
                         $update['$push'][$field] = ['$each' => $fieldValue];
                     }
                 } else {
-                    $update['$set']  += $this->aggregArray($value, $key);
+                    $update['$set'] += $this->aggregArray($value, $key);
                 }
             } else {
                 $update['$set'][$key] = $value;
@@ -212,12 +225,12 @@ class DocumentManager extends Singleton {
 
         return $update;
     }
-    
-    private function clearNullValues(&$array){
+
+    private function clearNullValues(&$array) {
         foreach ($array as $key => &$value) {
-            if(null === $value){
-                unset($array($key));
-            } else if (is_array($value)){
+            if (null === $value) {
+                unset($array[$key]);
+            } else if (is_array($value)) {
                 $this->clearNullValues($value);
             }
         }
@@ -243,13 +256,25 @@ class DocumentManager extends Singleton {
         $new = [];
         foreach ($datas as $key => $value) {
             if (is_array($value)) {
-                $new = $this->aggregArray($value, $prefix.'.'.$key);
+                $new = $this->aggregArray($value, $prefix . '.' . $key);
             } else {
-                $new[$prefix.'.'.$key] = $value;
+                $new[$prefix . '.' . $key] = $value;
             }
         }
-        
+
         return $new;
+    }
+    
+    public function addModifier($type, $callback){
+        $this->modifiers[$type][] = $callback;
+    }
+    
+    public function getModifier($type){
+        if(isset($this->modifiers[$type])){
+            return $this->modifiers[$type];
+        }
+        
+        return false;
     }
 
 }
