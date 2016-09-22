@@ -37,8 +37,12 @@ class Repository extends Multiton {
      * @var ApcuCache 
      */
     private $objectCache;
-    private $arrayObjCache = [];
 
+    /**
+     * Create new Repository
+     * 
+     * @param   Tools\ClassMetadata     $classMetadata      Metadata of managed class
+     */
     public function __construct($classMetadata) {
         $this->modelName = $classMetadata->getName();
 
@@ -51,26 +55,66 @@ class Repository extends Multiton {
         $this->objectCache = new ApcuCache();
     }
 
+    /**
+     * Get Hydrator used by the repository
+     * 
+     * @return Hydrator
+     */
     public function getHydrator() {
         return $this->hydrator;
     }
 
+    /**
+     * Count corresponding documents for filters
+     * 
+     * @param   array                   $filters            Object
+     * @param   array                   $options            Options for the query
+     * @return  int                                         Number of corresponding documents
+     */
     public function count($filters = [], $options = []) {
         return $this->collection->count($filters, $options);
     }
 
+    /**
+     * Find document by ID
+     * 
+     * @param   mixed                   $id                 Id of the document
+     * @param   array                   $projections        Projection of the query
+     * @param   array                   $options            Options for the query
+     * @return  object                                      Object corresponding to MongoDB Document (false if not found)
+     */
     public function find($id, $projections = [], $options = []) {
+        $options = array_merge($options,[
+            "projection" => $this->castMongoQuery($projections)
+        ]);
+        
         $result = $this->collection->findOne(["_id" => $id], $options);
 
-        $object = new $this->modelName();
-        $this->hydrator->hydrate($object, $result);
+        if ($result !== null) {
+            $object = new $this->modelName();
+            $this->hydrator->hydrate($object, $result);
 
-        $this->om->addObject($object, ObjectManager::OBJ_MANAGED);
-
-        return $object;
+            $this->om->addObject($object, ObjectManager::OBJ_MANAGED);
+            return $object;
+        }
+        
+        return false;
     }
 
+    /**
+     * Find all document of the collection
+     * 
+     * @param   array                   $projections        Projection of the query
+     * @param   array                   $sorts              Sort options
+     * @param   array                   $options            Options for the query
+     * @return  array                                       Array containing all the document of the collection
+     */
     public function findAll($projections = [], $sorts = [], $options = []) {
+        $options = array_merge($options,[
+            "projection" => $this->castMongoQuery($projections),
+            "sort" => $this->castMongoQuery($sorts)
+        ]);
+        
         $result = $this->collection->find([], $options);
 
         $objects = [];

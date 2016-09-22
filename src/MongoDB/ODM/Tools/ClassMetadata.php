@@ -108,7 +108,7 @@ class ClassMetadata {
     }
     
     public function hasPropertyAnnotation($propertyName, $annotationName){
-        if (!isset($this->propertiesAnnotations)) {
+        if (!isset($this->propertiesAnnotations[$propertyName])) {
             $this->readPropertiesAnnotations();
         }
 
@@ -120,7 +120,7 @@ class ClassMetadata {
     
     public function getPropertyAnnotation($propertyName, $annotationName){
         if(!$this->hasPropertyAnnotation($propertyName, $annotationName)){
-            return null;
+            return false;
         }
         
         return $this->propertiesAnnotations[$propertyName][$annotationName];
@@ -155,7 +155,7 @@ class ClassMetadata {
             $this->propertiesAnnotations = $this->annotationCache->fetch($this->name.self::PROPERTIES_ANNOT.$this->cacheSalt);
             return $this->propertiesAnnotations;
         }
-
+        
         return $this->doReadPropertiesAnnotations();
     }
 

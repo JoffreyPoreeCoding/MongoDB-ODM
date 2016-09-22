@@ -20,6 +20,7 @@ class ClassMetadataTest extends PHPUnit_Framework_TestCase {
     private $classMetadata;
 
     public function __construct() {
+        apcu_clear_cache();
         $this->reflectionClass = new ReflectionClass("JPC\MongoDB\ODM\Tools\ClassMetadata");
         $this->classMetadata = new ClassMetadata("SimpleDocument", new Doctrine\Common\Annotations\IndexedReader(new AnnotationReader()));
     }
@@ -44,6 +45,28 @@ class ClassMetadataTest extends PHPUnit_Framework_TestCase {
         $this->assertInstanceOf("JPC\MongoDB\ODM\Annotations\Mapping\Document", $result);
         $this->assertEquals("simple_doc", $result->collectionName);
         $this->assertNull($result->repositoryClass);
+        
+        $prop = $this->reflectionClass->getProperty("classAnnotations");
+        $prop->setAccessible(true);
+        $this->assertNotEmpty($prop->getValue($this->classMetadata));
+    }
+    
+    public function testHasPropertyAnnotation(){
+        $result = $this->classMetadata->hasPropertyAnnotation("attr1", "JPC\MongoDB\ODM\Annotations\Mapping\Field");
+        
+        $this->assertTrue($result);
+        
+        $prop = $this->reflectionClass->getProperty("propertiesAnnotations");
+        $prop->setAccessible(true);
+        $this->assertNotEmpty($prop->getValue($this->classMetadata));
+    }
+    
+    public function testGetPropertyAnnotation() {
+        $result_first = $this->classMetadata->getPropertyAnnotation("attr1", "JPC\MongoDB\ODM\Annotations\Mapping\Field");
+        $this->assertInstanceOf("JPC\MongoDB\ODM\Annotations\Mapping\Field", $result_first);
+        
+        $result_second = $this->classMetadata->hasPropertyAnnotation("attr1", "Nothing");
+        $this->assertFalse($result_second);
     }
 
 }
