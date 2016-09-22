@@ -174,7 +174,7 @@ class Repository extends Multiton {
     public function compareDatas($new, $old) {
         $changes = [];
         foreach ($new as $key => $value) {
-            if (is_array($value)) {
+            if (is_array($value) && is_array($old[$key])) {
                 $compare = true;
                 if (is_int(key($value))) {
                     $diff = array_diff_key($value, $old[$key]);

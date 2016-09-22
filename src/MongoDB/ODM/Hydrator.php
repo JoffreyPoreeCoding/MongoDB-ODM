@@ -89,7 +89,7 @@ class Hydrator extends Multiton {
                 }
 
                 if (is_array($value) && $this->classMetadata->hasPropertyAnnotation($name, "JPC\MongoDB\ODM\Annotations\Mapping\MultiEmbeddedDocument")) {
-                    $hydrator = Hydrator::instance($this->classMetadata->getPropertyAnnotation($name, "JPC\MongoDB\ODM\Annotations\Mapping\MultiEmbeddedDocument")->document);
+                    $hydrator = $this->getHydratorForEmbedded($this->classMetadata->getPropertyAnnotation($name, "JPC\MongoDB\ODM\Annotations\Mapping\MultiEmbeddedDocument")->document);
                     $realValue = [];
                     foreach ($value as $embedded) {
                         $realValue[] = $hydrator->unhydrate($embedded);
@@ -98,7 +98,7 @@ class Hydrator extends Multiton {
                 }
                 
                 if(is_a($value, "\DateTime")){
-                    $value = \Helper\DateHelper::convertToUTCDateTime($value);
+                    $value = new \MongoDB\BSON\UTCDateTime($value->getTimestamp() * 1000);
                 }
             }
             
@@ -110,51 +110,6 @@ class Hydrator extends Multiton {
 
         return $datas;
     }
-
-//    public function unhydrateForMongoUpdate($object) {
-//        $datas = [];
-//        $properties = $this->classMetadata->getProperties();
-//
-//        foreach ($properties as $name => $property) {
-//            $value = null;
-//
-//            if ($this->classMetadata->hasPropertyAnnotation($name, "JPC\MongoDB\ODM\Annotations\Mapping\Field")) {
-//                $prop = $this->classMetadata->getProperty($name);
-//                $prop->setAccessible(true);
-//                $value = $prop->getValue($object);
-//
-//                if (is_object($value) && $this->classMetadata->hasPropertyAnnotation($name, "JPC\MongoDB\ODM\Annotations\Mapping\EmbeddedDocument")) {
-//                    $embeddedClass = $this->classMetadata->getPropertyAnnotation($name, "JPC\MongoDB\ODM\Annotations\Mapping\EmbeddedDocument")->document;
-//                    $hydrator = $this->getHydratorForEmbedded($embeddedClass);
-//                    $value = $hydrator->unhydrate($value);
-//                }
-//
-//                if (is_a($value, "JPC\MongoDB\ODM\Object\ArrayContainer") && $this->classMetadata->hasPropertyAnnotation($name, "JPC\MongoDB\ODM\Annotations\Mapping\MultiEmbeddedDocument")) {
-//                    $hydrator = Hydrator::instance($this->classMetadata->getPropertyAnnotation($name, "JPC\MongoDB\ODM\Annotations\Mapping\MultiEmbeddedDocument")->document);
-//                    $realValue = [];
-//
-//                    $addeds = $value->getUpdateInfos()["added"];
-//                    foreach ($addeds as $key) {
-//                        $realValue['$push'][] = $hydrator->unhydrateForMongoUpdate($value->get($key));
-//                    }
-//
-//                    if (empty($realValue)) {
-//                        foreach ($value->getArray() as $key => $value) {
-//                            $realValue[$key] = $hydrator->unhydrateForMongoUpdate($value);
-//                        }
-//                    }
-//
-//                    $value = $realValue;
-//                }
-//            }
-//
-//            if ($this->classMetadata->hasPropertyAnnotation($name, "JPC\MongoDB\ODM\Annotations\Mapping\Field")) {
-//                $datas[$this->classMetadata->getPropertyAnnotation($name, "JPC\MongoDB\ODM\Annotations\Mapping\Field")->name] = $value;
-//            }
-//        }
-//
-//        return $datas;
-//    }
 
     private function getPropertyInfos($name) {
         if (!isset($this->propertiesInfos[$name])) {

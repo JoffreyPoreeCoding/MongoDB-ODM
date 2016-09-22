@@ -28,10 +28,35 @@ class ClassMetadata {
      * @var \Doctrine\Common\Annotations\AnnotationReader 
      */
     private $reader;
+    
+    /**
+     * Class name
+     * @var string
+     */
     private $name;
+    
+    /**
+     * Class annotations
+     * @var array
+     */
     private $classAnnotations;
+    
+    /**
+     * List of properties
+     * @var array
+     */
     private $properties = [];
+    
+    /**
+     * Properties annotations
+     * @var array 
+     */
     private $propertiesAnnotations = [];
+    
+    /**
+     * Relection class
+     * @var \ReflectionClass 
+     */
     private $reflectionClass;
     
     /**
@@ -40,7 +65,7 @@ class ClassMetadata {
      */
     private $annotationCache;
 
-    function __construct($className, $reader) {
+    public function __construct($className, $reader) {
         $this->className = $className;
         $this->reader = $reader;
 
@@ -48,49 +73,6 @@ class ClassMetadata {
         $this->annotationCache = new ApcuCache();
     }
 
-    private function readClassAnnotations() {
-        if (isset($this->classAnnotations)) {
-            return $this->classAnnotations;
-        }
-        
-        if($this->annotationCache->contains($this->name.self::CLASS_ANNOT.$this->cacheSalt)){
-            $this->classAnnotations = $this->annotationCache->fetch($this->name.self::CLASS_ANNOT.$this->cacheSalt);
-            return $this->classAnnotations;
-        }
-
-        return $this->doReadClassAnnotations();
-    }
-
-    private function doReadClassAnnotations() {
-        $annotations = $this->reader->getClassAnnotations(new \ReflectionClass($this->className));
-        $this->classAnnotations = $annotations;
-        $this->annotationCache->save($this->name.self::CLASS_ANNOT.$this->cacheSalt, $annotations);
-        return $this->classAnnotations;
-    }
-
-    private function readPropertiesAnnotations() {
-        if (isset($this->propertiesAnnotations) && !empty($this->propertiesAnnotations)) {
-            return $this->propertiesAnnotations;
-        }
-        
-        if($this->annotationCache->contains($this->name.self::PROPERTIES_ANNOT.$this->cacheSalt)){
-            $this->propertiesAnnotations = $this->annotationCache->fetch($this->name.self::PROPERTIES_ANNOT.$this->cacheSalt);
-            return $this->propertiesAnnotations;
-        }
-
-        return $this->doReadPropertiesAnnotations();
-    }
-
-    private function doReadPropertiesAnnotations() {
-        foreach ((new \ReflectionClass($this->className))->getProperties() as $property) {
-            $this->properties[$property->name] = $property;
-            $this->propertiesAnnotations[$property->name] = $this->reader->getPropertyAnnotations($property);
-        }
-        
-        $this->annotationCache->save($this->name.self::PROPERTIES_ANNOT.$this->cacheSalt, $this->propertiesAnnotations);
-        return $this->propertiesAnnotations;
-    }
-    
     public function getName(){
         return $this->name;
     }
@@ -143,5 +125,47 @@ class ClassMetadata {
         
         return $this->propertiesAnnotations[$propertyName][$annotationName];
     }
+    
+    private function readClassAnnotations() {
+        if (isset($this->classAnnotations)) {
+            return $this->classAnnotations;
+        }
+        
+        if($this->annotationCache->contains($this->name.self::CLASS_ANNOT.$this->cacheSalt)){
+            $this->classAnnotations = $this->annotationCache->fetch($this->name.self::CLASS_ANNOT.$this->cacheSalt);
+            return $this->classAnnotations;
+        }
 
+        return $this->doReadClassAnnotations();
+    }
+
+    private function doReadClassAnnotations() {
+        $annotations = $this->reader->getClassAnnotations(new \ReflectionClass($this->className));
+        $this->classAnnotations = $annotations;
+        $this->annotationCache->save($this->name.self::CLASS_ANNOT.$this->cacheSalt, $annotations);
+        return $this->classAnnotations;
+    }
+
+    private function readPropertiesAnnotations() {
+        if (isset($this->propertiesAnnotations) && !empty($this->propertiesAnnotations)) {
+            return $this->propertiesAnnotations;
+        }
+        
+        if($this->annotationCache->contains($this->name.self::PROPERTIES_ANNOT.$this->cacheSalt)){
+            $this->propertiesAnnotations = $this->annotationCache->fetch($this->name.self::PROPERTIES_ANNOT.$this->cacheSalt);
+            return $this->propertiesAnnotations;
+        }
+
+        return $this->doReadPropertiesAnnotations();
+    }
+
+    private function doReadPropertiesAnnotations() {
+        foreach ((new \ReflectionClass($this->className))->getProperties() as $property) {
+            $this->properties[$property->name] = $property;
+            $this->propertiesAnnotations[$property->name] = $this->reader->getPropertyAnnotations($property);
+        }
+        
+        $this->annotationCache->save($this->name.self::PROPERTIES_ANNOT.$this->cacheSalt, $this->propertiesAnnotations);
+        return $this->propertiesAnnotations;
+    }
 }
