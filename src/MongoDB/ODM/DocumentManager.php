@@ -80,8 +80,8 @@ class DocumentManager extends Singleton {
     function getRepository($modelName, $collection = null) {
         $rep = "JPC\MongoDB\ODM\Repository";
         foreach ($this->modelPaths as $modelPath) {
-            if (file_exists($modelPath . "/" . $modelName . ".php")) {
-                require_once $modelPath . "/" . $modelName . ".php";
+            if (file_exists($modelPath . "/" . str_replace("\\", "/", $modelName) . ".php")) {
+                require_once $modelPath . "/" . str_replace("\\", "/", $modelName) . ".php";
                 $class = $this->classMetadataFactory->getMetadataForClass($modelName);
                 if (!$class->hasClassAnnotation("JPC\MongoDB\ODM\Annotations\Mapping\Document")) {
                     throw new Exception\AnnotationException("Model '$modelName' need to have 'Document' annotation.");
@@ -145,6 +145,7 @@ class DocumentManager extends Singleton {
         $hydrator = $rep->getHydrator();
 
         $datas = $hydrator->unhydrate($object);
+        $this->clearNullValues($datas);
         $res = $collection->insertOne($datas);
 
         if ($res->isAcknowledged()) {
@@ -210,6 +211,16 @@ class DocumentManager extends Singleton {
         }
 
         return $update;
+    }
+    
+    private function clearNullValues(&$array){
+        foreach ($array as $key => &$value) {
+            if(null === $value){
+                unset($array($key));
+            } else if (is_array($value)){
+                $this->clearNullValues($value);
+            }
+        }
     }
 
     private function checkPush($array, $prefix = '') {
