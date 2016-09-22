@@ -59,6 +59,9 @@ class DocumentManager extends Singleton {
     private $classMetadataFactory;
 
     const UPDATE_STATEMENT_MODIFIER = 0;
+    
+    const HYDRATE_CONVERTION_MODIFIER = 1;
+    const UNHYDRATE_CONVERTION_MODIFIER = 2;
 
     /**
      * Modifiers
