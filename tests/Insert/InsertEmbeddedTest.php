@@ -2,7 +2,7 @@
 
 use JPC\MongoDB\ODM\DocumentManager;
 
-require_once __DIR__."/../../models/EmbeddedDocument.php";
+require_once __DIR__."/../models/EmbeddedDocument.php";
 
 class InsertEmbeddedTest extends PHPUnit_Framework_TestCase {
     
@@ -14,7 +14,7 @@ class InsertEmbeddedTest extends PHPUnit_Framework_TestCase {
     
     public function __construct() {
         $this->dm = DocumentManager::instance("mongodb://localhost", "jpc_mongodb_phpunit");
-        $this->dm->addModelPath("globals", __DIR__."/../../models/");
+        $this->dm->addModelPath("globals", __DIR__."/../models/");
     }
     
     public function test_insertSimple(){

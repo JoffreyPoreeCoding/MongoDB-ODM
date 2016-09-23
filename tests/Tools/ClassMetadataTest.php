@@ -3,7 +3,7 @@
 use JPC\MongoDB\ODM\Tools\ClassMetadata;
 use Doctrine\Common\Annotations\AnnotationReader;
 
-require_once __DIR__."/../../models/SimpleDocument.php";
+require_once __DIR__."/../models/SimpleDocument.php";
 
 class ClassMetadataTest extends PHPUnit_Framework_TestCase {
 

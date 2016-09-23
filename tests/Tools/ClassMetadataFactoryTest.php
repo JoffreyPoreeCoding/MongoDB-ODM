@@ -2,7 +2,7 @@
 
 use JPC\MongoDB\ODM\Tools\ClassMetadataFactory;
 
-require_once __DIR__."/../../models/SimpleDocument.php";
+require_once __DIR__."/../models/SimpleDocument.php";
 
 class ClassMetadataFactoryTest extends PHPUnit_Framework_TestCase {
 

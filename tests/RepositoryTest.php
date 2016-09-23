@@ -1,6 +1,6 @@
 <?php
 
-require_once __DIR__ . "/../models/EmbeddedDocument.php";
+require_once __DIR__ . "/models/EmbeddedDocument.php";
 
 class RepositoryTest extends PHPUnit_Framework_TestCase {
 

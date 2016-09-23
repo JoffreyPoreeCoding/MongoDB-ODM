@@ -5,7 +5,7 @@
 >
     <testsuites>
         <testsuite name="MongoDB-ODM">
-            <directory suffix="Test.php">tests</directory>
+            <directory suffix="Test.php">.</directory>
         </testsuite>
     </testsuites>
 </phpunit>

@@ -1,6 +1,6 @@
 <?php
 
-require_once __DIR__ . "/../models/SimpleDocument.php";
+require_once __DIR__ . "/models/SimpleDocument.php";
 
 class DocumentManagerTest extends PHPUnit_Framework_TestCase {
 
@@ -25,7 +25,7 @@ class DocumentManagerTest extends PHPUnit_Framework_TestCase {
 
     public function testGetRepository() {
         $dm = new JPC\MongoDB\ODM\DocumentManager("mongodb://localhost", "jpc_mongodb_phpunit");
-        $dm->addModelPath("tests", __DIR__ . "/../models");
+        $dm->addModelPath("tests", __DIR__ . "/models");
 
         $rep = $dm->getRepository("SimpleDocument");
 
@@ -51,7 +51,7 @@ class DocumentManagerTest extends PHPUnit_Framework_TestCase {
 
     public function testRefresh() {
         $dm = new JPC\MongoDB\ODM\DocumentManager("mongodb://localhost", "jpc_mongodb_phpunit");
-        $dm->addModelPath("tests", __DIR__ . "/../models");
+        $dm->addModelPath("tests", __DIR__ . "/models");
 
         $doc = new SimpleDocument();
         $doc->setAttr1("test1");
