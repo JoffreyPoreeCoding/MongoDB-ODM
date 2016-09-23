@@ -120,11 +120,15 @@ class DocumentManager extends Singleton {
         $this->om->setObjectState($object, ObjectManager::OBJ_REMOVED);
     }
 
-    public function refresh($object) {
+    public function refresh(&$object) {
         $rep = $this->getRepository(get_class($object));
         $collection = $rep->getCollection();
         $datas = $collection->findOne(["_id" => $object->getId()]);
-        $rep->getHydrator()->hydrate($object, $datas);
+        if($datas != null){
+            $rep->getHydrator()->hydrate($object, $datas);
+        } else {
+            $object = null;
+        }
     }
 
     public function flush() {
