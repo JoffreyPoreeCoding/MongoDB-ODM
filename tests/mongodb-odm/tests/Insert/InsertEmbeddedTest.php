@@ -31,7 +31,7 @@ class InsertEmbeddedTest extends PHPUnit_Framework_TestCase {
         
         $inserted = $this->getObject($document->getId());
         
-        $insertedEmbedded = $inserted["embedded"];
+        $insertedEmbedded = $inserted["embedded_1"];
         
         $this->assertInstanceOf("MongoDB\Model\BSONDocument", $insertedEmbedded);
         $this->assertEquals($embedded->getAttr1(), $insertedEmbedded["attr_1"]);
@@ -51,7 +51,7 @@ class InsertEmbeddedTest extends PHPUnit_Framework_TestCase {
         
         $inserted = $this->getObject($document->getId());
         
-        $insertedEmbedded = $inserted["embedded"];
+        $insertedEmbedded = $inserted["embedded_1"];
         
         $this->assertInstanceOf("MongoDB\Model\BSONDocument", $insertedEmbedded);
         $this->assertEquals($embedded->getAttr1(), (array)$insertedEmbedded["attr_1"]);
@@ -76,7 +76,7 @@ class InsertEmbeddedTest extends PHPUnit_Framework_TestCase {
         
         $inserted = $this->getObject($document->getId());
         
-        $insertedEmbedded = $inserted["embedded"];
+        $insertedEmbedded = $inserted["embedded_1"];
         
         $this->assertInstanceOf("MongoDB\Model\BSONDocument", $insertedEmbedded);
         $this->assertEquals((array)$embedded->getAttr1(), (array)$insertedEmbedded["attr_1"]);
@@ -98,7 +98,7 @@ class InsertEmbeddedTest extends PHPUnit_Framework_TestCase {
         
         $inserted = $this->getObject($document->getId());
         
-        $insertedEmbedded = $inserted["embedded"];
+        $insertedEmbedded = $inserted["embedded_1"];
         
         $this->assertInstanceOf("MongoDB\Model\BSONDocument", $insertedEmbedded);
         $this->assertEquals($embedded->getAttr1(), $insertedEmbedded["attr_1"]->toDateTime());

@@ -130,7 +130,6 @@ class Hydrator extends Multiton {
     }
 
     public function getFieldNameFor($name) {
-
         if (strstr($name, ".")) {
             list($name, $embeddedName) = explode(".", $name, 2);
         }
@@ -158,13 +157,22 @@ class Hydrator extends Multiton {
 
         return $name;
     }
+    
+    public function getPropNameFor($field){
+        if(!isset($this->fieldMapping[$field])){
+            throw new Exception();
+        }
+        
+        return $this->fieldMapping[$field];
+    }
 
     public function getEmbeddedClassFor($field) {
         if (!isset($this->fieldMapping[$field])) {
             throw new \Exception();
         } else {
             $field = $this->fieldMapping[$field];
-            $embedded = isset($this->propertiesInfos[$field]["embedded"]) ? $this->propertiesInfos[$field]["embedded"] : isset($this->propertiesInfos[$field]["multiEmbedded"]) ? $this->propertiesInfos[$field]["multiEmbedded"] : false;
+            $embedded = isset($this->propertiesInfos[$field]["embedded"]) ? $this->propertiesInfos[$field]["embedded"] : false;
+            $embedded = isset($this->propertiesInfos[$field]["multiEmbedded"]) && !$embedded ? $this->propertiesInfos[$field]["multiEmbedded"] : $embedded;
             return $embedded;
         }
     }
@@ -217,6 +225,12 @@ class Hydrator extends Multiton {
             return false;
         }
         return Hydrator::instance($embeddedClass, Tools\ClassMetadataFactory::instance()->getMetadataForClass($embeddedClass));
+    }
+    
+    public function isEmbedded($field){
+        $embedded = isset($this->propertiesInfos[$field]["embedded"]) ? $this->propertiesInfos[$field]["embedded"] : false;
+        $embedded = isset($this->propertiesInfos[$field]["multiEmbedded"]) && !$embedded ? $this->propertiesInfos[$field]["multiEmbedded"] : $embedded;
+        return $embedded;
     }
 
 }

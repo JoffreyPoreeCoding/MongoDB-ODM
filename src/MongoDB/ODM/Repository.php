@@ -14,6 +14,8 @@ use Doctrine\Common\Cache\ApcuCache;
  */
 class Repository extends Multiton {
 
+    const MONGODB_QUERY_OPERATORS = ['$gt', '$lt', '$gte', '$lte', '$eq', '$ne', '$in', '$nin'];
+
     /**
      * Hydrator of model
      * @var Hydrator
@@ -72,7 +74,7 @@ class Repository extends Multiton {
      * @return  int                                         Number of corresponding documents
      */
     public function count($filters = [], $options = []) {
-        return $this->collection->count($filters, $options);
+        return $this->collection->count($this->castMongoQuery($filters), $options);
     }
 
     /**
@@ -84,20 +86,21 @@ class Repository extends Multiton {
      * @return  object                                      Object corresponding to MongoDB Document (false if not found)
      */
     public function find($id, $projections = [], $options = []) {
-        $options = array_merge($options,[
+        $options = array_merge($options, [
             "projection" => $this->castMongoQuery($projections)
         ]);
-        
+
         $result = $this->collection->findOne(["_id" => $id], $options);
 
         if ($result !== null) {
             $object = new $this->modelName();
             $this->hydrator->hydrate($object, $result);
 
+            $this->cacheObject($object);
             $this->om->addObject($object, ObjectManager::OBJ_MANAGED);
             return $object;
         }
-        
+
         return false;
     }
 
@@ -110,11 +113,11 @@ class Repository extends Multiton {
      * @return  array                                       Array containing all the document of the collection
      */
     public function findAll($projections = [], $sorts = [], $options = []) {
-        $options = array_merge($options,[
+        $options = array_merge($options, [
             "projection" => $this->castMongoQuery($projections),
             "sort" => $this->castMongoQuery($sorts)
         ]);
-        
+
         $result = $this->collection->find([], $options);
 
         $objects = [];
@@ -122,48 +125,77 @@ class Repository extends Multiton {
         foreach ($result as $datas) {
             $object = new $this->modelName();
             $this->hydrator->hydrate($object, $datas);
-            $objects[] = $object;
-
+            $this->cacheObject($object);
             $this->om->addObject($object, ObjectManager::OBJ_MANAGED);
+            $objects[] = $object;
         }
 
         return $objects;
     }
 
+    /**
+     * Find all document of the collection
+     * 
+     * @param   array                   $filters            Filters of the query
+     * @param   array                   $projections        Projection of the query
+     * @param   array                   $sorts              Sort options
+     * @param   array                   $options            Options for the query
+     * @return  array                                       Array containing all the document of the collection
+     */
     public function findBy($filters, $projections = [], $sorts = [], $options = []) {
-        $this->castAllQueries($filters, $projections, $sorts);
+        $options = array_merge($options, [
+            "projection" => $this->castMongoQuery($projections),
+            "sort" => $this->castMongoQuery($sorts)
+        ]);
 
-        $result = $this->collection->find($filters, $options);
+        $result = $this->collection->find($this->castMongoQuery($filters), $options);
         $objects = [];
 
         foreach ($result as $datas) {
             $object = new $this->modelName();
             $this->hydrator->hydrate($object, $datas);
-            $objects[] = $object;
-
+            $this->cacheObject($object);
             $this->om->addObject($object, ObjectManager::OBJ_MANAGED);
+            $objects[] = $object;
         }
 
         return $objects;
     }
 
+    /**
+     * Find all document of the collection
+     * 
+     * @param   array                   $filters            Filters of the query
+     * @param   array                   $projections        Projection of the query
+     * @param   array                   $sorts              Sort options
+     * @param   array                   $options            Options for the query
+     * @return  array                                       Array containing all the document of the collection
+     */
     public function findOneBy($filters = [], $projections = [], $sorts = [], $options = []) {
-        $result = $this->collection->findOne($filters, $options);
 
-        $object = new $this->modelName();
+        $options = array_merge($options, [
+            "projection" => $this->castMongoQuery($projections),
+            "sort" => $this->castMongoQuery($sorts)
+        ]);
 
-        $this->hydrator->hydrate($object, $result);
+        $result = $this->collection->findOne($this->castMongoQuery($filters), $options);
 
-        $this->om->addObject($object, ObjectManager::OBJ_MANAGED);
+        if ($result != null) {
+            $object = new $this->modelName();
+            $this->hydrator->hydrate($object, $result);
+            $this->om->addObject($object, ObjectManager::OBJ_MANAGED);
+            $this->cacheObject($object);
+            return $object;
+        }
 
-        $this->cacheObject($object);
-
-        return $object;
+        return null;
     }
 
+    
     public function distinct($fieldName, $filters = [], $options = []) {
-        $result = $this->collection->distinct($fieldName, $filters, $options);
-
+        $field = $this->hydrator->getFieldNameFor($fieldName);
+        
+        $result = $this->collection->distinct($field, $this->castMongoQuery($filters), $options);
         return $result;
     }
 
@@ -177,25 +209,25 @@ class Repository extends Multiton {
         }
     }
 
-    private function castMongoQuery($query, $hydrator = null) {
+    private function castMongoQuery($query, $hydrator = null, $initial = true) {
         if (!isset($hydrator)) {
             $hydrator = $this->hydrator;
         }
         $new_query = [];
         foreach ($query as $name => $value) {
             $field = $hydrator->getFieldNameFor($name);
-            if (is_array($value)) {
-                $value = $this->castMongoQuery($value, $this->hydrator->getHydratorForField($field));
+            $prop = $hydrator->getPropNameFor($field);
+            if (is_array($value) && false != ($embName = $hydrator->isEmbedded($prop))) {
+                $hydrator = $this->hydrator->getHydratorForField($field);
+                $value = $this->castMongoQuery($value, $hydrator, false);
             }
             $new_query[$field] = $value;
         }
-        return $new_query;
-    }
 
-    private function castAllQueries(&$filters, &$projection = [], &$sort = []) {
-        $filters = $this->castMongoQuery($filters);
-        $projection = $this->castMongoQuery($projection);
-        $sort = $this->castMongoQuery($sort);
+        if ($initial) {
+            $new_query = $this->aggregArray($new_query);
+        }
+        return $new_query;
     }
 
     private function cacheObject($object) {
@@ -244,16 +276,30 @@ class Repository extends Multiton {
         return $changes;
     }
 
-    public function compareValues($a, $b) {
-        dump($a, $b);
-    }
-
-    /**
-     * 
-     * @return \MongoDB\Collection
-     */
     public function getCollection() {
         return $this->collection;
+    }
+
+    private function aggregArray($datas, $prefix = '') {
+        $realprefix = $prefix;
+        if (!empty($prefix)) {
+            $realprefix.='.';
+        }
+        $new = [];
+        foreach ($datas as $key => $value) {
+            if (is_array($value)) {
+                $new = $this->aggregArray($value, $realprefix . $key);
+            } else {
+                if (in_array($key, self::MONGODB_QUERY_OPERATORS)) {
+                    !isset($new[$prefix]) ? $new[$prefix] = [] : null;
+                    $new[$prefix] += [$key => $value];
+                } else {
+                    $new[$realprefix . $key] = $value;
+                }
+            }
+        }
+
+        return $new;
     }
 
 }

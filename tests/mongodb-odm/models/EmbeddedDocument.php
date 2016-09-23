@@ -13,7 +13,7 @@ class EmbeddedDocument {
     private $id;
 
     /**
-     * @ODM\Field("embedded")
+     * @ODM\Field("embedded_1")
      * @ODM\EmbeddedDocument("Embedded")
      */
     private $embedded;

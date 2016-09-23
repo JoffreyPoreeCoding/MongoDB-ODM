@@ -7,13 +7,6 @@ use MongoDB\Database as MongoDatabase;
 use JPC\MongoDB\ODM\Exception\ModelNotFoundException;
 use axelitus\Patterns\Creational\Singleton;
 use JPC\MongoDB\ODM\ObjectManager;
-/**
- * For annotations reading
- */
-use Doctrine\Common\Annotations\AnnotationReader;
-use Doctrine\Common\Annotations\CachedReader;
-use Doctrine\Common\Cache\ApcuCache;
-use Doctrine\Common\Annotations\IndexedReader;
 
 /**
  * This allow to interact with document and repositories
@@ -59,7 +52,6 @@ class DocumentManager extends Singleton {
     private $classMetadataFactory;
 
     const UPDATE_STATEMENT_MODIFIER = 0;
-    
     const HYDRATE_CONVERTION_MODIFIER = 1;
     const UNHYDRATE_CONVERTION_MODIFIER = 2;
 
@@ -69,7 +61,7 @@ class DocumentManager extends Singleton {
      */
     private $modifiers = [];
 
-    function __construct($mongouri, $db, $debug = false) {
+    public function __construct($mongouri, $db, $debug = false) {
         $this->mongoclient = new MongoClient($mongouri);
         $this->mongodatabase = $this->mongoclient->selectDatabase($db);
         $this->classMetadataFactory = Tools\ClassMetadataFactory::instance();
@@ -80,7 +72,7 @@ class DocumentManager extends Singleton {
         $this->modelPaths[$identifier] = $path;
     }
 
-    function getRepository($modelName, $collection = null) {
+    public function getRepository($modelName, $collection = null) {
         $rep = "JPC\MongoDB\ODM\Repository";
         foreach ($this->modelPaths as $modelPath) {
             if (file_exists($modelPath . "/" . str_replace("\\", "/", $modelName) . ".php")) {
@@ -237,6 +229,8 @@ class DocumentManager extends Singleton {
                 $this->clearNullValues($value);
             }
         }
+
+        return $array;
     }
 
     private function checkPush($array, $prefix = '') {
@@ -267,16 +261,19 @@ class DocumentManager extends Singleton {
 
         return $new;
     }
-    
-    public function addModifier($type, $callback){
+
+    public function addModifier($type, $callback, $id = null) {
+        if (isset($id)) {
+            $this->modifiers[$type][$id] = $callback;
+        }
         $this->modifiers[$type][] = $callback;
     }
-    
-    public function getModifier($type){
-        if(isset($this->modifiers[$type])){
+
+    public function getModifier($type) {
+        if (isset($this->modifiers[$type])) {
             return $this->modifiers[$type];
         }
-        
+
         return false;
     }
 
