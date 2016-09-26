@@ -5,7 +5,7 @@ namespace JPC\MongoDB\ODM;
 use JPC\MongoDB\ODM\DocumentManager;
 use axelitus\Patterns\Creational\Multiton;
 use JPC\MongoDB\ODM\ObjectManager;
-use Doctrine\Common\Cache\ApcuCache;
+use Doctrine\Common\Cache\ArrayCache;
 
 /**
  * Allow to find, delete, document in MongoDB
@@ -45,16 +45,16 @@ class Repository extends Multiton {
      * 
      * @param   Tools\ClassMetadata     $classMetadata      Metadata of managed class
      */
-    public function __construct($classMetadata) {
+    public function __construct($classMetadata, $collection) {
         $this->modelName = $classMetadata->getName();
 
         $this->hydrator = Hydrator::instance($this->modelName, $classMetadata);
 
-        $this->collection = DocumentManager::instance()->getMongoDBDatabase()->selectCollection($classMetadata->getClassAnnotation("JPC\MongoDB\ODM\Annotations\Mapping\Document")->collectionName);
+        $this->collection = DocumentManager::instance()->getMongoDBDatabase()->selectCollection($collection);
 
         $this->om = ObjectManager::instance();
 
-        $this->objectCache = new ApcuCache();
+        $this->objectCache = new ArrayCache();
     }
 
     /**
@@ -191,10 +191,9 @@ class Repository extends Multiton {
         return null;
     }
 
-    
     public function distinct($fieldName, $filters = [], $options = []) {
         $field = $this->hydrator->getFieldNameFor($fieldName);
-        
+
         $result = $this->collection->distinct($field, $this->castMongoQuery($filters), $options);
         return $result;
     }
@@ -231,18 +230,21 @@ class Repository extends Multiton {
     }
 
     private function cacheObject($object) {
-        $this->objectCache->save(spl_object_hash($object), json_encode($this->hydrator->unhydrate($object)), 120);
+        $this->objectCache->save(spl_object_hash($object), $this->hydrator->unhydrate($object));
     }
 
     private function uncacheObject($object) {
-        return json_decode($this->objectCache->fetch(spl_object_hash($object)));
+        return $this->objectCache->fetch(spl_object_hash($object));
     }
 
     public function getObjectChanges($object) {
         $new_datas = $this->hydrator->unhydrate($object);
         $old_datas = $this->uncacheObject($object);
-
         $changes = $this->compareDatas($new_datas, $old_datas);
+
+        if (is_a($object, "FocusDoc\FocusDoc")) {
+            dump($changes);
+        }
 
         return $changes;
     }
@@ -250,26 +252,35 @@ class Repository extends Multiton {
     public function compareDatas($new, $old) {
         $changes = [];
         foreach ($new as $key => $value) {
-            if (is_array($value) && is_array($old[$key])) {
-                $compare = true;
-                if (is_int(key($value))) {
-                    $diff = array_diff_key($value, $old[$key]);
-                    if (!empty($diff)) {
-                        foreach ($diff as $diffKey => $diffValue) {
-                            $changes[$key]['$push'][$diffKey] = $diffValue;
+            if (is_array($old) && array_key_exists($key, $old) && $old[$key] != null) {
+                if (is_array($value) && is_array($old[$key])) {
+                    $compare = true;
+                    if (is_int(key($value))) {
+                        $diff = array_diff_key($value, $old[$key]);
+                        if (!empty($diff)) {
+                            foreach ($diff as $diffKey => $diffValue) {
+                                $changes[$key]['$push'][$diffKey] = $diffValue;
+                            }
+                            $compare = false;
                         }
-                        $compare = false;
                     }
-                }
 
-                if ($compare) {
-                    $array_changes = $this->compareDatas($value, $old[$key]);
-                    if (!empty($array_changes)) {
-                        $changes[$key] = $array_changes;
+                    if ($compare) {
+                        $array_changes = $this->compareDatas($value, $old[$key]);
+                        if (!empty($array_changes)) {
+                            $changes[$key] = $array_changes;
+                        }
                     }
+                } else if ($value != $old[$key]) {
+                    $changes[$key] = $value;
                 }
-            } else if (isset($old[$key]) && $value != $old[$key]) {
-                $changes[$key] = $value;
+            } else {
+                if(is_array($value) && is_int(key($value))){
+                    $changes[$key]['$set'] = $value;
+                }
+                else if ($old[$key] != $value) {
+                    $changes['$set'][$key] = $value;
+                }
             }
         }
 

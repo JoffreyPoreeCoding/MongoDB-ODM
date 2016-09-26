@@ -34,7 +34,7 @@ class Hydrator extends Multiton {
      * @var array
      */
     private $fieldMapping = [];
-    
+
     function __construct($classMetadata) {
         $this->classMetadata = $classMetadata;
     }
@@ -43,10 +43,10 @@ class Hydrator extends Multiton {
         $propertiesAnnotations = $this->classMetadata->getProperties();
 
         foreach ($propertiesAnnotations as $name => $propertyAnnotations) {
-            if(!($modifiers = DocumentManager::instance()->getModifier(DocumentManager::HYDRATE_CONVERTION_MODIFIER))){
+            if (!($modifiers = DocumentManager::instance()->getModifier(DocumentManager::HYDRATE_CONVERTION_MODIFIER))) {
                 $modifiers = [];
             }
-            
+
             $value = null;
             $fieldInfos = $this->getPropertyInfos($name);
             if (isset($fieldInfos["field"]) && isset($datas[$fieldInfos["field"]])) {
@@ -58,7 +58,7 @@ class Hydrator extends Multiton {
                     $datas[$fieldInfos["field"]] = $this->convertEmbeddeds($datas[$fieldInfos["field"]], $fieldInfos["multiEmbedded"]);
                 }
 
-                foreach ($modifiers as $mod){
+                foreach ($modifiers as $mod) {
                     $datas[$fieldInfos["field"]] = call_user_func($mod, $datas[$fieldInfos["field"]]);
                 }
 
@@ -70,7 +70,6 @@ class Hydrator extends Multiton {
     }
 
     public function unhydrate($object) {
-        $datas = [];
         $properties = $this->classMetadata->getProperties();
 
         foreach ($properties as $name => $property) {
@@ -80,7 +79,6 @@ class Hydrator extends Multiton {
                 $prop = $this->classMetadata->getProperty($name);
                 $prop->setAccessible(true);
                 $value = $prop->getValue($object);
-                
 
                 if (is_object($value) && $this->classMetadata->hasPropertyAnnotation($name, "JPC\MongoDB\ODM\Annotations\Mapping\EmbeddedDocument")) {
                     $embeddedClass = $this->classMetadata->getPropertyAnnotation($name, "JPC\MongoDB\ODM\Annotations\Mapping\EmbeddedDocument")->document;
@@ -96,17 +94,18 @@ class Hydrator extends Multiton {
                     }
                     $value = $realValue;
                 }
-                
-                if(is_a($value, "\DateTime")){
+
+                if (is_a($value, "\DateTime")) {
                     $value = new \MongoDB\BSON\UTCDateTime($value->getTimestamp() * 1000);
                 }
             }
-            
+
 
             if ($this->classMetadata->hasPropertyAnnotation($name, "JPC\MongoDB\ODM\Annotations\Mapping\Field")) {
                 $datas[$this->classMetadata->getPropertyAnnotation($name, "JPC\MongoDB\ODM\Annotations\Mapping\Field")->name] = $value;
             }
         }
+        
 
         return $datas;
     }
@@ -157,12 +156,12 @@ class Hydrator extends Multiton {
 
         return $name;
     }
-    
-    public function getPropNameFor($field){
-        if(!isset($this->fieldMapping[$field])){
+
+    public function getPropNameFor($field) {
+        if (!isset($this->fieldMapping[$field])) {
             throw new Exception();
         }
-        
+
         return $this->fieldMapping[$field];
     }
 
@@ -221,13 +220,13 @@ class Hydrator extends Multiton {
     }
 
     private function getHydratorForEmbedded($embeddedClass) {
-        if(!$embeddedClass){
+        if (!$embeddedClass) {
             return false;
         }
         return Hydrator::instance($embeddedClass, Tools\ClassMetadataFactory::instance()->getMetadataForClass($embeddedClass));
     }
-    
-    public function isEmbedded($field){
+
+    public function isEmbedded($field) {
         $embedded = isset($this->propertiesInfos[$field]["embedded"]) ? $this->propertiesInfos[$field]["embedded"] : false;
         $embedded = isset($this->propertiesInfos[$field]["multiEmbedded"]) && !$embedded ? $this->propertiesInfos[$field]["multiEmbedded"] : $embedded;
         return $embedded;

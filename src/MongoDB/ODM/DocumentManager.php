@@ -77,13 +77,14 @@ class DocumentManager extends Singleton {
         foreach ($this->modelPaths as $modelPath) {
             if (file_exists($modelPath . "/" . str_replace("\\", "/", $modelName) . ".php")) {
                 require_once $modelPath . "/" . str_replace("\\", "/", $modelName) . ".php";
-                $class = $this->classMetadataFactory->getMetadataForClass($modelName);
+                $classMeta = $this->classMetadataFactory->getMetadataForClass($modelName);
                 if (!$class->hasClassAnnotation("JPC\MongoDB\ODM\Annotations\Mapping\Document")) {
                     throw new Exception\AnnotationException("Model '$modelName' need to have 'Document' annotation.");
                 } else {
                     $docAnnotation = $class->getClassAnnotation("JPC\MongoDB\ODM\Annotations\Mapping\Document");
                     $rep = isset($docAnnotation->repositoryClass) ? $docAnnotation->repositoryClass : $rep;
                     $collection = isset($collection) ? $collection : $docAnnotation->collectionName;
+                    dump($collection);
                 }
                 break;
             }
@@ -93,7 +94,7 @@ class DocumentManager extends Singleton {
             throw new ModelNotFoundException($modelName);
         }
 
-        return $rep::instance($modelName, $class);
+        return $rep::instance($modelName, $classMeta, $collection);
     }
 
     public function getMongoDBClient() {
@@ -124,7 +125,7 @@ class DocumentManager extends Singleton {
         $rep = $this->getRepository(get_class($object));
         $collection = $rep->getCollection();
         $datas = $collection->findOne(["_id" => $object->getId()]);
-        if($datas != null){
+        if ($datas != null) {
             $rep->getHydrator()->hydrate($object, $datas);
         } else {
             $object = null;
@@ -169,13 +170,11 @@ class DocumentManager extends Singleton {
         $collection = $rep->getCollection();
 
         $diffs = $rep->getObjectChanges($object);
-
-
         $update = $this->createUpdateQueryStatement($diffs);
 
         if (isset($this->modifiers[self::UPDATE_STATEMENT_MODIFIER])) {
             foreach ($this->modifiers[self::UPDATE_STATEMENT_MODIFIER] as $callback) {
-                call_user_func($callback, $update);
+                $update = call_user_func($callback, $update);
             }
         }
 
@@ -204,7 +203,10 @@ class DocumentManager extends Singleton {
         $update['$set'] = [];
         foreach ($datas as $key => $value) {
             $push = null;
-            if (is_array($value)) {
+            if($key == '$set'){
+                $update['$set'] += $value;
+            }
+            else if (is_array($value)) {
                 $push = $this->checkPush($value, $key);
                 if ($push != null) {
                     foreach ($push as $field => $fieldValue) {
@@ -256,13 +258,21 @@ class DocumentManager extends Singleton {
     private function aggregArray($datas, $prefix = '') {
         $new = [];
         foreach ($datas as $key => $value) {
-            if (is_array($value)) {
-                $new = $this->aggregArray($value, $prefix . '.' . $key);
+            if(is_a($value, "stdClass")){
+                $value = (array)$value;
+            }
+            if ($key == '$set'){
+                foreach ($value as $k => $val) {
+                    $new[$prefix][$k] = $val;
+                }
+            }
+            else if (is_array($value)) {
+                $new += $this->aggregArray($value, $prefix . '.' . $key);
             } else {
                 $new[$prefix . '.' . $key] = $value;
             }
         }
-
+        
         return $new;
     }
 
