@@ -242,10 +242,6 @@ class Repository extends Multiton {
         $old_datas = $this->uncacheObject($object);
         $changes = $this->compareDatas($new_datas, $old_datas);
 
-        if (is_a($object, "FocusDoc\FocusDoc")) {
-            dump($changes);
-        }
-
         return $changes;
     }
 

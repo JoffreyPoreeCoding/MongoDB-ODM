@@ -78,19 +78,18 @@ class DocumentManager extends Singleton {
             if (file_exists($modelPath . "/" . str_replace("\\", "/", $modelName) . ".php")) {
                 require_once $modelPath . "/" . str_replace("\\", "/", $modelName) . ".php";
                 $classMeta = $this->classMetadataFactory->getMetadataForClass($modelName);
-                if (!$class->hasClassAnnotation("JPC\MongoDB\ODM\Annotations\Mapping\Document")) {
+                if (!$classMeta->hasClassAnnotation("JPC\MongoDB\ODM\Annotations\Mapping\Document")) {
                     throw new Exception\AnnotationException("Model '$modelName' need to have 'Document' annotation.");
                 } else {
-                    $docAnnotation = $class->getClassAnnotation("JPC\MongoDB\ODM\Annotations\Mapping\Document");
+                    $docAnnotation = $classMeta->getClassAnnotation("JPC\MongoDB\ODM\Annotations\Mapping\Document");
                     $rep = isset($docAnnotation->repositoryClass) ? $docAnnotation->repositoryClass : $rep;
                     $collection = isset($collection) ? $collection : $docAnnotation->collectionName;
-                    dump($collection);
                 }
                 break;
             }
         }
 
-        if (!isset($class)) {
+        if (!isset($classMeta)) {
             throw new ModelNotFoundException($modelName);
         }
 
