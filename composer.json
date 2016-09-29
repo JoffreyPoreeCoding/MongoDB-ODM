@@ -3,11 +3,11 @@
     "description": "A small MongoDB ODM",
     "type": "library",
     "require": {
-        "axelitus/design-patterns": "0.3.1",
+        "php": ">=5.4",
         "doctrine/annotations": "1.2.*",
         "doctrine/cache": "1.6.0",
         "mongodb/mongodb": "dev-master",
-        "php": ">=5.4"
+        "jpc/design-pattern": "dev-master"
     },
     "require-dev": {
         "symfony/var-dumper": "*"

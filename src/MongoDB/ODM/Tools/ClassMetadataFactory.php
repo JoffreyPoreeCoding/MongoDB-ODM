@@ -6,28 +6,33 @@ use Doctrine\Common\Cache\ApcuCache;
 use Doctrine\Common\Annotations\CachedReader;
 use Doctrine\Common\Annotations\IndexedReader;
 use Doctrine\Common\Annotations\AnnotationReader;
-use axelitus\Patterns\Creational\Singleton;
+use JPC\MongoDB\ODM\Tools\ClassMetadata;
 
 /**
- *
- * @author JoffreyP
+ * Allow to get Class metadatas
  */
-class ClassMetadataFactory extends Singleton {
+class ClassMetadataFactory {
+    
+    use \JPC\DesignPattern\Singleton;
+    
+    /* ================================== */
+    /*             PROPERTIES             */
+    /* ================================== */
 
     /**
      * Salt For Cache
-     * @var type 
+     * @var string 
      */
     private $cacheSalt = '$CLASSMETADATA';
     
     /**
-     *
+     * Cache
      * @var ApcuCache 
      */
     private $annotationsCache;
     
     /**
-     *
+     * Annotation Reader
      * @var CachedReader 
      */
     private $reader;
@@ -38,15 +43,24 @@ class ClassMetadataFactory extends Singleton {
      */
     private $loadedMetadatas = [];
 
+    /* ================================== */
+    /*           PUBLICS FUNCTIONS        */
+    /* ================================== */
+    
+    /**
+     * Create new Class metadata factory
+     */
     public function __construct() {
         $this->annotationsCache = new ApcuCache();
         $this->reader = new CachedReader(new IndexedReader(new AnnotationReader()), $this->annotationsCache, false);
     }
     
     /**
+     * Allow to get class metadata for specified class
      * 
-     * @param string $className
-     * @return ClassMetadata
+     * @param   string          $className          Name of the class to get metadatas
+     * 
+     * @return  ClassMetadata   Class metadatas
      */
     public function getMetadataForClass($className){
         if(isset($this->loadedMetadatas[$className])){
@@ -62,6 +76,17 @@ class ClassMetadataFactory extends Singleton {
         return $this->loadedMetadatas[$className] = $this->loadMetadataForClass($className);
     }
     
+    /* ================================== */
+    /*          PRIVATES FUNCTIONS        */
+    /* ================================== */
+    
+    /**
+     * Load class metadatas
+     * 
+     * @param   string          $className Name of the class to get metadatas
+     * 
+     * @return  ClassMetadata   Class metadatas
+     */
     private function loadMetadataForClass($className){
         $classMetadatas = new ClassMetadata($className, $this->reader);
         $this->annotationsCache->save($className.$this->cacheSalt, $classMetadatas);

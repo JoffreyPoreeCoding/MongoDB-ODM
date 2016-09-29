@@ -1,94 +1,125 @@
 <?php
 
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
 namespace JPC\MongoDB\ODM\Tools;
 
 use Doctrine\Common\Cache\ApcuCache;
+use Doctrine\Common\Annotations\AnnotationReader;
 
 /**
- * Description of ClassMetadata
- *
- * @author JoffreyP
+ * Allow to interact with class metadatas and annotations
  */
 class ClassMetadata {
+    
+    /* ================================== */
+    /*              CONSTANTS             */
+    /* ================================== */
 
     const CLASS_ANNOT = '$CLASS';
     const PROPERTIES_ANNOT = '$PROPETIES';
-
-    private $cacheSalt = '$ANNOTATIONS';
-    private $className;
+    
+    
+    /* ================================== */
+    /*             PROPERTIES             */
+    /* ================================== */
 
     /**
-     *
-     * @var \Doctrine\Common\Annotations\AnnotationReader 
+     * Salt for caching
+     * @var     string
+     */
+    private $cacheSalt = '$ANNOTATIONS';
+    
+    /**
+     * Annotation Reader
+     * @var     AnnotationReader 
      */
     private $reader;
     
     /**
      * Class name
-     * @var string
+     * @var     string
      */
     private $name;
     
     /**
      * Class annotations
-     * @var array
+     * @var     array
      */
     private $classAnnotations;
     
     /**
      * List of properties
-     * @var array
+     * @var     array
      */
     private $properties = [];
     
     /**
      * Properties annotations
-     * @var array 
+     * @var     array 
      */
     private $propertiesAnnotations = [];
     
     /**
-     * Relection class
-     * @var \ReflectionClass 
-     */
-    private $reflectionClass;
-    
-    /**
-     *
-     * @var ApcuCache 
+     * Cache
+     * @var     ApcuCache 
      */
     private $annotationCache;
+    
+    
+    /* ================================== */
+    /*          PUBLICS FUNCTIONS         */
+    /* ================================== */
 
+    /**
+     * Create new ClassMetadata
+     * 
+     * @param   string              $className          Name of the class
+     * @param   AnnotationReader    $reader             Annotation reader
+     */
     public function __construct($className, $reader) {
-        $this->className = $className;
         $this->reader = $reader;
 
-        $this->name = ($className);
+        $this->name = $className;
         $this->annotationCache = new ApcuCache();
     }
 
+    /**
+     * Allow to get the class name
+     * 
+     * @return  string              Class name
+     */
     public function getName(){
         return $this->name;
     }
 
+    /**
+     * Check if class has annotation
+     * 
+     * @param   string              $annotationName     Annotation name (Class)
+     * 
+     * @return  boolean             True if yes, else false
+     */
     public function hasClassAnnotation($annotationName) {
+        //Check if annotation are already loaded, if not loaded it
         if (!isset($this->classAnnotations)) {
             $this->readClassAnnotations();
         }
 
+        //If annotation exist return true
         if (isset($this->classAnnotations[$annotationName])) {
             return true;
         }
         return false;
     }
     
+    /**
+     * Allow to get the annotation object
+     * 
+     * @param   string              $annotationName     Annotation name (Class)
+     * 
+     * @return  mixed               Annotation
+     */
     public function getClassAnnotation($annotationName){
+        //Check if annotation exist
         if(!$this->hasClassAnnotation($annotationName)){
             return null;
         }
@@ -96,17 +127,39 @@ class ClassMetadata {
         return $this->classAnnotations[$annotationName];
     }
 
+    
+    /**
+     * Allow to get properties of the class
+     * 
+     * @return  array               Properties of the class
+     */
     public function getProperties() {
+        //Return properties annotation
         return $this->readPropertiesAnnotations();
     }
     
+    /**
+     * Allow to get a single property
+     * 
+     * @param   string              $name               Property name
+     * 
+     * @return  \ReflectionProperty Property
+     */
     public function getProperty($name){
         if(!isset($this->properties[$name])){
-            $this->properties[$name] = (new \ReflectionClass($this->className))->getProperty($name);
+            $this->properties[$name] = (new \ReflectionClass($this->name))->getProperty($name);
         }
         return $this->properties[$name];
     }
     
+    /**
+     * Check if property has annotation
+     * 
+     * @param   string              $propertyName       Property name
+     * @param   string              $annotationName     Annotation name (Class)
+     * 
+     * @return  boolean             True if yes, else false
+     */
     public function hasPropertyAnnotation($propertyName, $annotationName){
         if (!isset($this->propertiesAnnotations[$propertyName])) {
             $this->readPropertiesAnnotations();
@@ -118,6 +171,14 @@ class ClassMetadata {
         return false;
     }
     
+    /**
+     * Allow to get property annotation
+     * 
+     * @param   string              $propertyName       Property name
+     * @param   string              $annotationName     Annotation name (Class)
+     * 
+     * @return  mixed               Annotation
+     */
     public function getPropertyAnnotation($propertyName, $annotationName){
         if(!$this->hasPropertyAnnotation($propertyName, $annotationName)){
             return false;
@@ -126,6 +187,16 @@ class ClassMetadata {
         return $this->propertiesAnnotations[$propertyName][$annotationName];
     }
     
+    
+    /* ================================== */
+    /*          PRIVATES FUNCTIONS        */
+    /* ================================== */
+    
+    /**
+     * Read class annotations (From loaded, then cache, then file)
+     * 
+     * @return  array               All class's annotations
+     */
     private function readClassAnnotations() {
         if (isset($this->classAnnotations)) {
             return $this->classAnnotations;
@@ -139,13 +210,23 @@ class ClassMetadata {
         return $this->doReadClassAnnotations();
     }
 
+    /**
+     * Read class annotation from file
+     * 
+     * @return array               All class's annotations
+     */
     private function doReadClassAnnotations() {
-        $annotations = $this->reader->getClassAnnotations(new \ReflectionClass($this->className));
+        $annotations = $this->reader->getClassAnnotations(new \ReflectionClass($this->name));
         $this->classAnnotations = $annotations;
         $this->annotationCache->save($this->name.self::CLASS_ANNOT.$this->cacheSalt, $annotations);
         return $this->classAnnotations;
     }
 
+    /**
+     * Read all properties's annotations (From loaded, then cache, then file)
+     * 
+     * @return array               All properties's annotations
+     */
     private function readPropertiesAnnotations() {
         if (isset($this->propertiesAnnotations) && !empty($this->propertiesAnnotations)) {
             return $this->propertiesAnnotations;
@@ -159,8 +240,13 @@ class ClassMetadata {
         return $this->doReadPropertiesAnnotations();
     }
 
+    /**
+     * Read all properties's annotations from file
+     * 
+     * @return array               All class's annotations
+     */
     private function doReadPropertiesAnnotations() {
-        foreach ((new \ReflectionClass($this->className))->getProperties() as $property) {
+        foreach ((new \ReflectionClass($this->name))->getProperties() as $property) {
             $this->properties[$property->name] = $property;
             $this->propertiesAnnotations[$property->name] = $this->reader->getPropertyAnnotations($property);
         }

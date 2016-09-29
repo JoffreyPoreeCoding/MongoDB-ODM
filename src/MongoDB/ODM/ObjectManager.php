@@ -8,14 +8,14 @@
 
 namespace JPC\MongoDB\ODM;
 
-use axelitus\Patterns\Creational\Singleton;
-
 /**
  * Description of ObjectManager
  *
  * @author poree
  */
-class ObjectManager extends Singleton {
+class ObjectManager {
+    
+    use \JPC\DesignPattern\Singleton;
     
     /**
      * Object states
@@ -80,7 +80,6 @@ class ObjectManager extends Singleton {
         return null;
     }
     
-    
     public function getObject($state = null){
         if(!isset($state)){
             return $this->objects;
@@ -94,6 +93,11 @@ class ObjectManager extends Singleton {
         }
         
         return $objectList;
+    }
+    
+    public function clear(){
+        $this->objectStates = [];
+        $this->objects = [];
     }
     
 }

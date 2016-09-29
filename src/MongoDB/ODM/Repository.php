@@ -3,7 +3,6 @@
 namespace JPC\MongoDB\ODM;
 
 use JPC\MongoDB\ODM\DocumentManager;
-use axelitus\Patterns\Creational\Multiton;
 use JPC\MongoDB\ODM\ObjectManager;
 use Doctrine\Common\Cache\ArrayCache;
 
@@ -12,7 +11,9 @@ use Doctrine\Common\Cache\ArrayCache;
  *
  * @author poree
  */
-class Repository extends Multiton {
+class Repository {
+    
+    use \JPC\DesignPattern\Multiton;
 
     const MONGODB_QUERY_OPERATORS = ['$gt', '$lt', '$gte', '$lte', '$eq', '$ne', '$in', '$nin'];
 
@@ -48,11 +49,11 @@ class Repository extends Multiton {
     public function __construct($classMetadata, $collection) {
         $this->modelName = $classMetadata->getName();
 
-        $this->hydrator = Hydrator::instance($this->modelName, $classMetadata);
+        $this->hydrator = Hydrator::getInstance($this->modelName, $classMetadata);
 
-        $this->collection = DocumentManager::instance()->getMongoDBDatabase()->selectCollection($collection);
+        $this->collection = DocumentManager::getInstance()->getMongoDBDatabase()->selectCollection($collection);
 
-        $this->om = ObjectManager::instance();
+        $this->om = ObjectManager::getInstance();
 
         $this->objectCache = new ArrayCache();
     }
@@ -224,7 +225,7 @@ class Repository extends Multiton {
         }
 
         if ($initial) {
-            $new_query = $this->aggregArray($new_query);
+            $new_query += $this->aggregArray($new_query);
         }
         return $new_query;
     }
@@ -270,12 +271,25 @@ class Repository extends Multiton {
                 } else if ($value != $old[$key]) {
                     $changes[$key] = $value;
                 }
-            } else {
-                if(is_array($value) && is_int(key($value))){
-                    $changes[$key]['$set'] = $value;
+            } else if (is_array($old) && array_key_exists($key, $old) && $old[$key] == null) {
+                if ($old[$key] != $value) {
+                    if (is_array($value) && is_int(key($value))) {
+                        $changes[$key]['$push'] = $value;
+                    } else if ($value == null && isset($old[$key])) {
+                        $changes['$unset'][$key] = $value;
+                    } else if (!isset($old[$key])) {
+                        $changes[$key]['$set'] = $this->clearNullValues($value);
+                    }
                 }
-                else if ($old[$key] != $value) {
-                    $changes['$set'][$key] = $value;
+            } else {
+                if (is_array($value) && is_int(key($value)) && !isset($old)) {
+                    $changes[$key]['$push'] = $value;
+                } else if ($old != $value) {
+                    if ($value == null) {
+                        $changes['$unset'][$key] = $value;
+                    } else if (!isset($old)) {
+                        $changes[$key]['$set'] = $value;
+                    }
                 }
             }
         }
@@ -307,6 +321,18 @@ class Repository extends Multiton {
         }
 
         return $new;
+    }
+
+    private function clearNullValues(&$values) {
+        foreach ($values as $key => &$value) {
+            if (null === $value) {
+                unset($values[$key]);
+            } else if (is_array($value)) {
+                $this->clearNullValues($value);
+            }
+        }
+
+        return $values;
     }
 
 }
