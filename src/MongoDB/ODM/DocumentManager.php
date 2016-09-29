@@ -59,6 +59,8 @@ class DocumentManager {
      * @var ObjectManager
      */
     private $om;
+    
+    private $objectCollection = [];
 
     /**
      * Class metadata factory
@@ -191,8 +193,9 @@ class DocumentManager {
      * 
      * @param   mixed       $object     Object to persist
      */
-    public function persist($object) {
-        $this->om->addObject($object);
+    public function persist($object, $collection) {
+        $this->objectCollection[spl_object_hash($object)] = $collection;
+        $this->om->addObject($object, ObjectManager::OBJ_NEW);
     }
 
     /**
@@ -247,7 +250,8 @@ class DocumentManager {
 
         $toInsert = [];
         foreach ($newObjs as $object) {
-            $toInsert[$this->getRepository(get_class($object))->getCollection()->getCollectionName()][] = $object;
+            $collection = isset($this->objectCollection[spl_object_hash($object)]) ? $this->objectCollection[spl_object_hash($object)] : $this->getRepository(get_class($object))->getCollection()->getCollectionName();
+            $toInsert[$collection][] = $object;
         }
 
         foreach ($toInsert as $collection => $objects) {
