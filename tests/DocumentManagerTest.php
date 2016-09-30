@@ -34,7 +34,7 @@ class DocumentManagerTest extends PHPUnit_Framework_TestCase {
 
     public function testPersistDeleteUnpersist() {
         $dm = new JPC\MongoDB\ODM\DocumentManager("mongodb://localhost", "jpc_mongodb_phpunit");
-        $om = JPC\MongoDB\ODM\ObjectManager::instance();
+        $om = JPC\MongoDB\ODM\ObjectManager::getInstance();
         $obj = new SimpleDocument();
 
         $dm->persist($obj);
@@ -131,7 +131,7 @@ class DocumentManagerTest extends PHPUnit_Framework_TestCase {
             ]
         ];
 
-        $ref = & $query;
+        $ref =&$query;
 
         $this->assertEquals($expected, $method->invoke($dm, $ref));
     }

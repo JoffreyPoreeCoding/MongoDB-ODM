@@ -59,7 +59,6 @@ class DocumentManager {
      * @var ObjectManager
      */
     private $om;
-    
     private $objectCollection = [];
 
     /**
@@ -193,8 +192,10 @@ class DocumentManager {
      * 
      * @param   mixed       $object     Object to persist
      */
-    public function persist($object, $collection) {
-        $this->objectCollection[spl_object_hash($object)] = $collection;
+    public function persist($object, $collection = null) {
+        if (isset($collection)) {
+            $this->objectCollection[spl_object_hash($object)] = $collection;
+        }
         $this->om->addObject($object, ObjectManager::OBJ_NEW);
     }
 
@@ -223,8 +224,9 @@ class DocumentManager {
      */
     public function refresh(&$object) {
         $rep = $this->getRepository(get_class($object));
-        $collection = $rep->getCollection();
-        $datas = $collection->findOne(["_id" => $object->getId()]);
+        $collection = isset($this->objectCollection[spl_object_hash($object)]) ? $this->objectCollection[spl_object_hash($object)] : $rep->getCollection()->getCollectionName();
+        $mongoCollection = $this->mongodatabase->selectCollection($collection);
+        $datas = $mongoCollection->findOne(["_id" => $object->getId()]);
         if ($datas != null) {
             $rep->getHydrator()->hydrate($object, $datas);
         } else {
@@ -285,12 +287,12 @@ class DocumentManager {
             $datas[] = $hydrator->unhydrate($object);
             $this->clearNullValues($datas);
         }
-        
+
         $res = $collection->insertMany($datas);
 
 
         if ($res->isAcknowledged()) {
-            foreach($res->getInsertedIds() as $index => $id){
+            foreach ($res->getInsertedIds() as $index => $id) {
                 $hydrator->hydrate($objects[$index], ["_id" => $id]);
                 $this->om->setObjectState($objects[$index], ObjectManager::OBJ_MANAGED);
             }
@@ -418,8 +420,12 @@ class DocumentManager {
                 $value = (array) $value;
             }
             if ($key == '$set') {
-                foreach ($value as $k => $val) {
-                    $new[$prefix][$k] = $val;
+                if (is_array($value)) {
+                    foreach ($value as $k => $val) {
+                        $new[$prefix][$k] = $val;
+                    }
+                } else {
+                    $new[$prefix] = $value;
                 }
             } else if (is_array($value)) {
                 $new += $this->aggregArray($value, $prefix . '.' . $key);

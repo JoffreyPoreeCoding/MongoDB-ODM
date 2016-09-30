@@ -18,9 +18,9 @@ class RepositoryTest extends PHPUnit_Framework_TestCase {
 
     public function __construct() {
         apcu_clear_cache();
-        JPC\MongoDB\ODM\DocumentManager::instance("mongodb://localhost", "jpc_mongodb_phpunit");
+        JPC\MongoDB\ODM\DocumentManager::getInstance("mongodb://localhost", "jpc_mongodb_phpunit");
         $this->reflection = new ReflectionClass("JPC\MongoDB\ODM\Repository");
-        $this->rep = new \JPC\MongoDB\ODM\Repository(\JPC\MongoDB\ODM\Tools\ClassMetadataFactory::instance()->getMetadataForClass("EmbeddedDocument"));
+        $this->rep = new \JPC\MongoDB\ODM\Repository(\JPC\MongoDB\ODM\Tools\ClassMetadataFactory::getInstance()->getMetadataForClass("EmbeddedDocument"), "repo_test");
     }
 
     public function testCastMongoQuery() {
@@ -36,6 +36,8 @@ class RepositoryTest extends PHPUnit_Framework_TestCase {
         $expected = [
             "embedded_1.attr_1" => ['$lt' => 20, '$gt' => -100]
         ];
+        
+        dump($method->invoke($this->rep, $query));
         
         $this->assertEquals($expected, $method->invoke($this->rep, $query));
     }

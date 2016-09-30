@@ -226,6 +226,7 @@ class Repository {
 
         if ($initial) {
             $new_query += $this->aggregArray($new_query);
+            unset($new_query[$field]);
         }
         return $new_query;
     }

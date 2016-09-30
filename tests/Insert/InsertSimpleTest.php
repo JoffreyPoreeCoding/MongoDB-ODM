@@ -13,7 +13,7 @@ class InsertSimpleTest extends PHPUnit_Framework_TestCase {
     private $dm;
     
     public function __construct() {
-        $this->dm = DocumentManager::instance("mongodb://localhost", "jpc_mongodb_phpunit");
+        $this->dm = DocumentManager::getInstance("mongodb://localhost", "jpc_mongodb_phpunit");
         $this->dm->addModelPath("globals", __DIR__."/../models/");
     }
     
@@ -89,6 +89,6 @@ class InsertSimpleTest extends PHPUnit_Framework_TestCase {
      * @afterClass
      */
     public static function removeDatabase(){
-       DocumentManager::instance("mongodb://localhost", "jpc_mongodb_phpunit")->getMongoDBDatabase()->drop();
+       DocumentManager::getInstance("mongodb://localhost", "jpc_mongodb_phpunit")->getMongoDBDatabase()->drop();
     }
 }
