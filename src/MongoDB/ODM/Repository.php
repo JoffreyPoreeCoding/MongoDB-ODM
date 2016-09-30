@@ -12,7 +12,7 @@ use Doctrine\Common\Cache\ArrayCache;
  * @author poree
  */
 class Repository {
-    
+
     use \JPC\DesignPattern\Multiton;
 
     const MONGODB_QUERY_OPERATORS = ['$gt', '$lt', '$gte', '$lte', '$eq', '$ne', '$in', '$nin'];
@@ -192,6 +192,12 @@ class Repository {
         return null;
     }
 
+    public function getTailableCursor($filters = [], $options = []) {
+        $options['cursorType'] = \MongoDB\Operation\Find::TAILABLE_AWAIT;
+
+        return $this->collection->find($this->castMongoQuery($filters), $options);
+    }
+
     public function distinct($fieldName, $filters = [], $options = []) {
         $field = $this->hydrator->getFieldNameFor($fieldName);
 
@@ -222,13 +228,13 @@ class Repository {
                 $value = $this->castMongoQuery($value, $hydrator, false);
             }
             $new_query[$field] = $value;
-        }
 
-        if ($initial) {
-            $new_query += $this->aggregArray($new_query);
-            unset($new_query[$field]);
+            if ($initial) {
+                $new_query += $this->aggregArray($new_query);
+                unset($new_query[$field]);
+            }
+            return $new_query;
         }
-        return $new_query;
     }
 
     private function cacheObject($object) {
@@ -272,11 +278,11 @@ class Repository {
                 } else if ($value != $old[$key]) {
                     $changes[$key] = $value;
                 }
-            } else if (is_array($old) && array_key_exists($key, $old) && $old[$key] == null) {
+            } else if (is_array($old) && array_key_exists($key, $old) && $old[$key] === null) {
                 if ($old[$key] != $value) {
                     if (is_array($value) && is_int(key($value))) {
                         $changes[$key]['$push'] = $value;
-                    } else if ($value == null && isset($old[$key])) {
+                    } else if ($value === null && isset($old[$key])) {
                         $changes['$unset'][$key] = $value;
                     } else if (!isset($old[$key])) {
                         $changes[$key]['$set'] = $this->clearNullValues($value);
@@ -286,7 +292,7 @@ class Repository {
                 if (is_array($value) && is_int(key($value)) && !isset($old)) {
                     $changes[$key]['$push'] = $value;
                 } else if ($old != $value) {
-                    if ($value == null) {
+                    if ($value === null) {
                         $changes['$unset'][$key] = $value;
                     } else if (!isset($old)) {
                         $changes[$key]['$set'] = $value;

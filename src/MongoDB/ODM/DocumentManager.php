@@ -372,7 +372,7 @@ class DocumentManager {
                 unset($update['$set'][$key]);
             }
 
-            if (isset($update['$set'][$key]) && $update['$set'][$key] == null) {
+            if (isset($update['$set'][$key]) && $update['$set'][$key] === null) {
                 unset($update['$set'][$key]);
                 $update['$unset'][$key] = "";
             }

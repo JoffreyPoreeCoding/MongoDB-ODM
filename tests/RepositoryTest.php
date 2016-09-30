@@ -37,8 +37,6 @@ class RepositoryTest extends PHPUnit_Framework_TestCase {
             "embedded_1.attr_1" => ['$lt' => 20, '$gt' => -100]
         ];
         
-        dump($method->invoke($this->rep, $query));
-        
         $this->assertEquals($expected, $method->invoke($this->rep, $query));
     }
 
