@@ -285,7 +285,7 @@ class Repository {
                     } else if ($value === null && isset($old[$key])) {
                         $changes['$unset'][$key] = $value;
                     } else if (!isset($old[$key])) {
-                        $changes[$key]['$set'] = $this->clearNullValues($value);
+                        $changes[$key]['$set'] = Tools\ArrayModifier::clearNullValues($value);
                     }
                 }
             } else {
@@ -329,17 +329,4 @@ class Repository {
 
         return $new;
     }
-
-    private function clearNullValues(&$values) {
-        foreach ($values as $key => &$value) {
-            if (null === $value) {
-                unset($values[$key]);
-            } else if (is_array($value)) {
-                $this->clearNullValues($value);
-            }
-        }
-
-        return $values;
-    }
-
 }

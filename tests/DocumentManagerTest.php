@@ -103,39 +103,6 @@ class DocumentManagerTest extends PHPUnit_Framework_TestCase {
         $this->assertEquals($expected, $method->invoke($dm, $query));
     }
 
-    public function testClearNullValues() {
-        $dm = new JPC\MongoDB\ODM\DocumentManager("mongodb://localhost", "jpc_mongodb_phpunit");
-
-        $method = $this->reflection->getMethod('clearNullValues');
-        $method->setAccessible(true);
-
-        $query = [
-            "a" => false,
-            "b" => null,
-            "c" => [
-                "1a" => 0,
-                "1b" => null
-            ],
-            "d" => [
-                ['2a' => 1, '2b' => null]
-            ]
-        ];
-
-        $expected = [
-            "a" => false,
-            "c" => [
-                "1a" => 0,
-            ],
-            "d" => [
-                ['2a' => 1]
-            ]
-        ];
-
-        $ref =&$query;
-
-        $this->assertEquals($expected, $method->invoke($dm, $ref));
-    }
-
     public function testCheckPush() {
         $dm = new JPC\MongoDB\ODM\DocumentManager("mongodb://localhost", "jpc_mongodb_phpunit");
 
@@ -172,7 +139,5 @@ class DocumentManagerTest extends PHPUnit_Framework_TestCase {
 
         $this->assertEquals($expected, $method->invoke($dm, $query["a"], "a"));
     }
-    
-    
 
 }

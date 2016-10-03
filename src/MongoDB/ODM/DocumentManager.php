@@ -285,7 +285,7 @@ class DocumentManager {
         $datas = [];
         foreach ($objects as $object) {
             $datas[] = $hydrator->unhydrate($object);
-            $this->clearNullValues($datas);
+            Tools\ArrayModifier::clearNullValues($datas);
         }
 
         $res = $collection->insertMany($datas);
@@ -383,18 +383,6 @@ class DocumentManager {
         }
 
         return $update;
-    }
-
-    private function clearNullValues(&$array) {
-        foreach ($array as $key => &$value) {
-            if (null === $value) {
-                unset($array[$key]);
-            } else if (is_array($value)) {
-                $this->clearNullValues($value);
-            }
-        }
-
-        return $array;
     }
 
     private function checkPush($array, $prefix = '') {
