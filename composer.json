@@ -2,7 +2,7 @@
     "name": "jpc/mongodb-odm",
     "description": "A small MongoDB ODM",
     "type": "library",
-    "licence": "GPL-3.0",
+    "license": "GPL-3.0",
     "require": {
         "php": ">=5.4",
         "doctrine/annotations": "1.2.*",
