@@ -94,7 +94,7 @@ class DocumentManager {
         $this->classMetadataFactory = Tools\ClassMetadataFactory::getInstance();
         $this->om = ObjectManager::getInstance();
     }
-
+    
     /**
      * Add model path (Diroctory that contain models)
      * 
@@ -372,7 +372,7 @@ class DocumentManager {
                 unset($update['$set'][$key]);
             }
 
-            if (isset($update['$set'][$key]) && $update['$set'][$key] === null) {
+            if (array_key_exists($key, $update['$set']) && $update['$set'][$key] === null) {
                 unset($update['$set'][$key]);
                 $update['$unset'][$key] = "";
             }
@@ -381,7 +381,7 @@ class DocumentManager {
         if (empty($update['$set'])) {
             unset($update['$set']);
         }
-
+        
         return $update;
     }
 
@@ -407,7 +407,7 @@ class DocumentManager {
             if (is_a($value, "stdClass")) {
                 $value = (array) $value;
             }
-            if ($key == '$set') {
+            if ($key === '$set') {
                 if (is_array($value)) {
                     foreach ($value as $k => $val) {
                         $new[$prefix][$k] = $val;

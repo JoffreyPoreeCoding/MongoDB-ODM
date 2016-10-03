@@ -267,6 +267,13 @@ class Repository {
                             }
                             $compare = false;
                         }
+
+                        $diff = array_diff_key($old[$key], $value);
+                        if ($compare && !empty($diff)) {
+                            foreach ($diff as $diffKey => $diffValue) {
+                                $value[$diffKey] = null;
+                            }
+                        }
                     }
 
                     if ($compare) {
@@ -275,8 +282,8 @@ class Repository {
                             $changes[$key] = $array_changes;
                         }
                     }
-                } else if ($value != $old[$key]) {
-                    $changes[$key] = $value;
+                } else if ($value != $old[$key] || $value !== $old[$key]) {
+                    $changes[$key]['$set'] = $value;
                 }
             } else if (is_array($old) && array_key_exists($key, $old) && $old[$key] === null) {
                 if ($old[$key] != $value) {
@@ -329,4 +336,5 @@ class Repository {
 
         return $new;
     }
+
 }

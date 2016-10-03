@@ -96,7 +96,7 @@ class Hydrator {
                     $value = $realValue;
                 }
 
-                if (is_a($value, "MongoDB\Model\BSONArray")) {
+                if (is_a($value, "MongoDB\Model\BSONArray") || is_a($value, "MongoDB\Model\BSONDocument")) {
                     $this->BSONToPHP($value);
                 }
 
