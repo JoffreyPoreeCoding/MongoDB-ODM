@@ -222,7 +222,8 @@ class Repository {
         $new_query = [];
         foreach ($query as $name => $value) {
             $field = $hydrator->getFieldNameFor($name);
-            $prop = $hydrator->getPropNameFor($field);
+            $realfield = explode(".", $field, 2)[0];
+            $prop = $hydrator->getPropNameFor($realfield);
             if (is_array($value) && false != ($embName = $hydrator->isEmbedded($prop))) {
                 $hydrator = $this->hydrator->getHydratorForField($field);
                 $value = $this->castMongoQuery($value, $hydrator, false);
@@ -291,8 +292,10 @@ class Repository {
                         $changes[$key]['$push'] = $value;
                     } else if ($value === null && isset($old[$key])) {
                         $changes['$unset'][$key] = $value;
-                    } else if (!isset($old[$key])) {
+                    } else if (!isset($old[$key]) && is_array($value)) {
                         $changes[$key]['$set'] = Tools\ArrayModifier::clearNullValues($value);
+                    } else if  (!isset($old[$key])){
+                        $changes[$key]['$set'] = $value;
                     }
                 }
             } else {
