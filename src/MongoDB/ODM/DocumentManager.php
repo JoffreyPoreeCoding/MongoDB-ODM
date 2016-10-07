@@ -94,7 +94,7 @@ class DocumentManager {
         $this->classMetadataFactory = Tools\ClassMetadataFactory::getInstance();
         $this->om = ObjectManager::getInstance();
     }
-    
+
     /**
      * Add model path (Diroctory that contain models)
      * 
@@ -188,6 +188,22 @@ class DocumentManager {
     }
 
     /**
+     * Allow to get modifiers for the specified type
+     * 
+     * @param   integer     $type       Type of modifier (See constants)
+     * 
+     * @return  mixed       All modifiers or false if there arn't modifiers for specified type
+     */
+    public function removeModifier($type, $id) {
+        if (array_key_exists($id, $this->modifiers[$type])) {
+            unset($this->modifiers[$type][$id]);
+            return true;
+        }
+        
+        return false;
+    }
+
+    /**
      * Persist an object in object manager
      * 
      * @param   mixed       $object     Object to persist
@@ -229,6 +245,7 @@ class DocumentManager {
         $datas = $mongoCollection->findOne(["_id" => $object->getId()]);
         if ($datas != null) {
             $rep->getHydrator()->hydrate($object, $datas);
+            $rep->cacheObject($object);
         } else {
             $object = null;
         }
@@ -280,7 +297,8 @@ class DocumentManager {
     private function insert($collection, $objects) {
         $collection = $this->mongodatabase->selectCollection($collection);
 
-        $hydrator = $this->getRepository(get_class($objects[key($objects)]))->getHydrator();
+        $rep = $this->getRepository(get_class($objects[key($objects)]));
+        $hydrator = $rep->getHydrator();
 
         $datas = [];
         foreach ($objects as $object) {
@@ -295,6 +313,8 @@ class DocumentManager {
             foreach ($res->getInsertedIds() as $index => $id) {
                 $hydrator->hydrate($objects[$index], ["_id" => $id]);
                 $this->om->setObjectState($objects[$index], ObjectManager::OBJ_MANAGED);
+                $this->refresh($objects[$index]);
+                $rep->cacheObject($objects[$index]);
             }
         }
     }
@@ -320,7 +340,8 @@ class DocumentManager {
         if (!empty($update)) {
             $res = $collection->updateOne(["_id" => $object->getId()], $update);
             if ($res->isAcknowledged()) {
-                //ACTION IF ACKNOLEDGED
+                $this->refresh($object);
+                $rep->cacheObject($object);
             }
         }
     }
@@ -381,7 +402,7 @@ class DocumentManager {
         if (empty($update['$set'])) {
             unset($update['$set']);
         }
-        
+
         return $update;
     }
 

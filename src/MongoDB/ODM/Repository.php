@@ -231,14 +231,14 @@ class Repository {
             $new_query[$field] = $value;
 
             if ($initial) {
-                $new_query += $this->aggregArray($new_query);
-                unset($new_query[$field]);
+                $new_query = $this->aggregArray($new_query);
             }
-            return $new_query;
         }
+        
+        return $new_query;
     }
 
-    private function cacheObject($object) {
+    public function cacheObject($object) {
         $this->objectCache->save(spl_object_hash($object), $this->hydrator->unhydrate($object));
     }
 
@@ -257,7 +257,7 @@ class Repository {
     public function compareDatas($new, $old) {
         $changes = [];
         foreach ($new as $key => $value) {
-            if (is_array($old) && array_key_exists($key, $old) && $old[$key] != null) {
+            if (is_array($old) && array_key_exists($key, $old) && $old[$key] !== null) {
                 if (is_array($value) && is_array($old[$key])) {
                     $compare = true;
                     if (is_int(key($value))) {
@@ -294,7 +294,7 @@ class Repository {
                         $changes['$unset'][$key] = $value;
                     } else if (!isset($old[$key]) && is_array($value)) {
                         $changes[$key]['$set'] = Tools\ArrayModifier::clearNullValues($value);
-                    } else if  (!isset($old[$key])){
+                    } else if (!isset($old[$key])) {
                         $changes[$key]['$set'] = $value;
                     }
                 }
