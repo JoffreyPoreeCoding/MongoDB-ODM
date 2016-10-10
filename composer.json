@@ -7,8 +7,8 @@
         "php": ">=5.4",
         "doctrine/annotations": "1.2.*",
         "doctrine/cache": "1.6.0",
-        "mongodb/mongodb": "1.1.0-alpha1",
-        "jpc/design-pattern": "0.1.0"
+        "mongodb/mongodb": "dev-master",
+        "jpc/design-pattern": "dev-master"
     },
     "require-dev": {
         "symfony/var-dumper": "*"
