@@ -333,7 +333,7 @@ class DocumentManager {
 
         if (isset($this->modifiers[self::UPDATE_STATEMENT_MODIFIER])) {
             foreach ($this->modifiers[self::UPDATE_STATEMENT_MODIFIER] as $callback) {
-                $update = call_user_func($callback, $update);
+                $update = call_user_func($callback, $update, $object);
             }
         }
 
