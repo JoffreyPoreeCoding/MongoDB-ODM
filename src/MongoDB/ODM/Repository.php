@@ -239,7 +239,9 @@ class Repository {
     }
 
     public function cacheObject($object) {
-        $this->objectCache->save(spl_object_hash($object), $this->hydrator->unhydrate($object));
+        if (is_object($object)) {
+            $this->objectCache->save(spl_object_hash($object), $this->hydrator->unhydrate($object));
+        }
     }
 
     private function uncacheObject($object) {

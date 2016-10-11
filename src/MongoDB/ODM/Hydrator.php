@@ -71,6 +71,10 @@ class Hydrator {
     }
 
     public function unhydrate($object) {
+        if(!is_object($object)){
+            return [];
+        }
+        
         $properties = $this->classMetadata->getProperties();
 
         foreach ($properties as $name => $property) {
