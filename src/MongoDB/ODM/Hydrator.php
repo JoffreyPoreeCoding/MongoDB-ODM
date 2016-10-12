@@ -172,7 +172,7 @@ class Hydrator {
             } else if (isset($propInfos["multiEmbedded"])) {
                 $name .= "." . $this->getHydratorForEmbedded($propInfos["multiEmbedded"])->getFieldNameFor($embeddedName);
             } else {
-                throw new Exception\MappingException("Unable to find field for '$name.$embeddedName', '$name' does not contain embedded(s) document(s).");
+                return $name . "." . $embeddedName;
             }
         }
 
