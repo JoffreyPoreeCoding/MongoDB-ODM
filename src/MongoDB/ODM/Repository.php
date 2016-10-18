@@ -328,7 +328,7 @@ class Repository {
         $new = [];
         foreach ($datas as $key => $value) {
             if (is_array($value)) {
-                $new = $this->aggregArray($value, $realprefix . $key);
+                $new += $this->aggregArray($value, $realprefix . $key);
             } else {
                 if (in_array($key, self::MONGODB_QUERY_OPERATORS)) {
                     !isset($new[$prefix]) ? $new[$prefix] = [] : null;

@@ -42,7 +42,7 @@ class InsertSimpleTest extends PHPUnit_Framework_TestCase {
         $inserted = $this->getObject($simple->getId());
         
         $this->assertEquals($simple->getId(), $inserted["_id"]);
-        $this->assertEquals($simple->getAttr1(), (array)$inserted["attr_1"]);
+        $this->assertEquals((array)$simple->getAttr1(), (array)$inserted["attr_1"]);
         $this->assertArrayNotHasKey("attr_2", $inserted);
     }
     
@@ -77,7 +77,7 @@ class InsertSimpleTest extends PHPUnit_Framework_TestCase {
         $inserted = $this->getObject($simple->getId());
         
         $this->assertEquals($simple->getId(), $inserted["_id"]);
-        $this->assertEquals($simple->getAttr1(), $inserted["attr_1"]->toDateTime());
+        $this->assertEquals($simple->getAttr1(), $inserted["attr_1"]);
         $this->assertArrayNotHasKey("attr_2", $inserted);
     }
     

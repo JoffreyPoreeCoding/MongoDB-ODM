@@ -199,7 +199,7 @@ class DocumentManager {
             unset($this->modifiers[$type][$id]);
             return true;
         }
-        
+
         return false;
     }
 
@@ -382,7 +382,9 @@ class DocumentManager {
                         $update['$push'][$field] = ['$each' => $fieldValue];
                     }
                 }
-                $update['$set'] += $this->aggregArray($value, $key);
+                $update['$set'] += Tools\ArrayModifier::aggregate($value, [
+                            '$set' => [$this, 'testFunction']
+                                ], $key);
             } else {
                 $update['$set'][$key] = $value;
             }
@@ -422,27 +424,15 @@ class DocumentManager {
         }
     }
 
-    private function aggregArray($datas, $prefix = '') {
-        $new = [];
-        foreach ($datas as $key => $value) {
-            if (is_a($value, "stdClass")) {
-                $value = (array) $value;
+    public function testFunction($prefix, $value, $new) {
+        if (is_array($value)) {
+            foreach ($value as $k => $val) {
+                $new[$prefix][$k] = $val;
             }
-            if ($key === '$set') {
-                if (is_array($value)) {
-                    foreach ($value as $k => $val) {
-                        $new[$prefix][$k] = $val;
-                    }
-                } else {
-                    $new[$prefix] = $value;
-                }
-            } else if (is_array($value)) {
-                $new += $this->aggregArray($value, $prefix . '.' . $key);
-            } else {
-                $new[$prefix . '.' . $key] = $value;
-            }
+        } else {
+            $new[$prefix] = $value;
         }
-
+        
         return $new;
     }
 
