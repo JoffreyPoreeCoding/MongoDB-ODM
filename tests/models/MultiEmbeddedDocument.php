@@ -27,10 +27,57 @@ class MultiEmbeddedDocument {
 
     function addMultiEmbedded($embedded) {
         $this->multiEmbedded[] = $embedded;
+        return $this;
     }
 }
 
 class MultiEmbedded {
+    /**
+     * @ODM\Field("attr_1")
+     */
+    private $attr1;
+
+    /**
+     * @ODM\Field("attr_2")
+     */
+    private $attr2;
+    
+    /**
+     * @ODM\Field("embedded_1")
+     * @ODM\EmbeddedDocument("EmbeddedTwo")
+     */
+    private $embedded;
+    
+    function getAttr1() {
+        return $this->attr1;
+    }
+
+    function getAttr2() {
+        return $this->attr2;
+    }
+
+    function getEmbedded(){
+        return $this->embedded;
+    }
+    
+    function setAttr1($attr1) {
+        $this->attr1 = $attr1;
+        return $this;
+    }
+
+    function setAttr2($attr2) {
+        $this->attr2 = $attr2;
+        return $this;
+    }
+    
+    function setEmbedded($embedded){
+        $this->embedded = $embedded;
+        return $this;
+    }
+}
+
+class EmbeddedTwo {
+
     /**
      * @ODM\Field("attr_1")
      */
@@ -51,9 +98,11 @@ class MultiEmbedded {
 
     function setAttr1($attr1) {
         $this->attr1 = $attr1;
+        return $this;
     }
 
     function setAttr2($attr2) {
         $this->attr2 = $attr2;
+        return $this;
     }
 }

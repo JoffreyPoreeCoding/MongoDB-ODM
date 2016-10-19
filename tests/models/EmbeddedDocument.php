@@ -53,9 +53,11 @@ class Embedded {
 
     function setAttr1($attr1) {
         $this->attr1 = $attr1;
+        return $this;
     }
 
     function setAttr2($attr2) {
         $this->attr2 = $attr2;
+        return $this;
     }
 }

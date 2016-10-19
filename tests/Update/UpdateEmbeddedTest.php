@@ -114,6 +114,25 @@ class UpdateEmbeddedTest extends PHPUnit_Framework_TestCase {
 
         $this->assertEquals($date, $expected->embedded_1->attr_1->toDateTime());
     }
+    
+    public function test_insertSimpleOnNull(){
+        $this->insertObject([
+            "_id" => "simple_null",
+            "embedded_1" => null
+        ]);
+
+        $doc = $this->rep->find("simple");
+        
+        $doc->getEmbedded()->setAttr1("value3");
+        $doc->getEmbedded()->setAttr2("value4");
+
+        $this->dm->flush();
+
+        $expected = $this->getObject("simple")->embedded_1;
+
+        $this->assertEquals($expected->attr_1, $doc->getEmbedded()->getAttr1());
+        $this->assertEquals($expected->attr_2, $doc->getEmbedded()->getAttr2());
+    }
 
     private function insertObject($data) {
         return $this->dm->getMongoDBDatabase()->selectCollection("embedded_doc")->insertOne($data);

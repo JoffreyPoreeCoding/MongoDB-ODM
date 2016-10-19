@@ -32,7 +32,7 @@ class ArrayModifier {
         $new = [];
         foreach ($array as $key => $value) {
             $newKey = (!empty($prefix)) ? $prefix . '.' . $key : $key;
-            if (!in_array($key, $specialKeys) && !in_array($key, array_keys($specialKeys))) {
+            if (!in_array($key, $specialKeys, true) && !in_array($key, array_keys($specialKeys), true)) {
                 if (is_a($value, "stdClass")) {
                     $value = (array) $value;
                 }
@@ -51,11 +51,11 @@ class ArrayModifier {
 
         return $new;
     }
-    
-    public static function disaggregate($array){
+
+    public static function disaggregate($array) {
         $new = [];
-        foreach ($array as $key => $val){
-            if(false !== strpos($key, ".")){
+        foreach ($array as $key => $val) {
+            if (false !== strpos($key, ".")) {
                 list($realKey, $aggregated) = explode(".", $key, 2);
                 $values = self::getDisaggregatedValues(preg_grep("/^$realKey/", array_keys($array)), $array);
                 $new[$realKey] = self::disaggregate($values);
@@ -63,11 +63,11 @@ class ArrayModifier {
                 $new[$key] = $val;
             }
         }
-        
+
         return $new;
     }
-    
-    private static function getDisaggregatedValues($keys, $array){
+
+    private static function getDisaggregatedValues($keys, $array) {
         $values = [];
         foreach ($keys as $key) {
             $realKey = explode(".", $key, 2)[1];
@@ -75,4 +75,5 @@ class ArrayModifier {
         }
         return $values;
     }
+
 }
