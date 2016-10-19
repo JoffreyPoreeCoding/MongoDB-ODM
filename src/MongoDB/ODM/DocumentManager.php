@@ -383,7 +383,7 @@ class DocumentManager {
                     }
                 }
                 $update['$set'] += Tools\ArrayModifier::aggregate($value, [
-                            '$set' => [$this, 'testFunction']
+                            '$set' => [$this, 'onAggregSet']
                                 ], $key);
             } else {
                 $update['$set'][$key] = $value;
@@ -424,7 +424,7 @@ class DocumentManager {
         }
     }
 
-    public function testFunction($prefix, $value, $new) {
+    public function onAggregSet($prefix, $key, $value, $new) {
         if (is_array($value)) {
             foreach ($value as $k => $val) {
                 $new[$prefix][$k] = $val;

@@ -15,7 +15,7 @@ class Repository {
 
     use \JPC\DesignPattern\Multiton;
 
-    const MONGODB_QUERY_OPERATORS = ['$gt', '$lt', '$gte', '$lte', '$eq', '$ne', '$in', '$nin'];
+    private static $mognoDbQueryOperators;
 
     /**
      * Hydrator of model
@@ -47,6 +47,12 @@ class Repository {
      * @param   Tools\ClassMetadata     $classMetadata      Metadata of managed class
      */
     public function __construct($classMetadata, $collection) {
+        if(!isset(self::$mognoDbQueryOperators)){
+            $callBack = [$this, 'aggregOnMongoDbOperators'];
+            self::$mognoDbQueryOperators = [
+                '$gt' => $callBack, '$lt' => $callBack, '$gte' => $callBack, '$lte' => $callBack, '$eq' => $callBack, '$ne' => $callBack, '$in' => $callBack, '$nin' => $callBack
+            ];
+        }
         $this->modelName = $classMetadata->getName();
 
         $this->hydrator = Hydrator::getInstance($this->modelName, $classMetadata);
@@ -231,10 +237,10 @@ class Repository {
             $new_query[$field] = $value;
 
             if ($initial) {
-                $new_query = $this->aggregArray($new_query);
+                $new_query = Tools\ArrayModifier::aggregate($new_query, self::$mognoDbQueryOperators);
             }
         }
-        
+
         return $new_query;
     }
 
@@ -320,25 +326,10 @@ class Repository {
         return $this->collection;
     }
 
-    private function aggregArray($datas, $prefix = '') {
-        $realprefix = $prefix;
-        if (!empty($prefix)) {
-            $realprefix.='.';
-        }
-        $new = [];
-        foreach ($datas as $key => $value) {
-            if (is_array($value)) {
-                $new += $this->aggregArray($value, $realprefix . $key);
-            } else {
-                if (in_array($key, self::MONGODB_QUERY_OPERATORS)) {
-                    !isset($new[$prefix]) ? $new[$prefix] = [] : null;
-                    $new[$prefix] += [$key => $value];
-                } else {
-                    $new[$realprefix . $key] = $value;
-                }
-            }
-        }
-
+    public function aggregOnMongoDbOperators($prefix, $key, $value, $new) {
+        !isset($new[$prefix]) ? $new[$prefix] = [] : null;
+        $new[$prefix] += [$key => $value];
+        
         return $new;
     }
 

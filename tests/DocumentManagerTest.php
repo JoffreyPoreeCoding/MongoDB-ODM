@@ -121,23 +121,4 @@ class DocumentManagerTest extends PHPUnit_Framework_TestCase {
 
         $this->assertEquals($expected, $method->invoke($dm, $query, "b"));
     }
-    
-    public function testAggregArray(){
-        $dm = new JPC\MongoDB\ODM\DocumentManager("mongodb://localhost", "jpc_mongodb_phpunit");
-
-        $method = $this->reflection->getMethod('aggregArray');
-        $method->setAccessible(true);
-
-        $query = [
-                "a" => ['b' => ["c" => 1, "d" => 2]]
-        ];
-
-        $expected = [
-            "a.b.c" => 1,
-            "a.b.d" => 2
-        ];
-
-        $this->assertEquals($expected, $method->invoke($dm, $query["a"], "a"));
-    }
-
 }
