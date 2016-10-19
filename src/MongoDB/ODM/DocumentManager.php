@@ -284,6 +284,10 @@ class DocumentManager {
     public function clear() {
         $this->om->clear();
     }
+    
+    public function clearModifiers(){
+        $this->modifiers = [];
+    }
 
     /* ================================== */
     /*         PRIVATES FUNCTIONS         */
