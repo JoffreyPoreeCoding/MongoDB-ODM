@@ -7,7 +7,7 @@
         "php": ">=5.4",
         "doctrine/annotations": "1.2.*",
         "doctrine/cache": "1.6.0",
-        "mongodb/mongodb": "dev-master",
+        "mongodb/mongodb": "1.0.3",
         "jpc/design-pattern": "dev-master"
     },
     "require-dev": {
