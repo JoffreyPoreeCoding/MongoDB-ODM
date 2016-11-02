@@ -15,31 +15,31 @@ class Repository {
 
     use \JPC\DesignPattern\Multiton;
 
-    private static $mognoDbQueryOperators;
+    protected static $mongoDbQueryOperators;
 
     /**
      * Hydrator of model
      * @var Hydrator
      */
-    private $hydrator;
+    protected $hydrator;
 
     /**
      *
      * @var \MongoDB\Collection
      */
-    private $collection;
+    protected $collection;
 
     /**
      * Object Manager
      * @var ObjectManager
      */
-    private $om;
+    protected $om;
 
     /**
      * Cache for object changes
      * @var ApcuCache 
      */
-    private $objectCache;
+    protected $objectCache;
 
     /**
      * Create new Repository
@@ -47,9 +47,9 @@ class Repository {
      * @param   Tools\ClassMetadata     $classMetadata      Metadata of managed class
      */
     public function __construct($classMetadata, $collection) {
-        if(!isset(self::$mognoDbQueryOperators)){
+        if(!isset(self::$mongoDbQueryOperators)){
             $callBack = [$this, 'aggregOnMongoDbOperators'];
-            self::$mognoDbQueryOperators = [
+            self::$mongoDbQueryOperators = [
                 '$gt' => $callBack, '$lt' => $callBack, '$gte' => $callBack, '$lte' => $callBack, '$eq' => $callBack, '$ne' => $callBack, '$in' => $callBack, '$nin' => $callBack
             ];
         }
@@ -221,7 +221,7 @@ class Repository {
         }
     }
 
-    private function castMongoQuery($query, $hydrator = null, $initial = true) {
+    protected function castMongoQuery($query, $hydrator = null, $initial = true) {
         if (!isset($hydrator)) {
             $hydrator = $this->hydrator;
         }
@@ -237,7 +237,7 @@ class Repository {
             $new_query[$field] = $value;
 
             if ($initial) {
-                $new_query = Tools\ArrayModifier::aggregate($new_query, self::$mognoDbQueryOperators);
+                $new_query = Tools\ArrayModifier::aggregate($new_query, self::$mongoDbQueryOperators);
             }
         }
 
@@ -250,7 +250,7 @@ class Repository {
         }
     }
 
-    private function uncacheObject($object) {
+    protected function uncacheObject($object) {
         return $this->objectCache->fetch(spl_object_hash($object));
     }
 
@@ -262,7 +262,7 @@ class Repository {
         return $changes;
     }
 
-    public function compareDatas($new, $old) {
+    protected function compareDatas($new, $old) {
         $changes = [];
         foreach ($new as $key => $value) {
             if (is_array($old) && array_key_exists($key, $old) && $old[$key] !== null) {

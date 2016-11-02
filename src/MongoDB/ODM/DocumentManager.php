@@ -23,8 +23,9 @@ class DocumentManager {
     /* =========== MODIFIERS ============ */
 
     const UPDATE_STATEMENT_MODIFIER = 0;
-    const HYDRATE_CONVERTION_MODIFIER = 1;
-    const UNHYDRATE_CONVERTION_MODIFIER = 2;
+    const INSERT_STATEMENT_MODIFIER = 1;
+    const HYDRATE_CONVERTION_MODIFIER = 2;
+    const UNHYDRATE_CONVERTION_MODIFIER = 3;
 
     /* ================================== */
     /*             PROPERTIES             */
@@ -49,16 +50,15 @@ class DocumentManager {
     private $mongodatabase;
 
     /**
-     * Annotation Reader
-     * @var CacheReader
-     */
-    private $reader;
-
-    /**
      * Object Manager
      * @var ObjectManager
      */
     private $om;
+
+    /**
+     * Store coolection associated with object (for flush on special collection)
+     * @var array 
+     */
     private $objectCollection = [];
 
     /**
@@ -140,12 +140,16 @@ class DocumentManager {
             if (file_exists($modelPath . "/" . str_replace("\\", "/", $modelName) . ".php")) {
                 require_once $modelPath . "/" . str_replace("\\", "/", $modelName) . ".php";
                 $classMeta = $this->classMetadataFactory->getMetadataForClass($modelName);
-                if (!$classMeta->hasClassAnnotation("JPC\MongoDB\ODM\Annotations\Mapping\Document")) {
-                    throw new Exception\AnnotationException("Model '$modelName' need to have 'Document' annotation.");
-                } else {
+                if ($classMeta->hasClassAnnotation("JPC\MongoDB\ODM\Annotations\Mapping\Document")) {
                     $docAnnotation = $classMeta->getClassAnnotation("JPC\MongoDB\ODM\Annotations\Mapping\Document");
                     $rep = isset($docAnnotation->repositoryClass) ? $docAnnotation->repositoryClass : $rep;
                     $collection = isset($collection) ? $collection : $docAnnotation->collectionName;
+                } else if ($classMeta->hasClassAnnotation("JPC\MongoDB\ODM\Annotations\GridFS\Document")){
+                    $docAnnotation = $classMeta->getClassAnnotation("JPC\MongoDB\ODM\Annotations\GridFS\Document");
+                    $rep = isset($docAnnotation->repositoryClass) ? $docAnnotation->repositoryClass : "JPC\MongoDB\ODM\GridFSRepository";
+                    $collection = isset($collection) ? $collection : $docAnnotation->bucketName;
+                } else {
+                    throw new Exception\AnnotationException("Model '$modelName' need to have 'Document' annotation.");
                 }
                 break;
             }
@@ -184,7 +188,7 @@ class DocumentManager {
             return $this->modifiers[$type];
         }
 
-        return false;
+        return [];
     }
 
     /**
@@ -284,8 +288,8 @@ class DocumentManager {
     public function clear() {
         $this->om->clear();
     }
-    
-    public function clearModifiers(){
+
+    public function clearModifiers() {
         $this->modifiers = [];
     }
 
@@ -308,6 +312,10 @@ class DocumentManager {
         foreach ($objects as $object) {
             $datas[] = $hydrator->unhydrate($object);
             Tools\ArrayModifier::clearNullValues($datas);
+        }
+
+        foreach ($this->getModifier(self::INSERT_STATEMENT_MODIFIER) as $callback) {
+            $datas = call_user_func($callback, $update, $object);
         }
 
         $res = $collection->insertMany($datas);
@@ -335,10 +343,8 @@ class DocumentManager {
         $diffs = $rep->getObjectChanges($object);
         $update = $this->createUpdateQueryStatement($diffs);
 
-        if (isset($this->modifiers[self::UPDATE_STATEMENT_MODIFIER])) {
-            foreach ($this->modifiers[self::UPDATE_STATEMENT_MODIFIER] as $callback) {
-                $update = call_user_func($callback, $update, $object);
-            }
+        foreach ($this->getModifier(self::UPDATE_STATEMENT_MODIFIER) as $callback) {
+            $update = call_user_func($callback, $update, $object);
         }
 
         if (!empty($update)) {
@@ -436,7 +442,7 @@ class DocumentManager {
         } else {
             $new[$prefix] = $value;
         }
-        
+
         return $new;
     }
 
