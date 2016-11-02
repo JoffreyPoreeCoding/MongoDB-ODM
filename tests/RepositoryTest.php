@@ -2,6 +2,10 @@
 
 require_once __DIR__ . "/models/EmbeddedDocument.php";
 
+use JPC\MongoDB\ODM\DocumentManager;
+use JPC\MongoDB\ODM\Tools\ClassMetadataFactory;
+use JPC\MongoDB\ODM\Repository;
+
 class RepositoryTest extends PHPUnit_Framework_TestCase {
 
     /**
@@ -18,9 +22,9 @@ class RepositoryTest extends PHPUnit_Framework_TestCase {
 
     public function __construct() {
         apcu_clear_cache();
-        JPC\MongoDB\ODM\DocumentManager::getInstance("mongodb://localhost", "jpc_mongodb_phpunit");
+        $dm = new DocumentManager("mongodb://localhost", "jpc_mongodb_phpunit");
         $this->reflection = new ReflectionClass("JPC\MongoDB\ODM\Repository");
-        $this->rep = new \JPC\MongoDB\ODM\Repository(\JPC\MongoDB\ODM\Tools\ClassMetadataFactory::getInstance()->getMetadataForClass("EmbeddedDocument"), "repo_test");
+        $this->rep = $dm->getRepository("EmbeddedDocument", "repo_test");
     }
 
     public function testCastMongoQuery() {
@@ -32,11 +36,11 @@ class RepositoryTest extends PHPUnit_Framework_TestCase {
                 "attr1" => ['$lt' => 20, '$gt' => -100],
             ]
         ];
-        
+
         $expected = [
             "embedded_1.attr_1" => ['$lt' => 20, '$gt' => -100]
         ];
-        
+
         $this->assertEquals($expected, $method->invoke($this->rep, $query));
     }
 

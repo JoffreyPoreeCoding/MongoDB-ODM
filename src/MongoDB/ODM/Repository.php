@@ -13,8 +13,8 @@ use Doctrine\Common\Cache\ArrayCache;
  */
 class Repository {
 
-
-    private static $mognoDbQueryOperators;
+    private static $mongoDbQueryOperators;
+    
     private $documentManager;
 
     /**
@@ -49,7 +49,7 @@ class Repository {
      */
 
     public function __construct(DocumentManager $documentManager, ObjectManager $objectManager, $classMetadata, $collection) {
-        if (!isset(self::$mognoDbQueryOperators)) {
+        if (!isset(self::$mongoDbQueryOperators)) {
             $callBack = [$this, 'aggregOnMongoDbOperators'];
             self::$mongoDbQueryOperators = [
                 '$gt' => $callBack, '$lt' => $callBack, '$gte' => $callBack, '$lte' => $callBack, '$eq' => $callBack, '$ne' => $callBack, '$in' => $callBack, '$nin' => $callBack

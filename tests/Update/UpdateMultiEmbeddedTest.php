@@ -19,7 +19,7 @@ class UpdateMultiEmbeddedTest extends PHPUnit_Framework_TestCase {
     private $rep;
 
     public function __construct() {
-        $this->dm = DocumentManager::getInstance("mongodb://localhost", "jpc_mongodb_phpunit");
+       $this->dm = new DocumentManager("mongodb://localhost", "jpc_mongodb_phpunit");
         $this->dm->addModelPath("globals", __DIR__ . "/../models/");
 
         $this->rep = $this->dm->getRepository("MultiEmbeddedDocument");
@@ -162,7 +162,7 @@ class UpdateMultiEmbeddedTest extends PHPUnit_Framework_TestCase {
      * @afterClass
      */
     public static function removeDatabase() {
-        DocumentManager::getInstance("mongodb://localhost", "jpc_mongodb_phpunit")->getMongoDBDatabase()->drop();
+        (new DocumentManager("mongodb://localhost", "jpc_mongodb_phpunit"))->getMongoDBDatabase()->drop();
     }
 
 }

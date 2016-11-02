@@ -37,7 +37,7 @@ class Hydrator {
      */
     private $fieldMapping = [];
 
-    function __construct(DocumentManager$documentManager, $classMetadata) {
+    function __construct(DocumentManager $documentManager, Tools\ClassMetadata $classMetadata) {
         $this->documentManager = $documentManager;
         $this->classMetadata = $classMetadata;
     }
@@ -251,7 +251,7 @@ class Hydrator {
         if (!$embeddedClass) {
             return false;
         }
-        return Hydrator::getInstance($embeddedClass, Tools\ClassMetadataFactory::getInstance()->getMetadataForClass($embeddedClass));
+        return Hydrator::getInstance($embeddedClass.  spl_object_hash($this->documentManager), $this->documentManager, Tools\ClassMetadataFactory::getInstance()->getMetadataForClass($embeddedClass));
     }
 
     public function isEmbedded($field) {
