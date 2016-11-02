@@ -14,8 +14,6 @@ use JPC\MongoDB\ODM\ObjectManager;
  */
 class DocumentManager {
 
-    use \JPC\DesignPattern\Singleton;
-
     /* ================================== */
     /*              CONSTANTS             */
     /* ================================== */
@@ -53,12 +51,15 @@ class DocumentManager {
      * @var CacheReader
      */
     private $reader;
+    
+    private $repositories = [];
 
     /**
      * Object Manager
      * @var ObjectManager
      */
-    private $om;
+    private $objectManager;
+    
     private $objectCollection = [];
 
     /**
@@ -92,7 +93,7 @@ class DocumentManager {
         $this->mongoclient = new MongoClient($mongouri);
         $this->mongodatabase = $this->mongoclient->selectDatabase($db);
         $this->classMetadataFactory = Tools\ClassMetadataFactory::getInstance();
-        $this->om = ObjectManager::getInstance();
+        $this->objectManager = new ObjectManager();
     }
 
     /**
@@ -135,27 +136,33 @@ class DocumentManager {
      * @throws  ModelNotFoundException
      */
     public function getRepository($modelName, $collection = null) {
+        $repIndex = $modelName . $collection;
+        if(isset($this->repositories[$repIndex])){
+            return $this->repositories[$repIndex];
+        }
+            
         $rep = "JPC\MongoDB\ODM\Repository";
         foreach ($this->modelPaths as $modelPath) {
             if (file_exists($modelPath . "/" . str_replace("\\", "/", $modelName) . ".php")) {
                 require_once $modelPath . "/" . str_replace("\\", "/", $modelName) . ".php";
-                $classMeta = $this->classMetadataFactory->getMetadataForClass($modelName);
-                if (!$classMeta->hasClassAnnotation("JPC\MongoDB\ODM\Annotations\Mapping\Document")) {
-                    throw new Exception\AnnotationException("Model '$modelName' need to have 'Document' annotation.");
-                } else {
-                    $docAnnotation = $classMeta->getClassAnnotation("JPC\MongoDB\ODM\Annotations\Mapping\Document");
-                    $rep = isset($docAnnotation->repositoryClass) ? $docAnnotation->repositoryClass : $rep;
-                    $collection = isset($collection) ? $collection : $docAnnotation->collectionName;
-                }
-                break;
             }
         }
-
-        if (!isset($classMeta)) {
-            throw new ModelNotFoundException($modelName);
+        if (class_exists($modelName)) {
+            $classMeta = $this->classMetadataFactory->getMetadataForClass($modelName);
+            if (!$classMeta->hasClassAnnotation("JPC\MongoDB\ODM\Annotations\Mapping\Document")) {
+                throw new Exception\AnnotationException("Model '$modelName' need to have 'Document' annotation.");
+            } else {
+                $docAnnotation = $classMeta->getClassAnnotation("JPC\MongoDB\ODM\Annotations\Mapping\Document");
+                $rep = isset($docAnnotation->repositoryClass) ? $docAnnotation->repositoryClass : $rep;
+                $collection = isset($collection) ? $collection : $docAnnotation->collectionName;
+            }
+        } else {
+            throw new ModelNotFoundException("Unable to found class '$modelName'");
         }
 
-        return $rep::getInstance($modelName, $classMeta, $collection);
+        $this->repositories[$repIndex] = new Repository($this, $this->objectManager, $classMeta, $collection);
+        
+        return  $this->repositories[$repIndex];
     }
 
     /**
@@ -212,7 +219,7 @@ class DocumentManager {
         if (isset($collection)) {
             $this->objectCollection[spl_object_hash($object)] = $collection;
         }
-        $this->om->addObject($object, ObjectManager::OBJ_NEW);
+        $this->objectManager->addObject($object, ObjectManager::OBJ_NEW);
     }
 
     /**
@@ -221,7 +228,7 @@ class DocumentManager {
      * @param   mixed       $object     Object to unpersist
      */
     public function unpersist($object) {
-        $this->om->removeObject($object);
+        $this->objectManager->removeObject($object);
     }
 
     /**
@@ -230,7 +237,7 @@ class DocumentManager {
      * @param   mixed       $object     Object to delete
      */
     public function delete($object) {
-        $this->om->setObjectState($object, ObjectManager::OBJ_REMOVED);
+        $this->objectManager->setObjectState($object, ObjectManager::OBJ_REMOVED);
     }
 
     /**
@@ -255,17 +262,17 @@ class DocumentManager {
      * Flush all changes and write it in mongoDB
      */
     public function flush() {
-        $removeObjs = $this->om->getObject(ObjectManager::OBJ_REMOVED);
+        $removeObjs = $this->objectManager->getObject(ObjectManager::OBJ_REMOVED);
         foreach ($removeObjs as $object) {
             $this->doRemove($object);
         }
 
-        $updateObjs = $this->om->getObject(ObjectManager::OBJ_MANAGED);
+        $updateObjs = $this->objectManager->getObject(ObjectManager::OBJ_MANAGED);
         foreach ($updateObjs as $object) {
             $this->update($object);
         }
 
-        $newObjs = $this->om->getObject(ObjectManager::OBJ_NEW);
+        $newObjs = $this->objectManager->getObject(ObjectManager::OBJ_NEW);
 
         $toInsert = [];
         foreach ($newObjs as $object) {
@@ -282,10 +289,10 @@ class DocumentManager {
      * Unmanaged (unpersist) all object
      */
     public function clear() {
-        $this->om->clear();
+        $this->objectManager->clear();
     }
-    
-    public function clearModifiers(){
+
+    public function clearModifiers() {
         $this->modifiers = [];
     }
 
@@ -316,7 +323,7 @@ class DocumentManager {
         if ($res->isAcknowledged()) {
             foreach ($res->getInsertedIds() as $index => $id) {
                 $hydrator->hydrate($objects[$index], ["_id" => $id]);
-                $this->om->setObjectState($objects[$index], ObjectManager::OBJ_MANAGED);
+                $this->objectManager->setObjectState($objects[$index], ObjectManager::OBJ_MANAGED);
                 $this->refresh($objects[$index]);
                 $rep->cacheObject($objects[$index]);
             }
@@ -362,7 +369,7 @@ class DocumentManager {
         $res = $collection->deleteOne(["_id" => $object->getId()]);
 
         if ($res->isAcknowledged()) {
-            $this->om->removeObject($object);
+            $this->objectManager->removeObject($object);
         }
     }
 
@@ -436,7 +443,7 @@ class DocumentManager {
         } else {
             $new[$prefix] = $value;
         }
-        
+
         return $new;
     }
 

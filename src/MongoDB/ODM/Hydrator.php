@@ -10,6 +10,8 @@ namespace JPC\MongoDB\ODM;
 class Hydrator {
     
     use \JPC\DesignPattern\Multiton;
+    
+    private $documentManager;
 
     /**
      * Annotation Reader
@@ -35,7 +37,8 @@ class Hydrator {
      */
     private $fieldMapping = [];
 
-    function __construct($classMetadata) {
+    function __construct(DocumentManager$documentManager, $classMetadata) {
+        $this->documentManager = $documentManager;
         $this->classMetadata = $classMetadata;
     }
 
@@ -47,7 +50,7 @@ class Hydrator {
             $prop->setAccessible(true);
             $value = null;
 
-            if (!($modifiers = DocumentManager::getInstance()->getModifier(DocumentManager::HYDRATE_CONVERTION_MODIFIER))) {
+            if (!($modifiers = $this->documentManager->getModifier(DocumentManager::HYDRATE_CONVERTION_MODIFIER))) {
                 $modifiers = [];
             }
 

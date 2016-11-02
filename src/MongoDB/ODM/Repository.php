@@ -13,9 +13,8 @@ use Doctrine\Common\Cache\ArrayCache;
  */
 class Repository {
 
-    use \JPC\DesignPattern\Multiton;
-
     private static $mognoDbQueryOperators;
+    private $documentManager;
 
     /**
      * Hydrator of model
@@ -33,7 +32,7 @@ class Repository {
      * Object Manager
      * @var ObjectManager
      */
-    private $om;
+    private $objectManager;
 
     /**
      * Cache for object changes
@@ -46,20 +45,23 @@ class Repository {
      * 
      * @param   Tools\ClassMetadata     $classMetadata      Metadata of managed class
      */
-    public function __construct($classMetadata, $collection) {
-        if(!isset(self::$mognoDbQueryOperators)){
+    public function __construct(DocumentManager $documentManager, ObjectManager $objectManager, $classMetadata, $collection) {
+        if (!isset(self::$mognoDbQueryOperators)) {
             $callBack = [$this, 'aggregOnMongoDbOperators'];
             self::$mognoDbQueryOperators = [
                 '$gt' => $callBack, '$lt' => $callBack, '$gte' => $callBack, '$lte' => $callBack, '$eq' => $callBack, '$ne' => $callBack, '$in' => $callBack, '$nin' => $callBack
             ];
         }
+
+        $this->documentManager = $documentManager;
+
         $this->modelName = $classMetadata->getName();
 
-        $this->hydrator = Hydrator::getInstance($this->modelName, $classMetadata);
+        $this->hydrator = Hydrator::getInstance($this->modelName . spl_object_hash($documentManager), $documentManager, $classMetadata);
 
-        $this->collection = DocumentManager::getInstance()->getMongoDBDatabase()->selectCollection($collection);
+        $this->collection = $this->documentManager->getMongoDBDatabase()->selectCollection($collection);
 
-        $this->om = ObjectManager::getInstance();
+        $this->objectManager = $objectManager;
 
         $this->objectCache = new ArrayCache();
     }
@@ -104,7 +106,7 @@ class Repository {
             $this->hydrator->hydrate($object, $result);
 
             $this->cacheObject($object);
-            $this->om->addObject($object, ObjectManager::OBJ_MANAGED);
+            $this->objectManager->addObject($object, ObjectManager::OBJ_MANAGED);
             return $object;
         }
 
@@ -133,7 +135,7 @@ class Repository {
             $object = new $this->modelName();
             $this->hydrator->hydrate($object, $datas);
             $this->cacheObject($object);
-            $this->om->addObject($object, ObjectManager::OBJ_MANAGED);
+            $this->objectManager->addObject($object, ObjectManager::OBJ_MANAGED);
             $objects[] = $object;
         }
 
@@ -162,7 +164,7 @@ class Repository {
             $object = new $this->modelName();
             $this->hydrator->hydrate($object, $datas);
             $this->cacheObject($object);
-            $this->om->addObject($object, ObjectManager::OBJ_MANAGED);
+            $this->objectManager->addObject($object, ObjectManager::OBJ_MANAGED);
             $objects[] = $object;
         }
 
@@ -190,7 +192,7 @@ class Repository {
         if ($result != null) {
             $object = new $this->modelName();
             $this->hydrator->hydrate($object, $result);
-            $this->om->addObject($object, ObjectManager::OBJ_MANAGED);
+            $this->objectManager->addObject($object, ObjectManager::OBJ_MANAGED);
             $this->cacheObject($object);
             return $object;
         }
@@ -329,7 +331,7 @@ class Repository {
     public function aggregOnMongoDbOperators($prefix, $key, $value, $new) {
         !isset($new[$prefix]) ? $new[$prefix] = [] : null;
         $new[$prefix] += [$key => $value];
-        
+
         return $new;
     }
 

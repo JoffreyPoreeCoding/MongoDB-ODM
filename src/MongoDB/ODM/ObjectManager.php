@@ -15,8 +15,6 @@ namespace JPC\MongoDB\ODM;
  */
 class ObjectManager {
     
-    use \JPC\DesignPattern\Singleton;
-    
     /**
      * Object states
      */
