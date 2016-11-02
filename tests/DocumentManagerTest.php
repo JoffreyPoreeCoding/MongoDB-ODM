@@ -34,7 +34,7 @@ class DocumentManagerTest extends PHPUnit_Framework_TestCase {
 
     public function testPersistDeleteUnpersist() {
         $dm = new JPC\MongoDB\ODM\DocumentManager("mongodb://localhost", "jpc_mongodb_phpunit");
-        $om = JPC\MongoDB\ODM\ObjectManager::getInstance();
+        $om = $this->getPropertyValue("objectManager", $dm);
         $obj = new SimpleDocument();
 
         $dm->persist($obj);
@@ -120,5 +120,11 @@ class DocumentManagerTest extends PHPUnit_Framework_TestCase {
         ];
 
         $this->assertEquals($expected, $method->invoke($dm, $query, "b"));
+    }
+    
+    private function getPropertyValue($name, $obj){
+        $prop = $this->reflection->getProperty($name);
+        $prop->setAccessible(true);
+        return $prop->getValue($obj);
     }
 }
