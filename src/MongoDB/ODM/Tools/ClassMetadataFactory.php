@@ -52,7 +52,7 @@ class ClassMetadataFactory {
      */
     public function __construct() {
         $this->annotationsCache = new ApcuCache();
-        $this->reader = new CachedReader(new IndexedReader(new AnnotationReader()), $this->annotationsCache, false);
+        $this->reader = new CachedReader(new AnnotationReader(), $this->annotationsCache, false);
     }
     
     /**

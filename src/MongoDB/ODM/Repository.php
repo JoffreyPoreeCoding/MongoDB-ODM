@@ -57,16 +57,30 @@ class Repository {
         }
 
         $this->documentManager = $documentManager;
-
         $this->modelName = $classMetadata->getName();
-
         $this->hydrator = Hydrator::getInstance($this->modelName . spl_object_hash($documentManager), $documentManager, $classMetadata);
-
+        $this->createCollection($collection, $classMetadata);
         $this->collection = $this->documentManager->getMongoDBDatabase()->selectCollection($collection);
-
+        
         $this->objectManager = $objectManager;
-
         $this->objectCache = new ArrayCache();
+    }
+    
+    private function createcollection($collectionName, $classMetadata){
+        $db = $this->documentManager->getMongoDBDatabase();
+        foreach ($db->listCollections()as $collection){
+            if($collection->getName() == $collectionName){
+                return;
+            }
+        }
+
+        $options = [];
+        
+        /**
+         * INIT OPTIONS HERE
+         */
+        
+        $db->createCollection($collectionName, $options);
     }
 
     /**

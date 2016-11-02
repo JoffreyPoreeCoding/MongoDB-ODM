@@ -14,5 +14,5 @@ namespace JPC\MongoDB\ODM;
  * @author poree
  */
 class GridFSRepository extends Repository {
-    //put your code here
+    
 }
