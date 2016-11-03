@@ -184,6 +184,20 @@ class ClassMetadata {
         return $this->propertiesAnnotations[$propertyName][$annotationName];
     }
 
+    public function getPropertyWithAnnotation($annotationName) {
+        if (empty($this->propertiesAnnotations)) {
+            $this->readPropertiesAnnotations();
+        }
+
+        foreach ($this->propertiesAnnotations as $property => $annotations) {
+            foreach ($annotations as $name => $value) {
+                if ($name == $annotationName) {
+                    return [$property => $value];
+                }
+            }
+        }
+    }
+
     /* ================================== */
     /*          PRIVATES FUNCTIONS        */
     /* ================================== */
@@ -268,7 +282,7 @@ class ClassMetadata {
             }
             $this->propertiesAnnotations[$property->name] = $propAnnot;
         }
-        
+
         $this->annotationCache->save($this->name . self::PROPERTIES_ANNOT . $this->cacheSalt, $this->propertiesAnnotations);
         return $this->propertiesAnnotations;
     }

@@ -15,7 +15,7 @@ class Repository {
 
     private static $mongoDbQueryOperators;
     
-    private $documentManager;
+    protected $documentManager;
 
     /**
      * Hydrator of model

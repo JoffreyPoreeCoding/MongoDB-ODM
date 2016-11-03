@@ -1,14 +1,22 @@
 {
     "name": "jpc/mongodb-odm",
     "description": "A small MongoDB ODM",
+    "version": "1.0.0",
     "type": "library",
+    "keywords" : [
+        "MongoDB",
+        "ODM",
+        "PHP",
+        "Mapping"
+    ],
+    "homepage" : "https://github.com/JoffreyPoreeCoding/MongoDB-ODM",
     "license": "GPL-3.0",
     "require": {
         "php": ">=5.4",
         "doctrine/annotations": "1.2.*",
         "doctrine/cache": "1.6.0",
         "mongodb/mongodb": "1.1.0-alpha1",
-        "jpc/design-pattern": "^0.2"
+        "jpc/design-pattern": "1.0.*"
     },
     "require-dev": {
         "symfony/var-dumper": "*"

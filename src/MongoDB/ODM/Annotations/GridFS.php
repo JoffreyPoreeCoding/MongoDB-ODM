@@ -17,6 +17,12 @@ class Document {
 
 /**
  * @Annotation
- * @Target("METHOD")
+ * @Target("PROPERTY")
  */
 class File {}
+
+/**
+ * @Annotation
+ * @Target("PROPERTY")
+ */
+class Stream {}

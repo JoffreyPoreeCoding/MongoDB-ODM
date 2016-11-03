@@ -146,7 +146,7 @@ class DocumentManager {
             return $this->repositories[$repIndex];
         }
             
-        $rep = "JPC\MongoDB\ODM\Repository";
+        $rep = "\JPC\MongoDB\ODM\Repository";
         foreach ($this->modelPaths as $modelPath) {
             if (file_exists($modelPath . "/" . str_replace("\\", "/", $modelName) . ".php")) {
                 require_once $modelPath . "/" . str_replace("\\", "/", $modelName) . ".php";
@@ -154,18 +154,22 @@ class DocumentManager {
         }
         if (class_exists($modelName)) {
             $classMeta = $this->classMetadataFactory->getMetadataForClass($modelName);
-            if (!$classMeta->hasClassAnnotation("JPC\MongoDB\ODM\Annotations\Mapping\Document")) {
-                throw new Exception\AnnotationException("Model '$modelName' need to have 'Document' annotation.");
-            } else {
+            if ($classMeta->hasClassAnnotation("JPC\MongoDB\ODM\Annotations\Mapping\Document")) {
                 $docAnnotation = $classMeta->getClassAnnotation("JPC\MongoDB\ODM\Annotations\Mapping\Document");
                 $rep = isset($docAnnotation->repositoryClass) ? $docAnnotation->repositoryClass : $rep;
                 $collection = isset($collection) ? $collection : $docAnnotation->collectionName;
+            } else if ($classMeta->hasClassAnnotation("JPC\MongoDB\ODM\Annotations\GridFS\Document")) {
+                $docAnnotation = $classMeta->getClassAnnotation("JPC\MongoDB\ODM\Annotations\GridFS\Document");
+                $rep = isset($docAnnotation->repositoryClass) ? $docAnnotation->repositoryClass : "JPC\MongoDB\ODM\GridFS\Repository";
+                $collection = isset($collection) ? $collection : $docAnnotation->bucketName;
+            } else {
+                throw new Exception\AnnotationException("Model '$modelName' need to have 'Document' annotation.");
             }
         } else {
             throw new ModelNotFoundException("Unable to found class '$modelName'");
         }
 
-        $this->repositories[$repIndex] = new Repository($this, $this->objectManager, $classMeta, $collection);
+        $this->repositories[$repIndex] = new $rep($this, $this->objectManager, $classMeta, $collection);
         
         return  $this->repositories[$repIndex];
     }
