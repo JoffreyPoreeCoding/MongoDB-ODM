@@ -19,7 +19,7 @@ class Document {
  * @Annotation
  * @Target("PROPERTY")
  */
-class File {}
+class FileInfos {}
 
 /**
  * @Annotation

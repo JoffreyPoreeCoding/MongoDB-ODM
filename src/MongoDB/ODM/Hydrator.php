@@ -11,31 +11,31 @@ class Hydrator {
     
     use \JPC\DesignPattern\Multiton;
     
-    private $documentManager;
+    protected $documentManager;
 
     /**
      * Annotation Reader
      * @var Tools\ClassMetadata
      */
-    private $classMetadata;
+    protected $classMetadata;
 
     /**
      * Reflection classes of embedded documents
      * @var array
      */
-    private $embeddedReflectionClasses = [];
+    protected $embeddedReflectionClasses = [];
 
     /**
      * Properties infos
      * @var array
      */
-    private $propertiesInfos = [];
+    protected $propertiesInfos = [];
 
     /**
      * Field mapping with mongo field as key and property name as value
      * @var array
      */
-    private $fieldMapping = [];
+    protected $fieldMapping = [];
 
     function __construct(DocumentManager $documentManager, Tools\ClassMetadata $classMetadata) {
         $this->documentManager = $documentManager;
@@ -122,7 +122,7 @@ class Hydrator {
         return $datas;
     }
 
-    private function BSONToPHP(&$datas) {
+    protected function BSONToPHP(&$datas) {
         if (!is_array($datas)) {
             $datas = (array) $datas;
         }
@@ -135,7 +135,7 @@ class Hydrator {
         }
     }
 
-    private function getPropertyInfos($name) {
+    protected function getPropertyInfos($name) {
         if (!isset($this->propertiesInfos[$name])) {
             $this->propertiesInfos[$name] = [];
             if ($this->classMetadata->hasPropertyAnnotation($name, "JPC\MongoDB\ODM\Annotations\Mapping\Field")) {
@@ -204,7 +204,7 @@ class Hydrator {
         }
     }
 
-    private function searchFieldForName($name) {
+    protected function searchFieldForName($name) {
         $propertiesNames = array_keys($this->classMetadata->getProperties());
 
         if (in_array($name, $propertiesNames)) {
@@ -219,7 +219,7 @@ class Hydrator {
         return false;
     }
 
-    private function convertEmbedded($value, $embeddedDocument) {
+    protected function convertEmbedded($value, $embeddedDocument) {
         $object = new $embeddedDocument();
 
         if (!isset($this->embeddedReflectionClasses[$embeddedDocument])) {
@@ -233,7 +233,7 @@ class Hydrator {
         return $object;
     }
 
-    private function convertEmbeddeds($value, $embeddedDocument) {
+    protected function convertEmbeddeds($value, $embeddedDocument) {
         $embeddeds = [];
         foreach ($value as $embedded) {
             $embeddeds[] = $this->convertEmbedded($embedded, $embeddedDocument);
@@ -247,7 +247,7 @@ class Hydrator {
         return $this->getHydratorForEmbedded($emb);
     }
 
-    private function getHydratorForEmbedded($embeddedClass) {
+    protected function getHydratorForEmbedded($embeddedClass) {
         if (!$embeddedClass) {
             return false;
         }

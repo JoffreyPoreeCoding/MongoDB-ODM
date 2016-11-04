@@ -13,7 +13,7 @@ use Doctrine\Common\Cache\ArrayCache;
  */
 class Repository {
 
-    private static $mongoDbQueryOperators;
+    protected static $mongoDbQueryOperators;
     
     protected $documentManager;
 
@@ -47,7 +47,6 @@ class Repository {
      * 
      * @param   Tools\ClassMetadata     $classMetadata      Metadata of managed class
      */
-
     public function __construct(DocumentManager $documentManager, ObjectManager $objectManager, $classMetadata, $collection) {
         if (!isset(self::$mongoDbQueryOperators)) {
             $callBack = [$this, 'aggregOnMongoDbOperators'];

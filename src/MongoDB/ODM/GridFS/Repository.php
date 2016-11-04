@@ -11,6 +11,7 @@ namespace JPC\MongoDB\ODM\GridFS;
 use JPC\MongoDB\ODM\Repository as BaseRep;
 use JPC\MongoDB\ODM\DocumentManager;
 use JPC\MongoDB\ODM\ObjectManager;
+use Doctrine\Common\Cache\ArrayCache;
 
 /**
  * Description of GridFSRepository
@@ -18,31 +19,50 @@ use JPC\MongoDB\ODM\ObjectManager;
  * @author poree
  */
 class Repository extends BaseRep {
-    
+
     /**
      * 
      * @var \MongoDB\GridFS\Bucket 
      */
     protected $bucket;
-    
+
     public function __construct(DocumentManager $documentManager, ObjectManager $objectManager, $classMetadata, $collection) {
-        parent::__construct($documentManager, $objectManager, $classMetadata, $collection);
-        
         $this->bucket = $documentManager->getMongoDBDatabase()->selectGridFSBucket(['bucketName' => $collection]);
+        if (!isset(self::$mongoDbQueryOperators)) {
+            $callBack = [$this, 'aggregOnMongoDbOperators'];
+            self::$mongoDbQueryOperators = [
+                '$gt' => $callBack, '$lt' => $callBack, '$gte' => $callBack, '$lte' => $callBack, '$eq' => $callBack, '$ne' => $callBack, '$in' => $callBack, '$nin' => $callBack
+            ];
+        }
+
+        $this->documentManager = $documentManager;
+        $this->modelName = $classMetadata->getName();
+        $this->hydrator = Hydrator::getInstance($this->modelName . spl_object_hash($documentManager), $documentManager, $classMetadata);
+
+        $this->collection = $this->documentManager->getMongoDBDatabase()->selectCollection($collection . ".files");
+
+        $this->objectManager = $objectManager;
+        $this->objectCache = new ArrayCache();
+    }
+
+    public function getBucket() {
+        return $this->bucket;
     }
 
     public function find($id, $projections = array(), $options = array()) {
+        if (!empty($projections) && isset($projections["_id"]) && !$projections["_id"]) {
+            $projections["_id"] = true;
+        }
+
         $options = array_merge($options, [
             "projection" => $this->castMongoQuery($projections)
         ]);
 
-        $result = $this->bucket->find(["_id" => $id], $options)->toArray()[0];
-        
-        dump($result);
-        
-        dump($this->bucket->openDownloadStream($result->_id));
+        $result = (array) $this->collection->findOne(["_id" => $id], $options);
+
 
         if ($result !== null) {
+            $result = $this->createHytratableResult($result);
             $object = new $this->modelName();
             $this->hydrator->hydrate($object, $result);
 
@@ -66,5 +86,25 @@ class Repository extends BaseRep {
         return parent::findOneBy($filters, $projections, $sorts, $options);
     }
 
-    
+    public function createHytratableResult($result) {
+
+        dump($result);
+        $newResult = ["_id" => $result["_id"]];
+        $newResult["file"] = [];
+        foreach ($result as $name => $value) {
+            if ($name != "_id" && $name != "metadata") {
+                $newResult["file"][$name] = $value;
+            }
+        }
+
+        foreach ($result["metadata"] as $key => $value) {
+            $newResult[$key] = $value;
+        }
+
+        $stream = $this->bucket->openDownloadStream($result["_id"]);
+        $newResult["stream"] = $stream;
+
+        return $newResult;
+    }
+
 }

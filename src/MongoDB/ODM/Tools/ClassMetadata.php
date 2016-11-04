@@ -196,6 +196,8 @@ class ClassMetadata {
                 }
             }
         }
+        
+        return false;
     }
 
     /* ================================== */

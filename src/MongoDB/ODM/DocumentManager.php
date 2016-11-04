@@ -13,7 +13,6 @@ use JPC\MongoDB\ODM\ObjectManager;
  * @author Joffrey Porée <contact@joffreyporee.com>
  */
 class DocumentManager {
-
     /* ================================== */
     /*              CONSTANTS             */
     /* ================================== */
@@ -52,7 +51,6 @@ class DocumentManager {
      * @var CacheReader
      */
     private $reader;
-    
     private $repositories = [];
 
     /**
@@ -60,7 +58,7 @@ class DocumentManager {
      * @var ObjectManager
      */
     private $objectManager;
-    
+
     /**
      * Store coolection associated with object (for flush on special collection)
      * @var array 
@@ -142,10 +140,10 @@ class DocumentManager {
      */
     public function getRepository($modelName, $collection = null) {
         $repIndex = $modelName . $collection;
-        if(isset($this->repositories[$repIndex])){
+        if (isset($this->repositories[$repIndex])) {
             return $this->repositories[$repIndex];
         }
-            
+
         $rep = "\JPC\MongoDB\ODM\Repository";
         foreach ($this->modelPaths as $modelPath) {
             if (file_exists($modelPath . "/" . str_replace("\\", "/", $modelName) . ".php")) {
@@ -170,8 +168,8 @@ class DocumentManager {
         }
 
         $this->repositories[$repIndex] = new $rep($this, $this->objectManager, $classMeta, $collection);
-        
-        return  $this->repositories[$repIndex];
+
+        return $this->repositories[$repIndex];
     }
 
     /**
@@ -258,7 +256,9 @@ class DocumentManager {
         $rep = $this->getRepository(get_class($object));
         $collection = isset($this->objectCollection[spl_object_hash($object)]) ? $this->objectCollection[spl_object_hash($object)] : $rep->getCollection()->getCollectionName();
         $mongoCollection = $this->mongodatabase->selectCollection($collection);
-        $datas = $mongoCollection->findOne(["_id" => $object->getId()]);
+        
+        $datas = $rep->createHytratableResult((array) $mongoCollection->findOne(["_id" => $object->getId()]));
+        
         if ($datas != null) {
             $rep->getHydrator()->hydrate($object, $datas);
             $rep->cacheObject($object);
@@ -315,30 +315,66 @@ class DocumentManager {
      * @param   mixed       $object     Object to insert
      */
     private function insert($collection, $objects) {
-        $collection = $this->mongodatabase->selectCollection($collection);
-
-        $rep = $this->getRepository(get_class($objects[key($objects)]));
+        if($pos = strpos($collection, ".files")){
+            $collection = substr($collection, 0, $pos);
+        }
+        $rep = $this->getRepository(get_class($objects[key($objects)]), $collection);
         $hydrator = $rep->getHydrator();
 
-        $datas = [];
-        foreach ($objects as $object) {
-            $datas[] = $hydrator->unhydrate($object);
-            Tools\ArrayModifier::clearNullValues($datas);
-        }
+        if (is_a($rep, "JPC\MongoDB\ODM\GridFS\Repository")) {
+            $bucket = $rep->getBucket();
+            
+            foreach ($objects as $obj) {
+                $datas = $hydrator->unhydrate($obj);
+                
+                $stream = $datas["stream"];
 
-        foreach ($this->getModifier(self::INSERT_STATEMENT_MODIFIER) as $callback) {
-            $datas = call_user_func($callback, $update, $object);
-        }
+                $options = $datas;
+                unset($options["stream"]);
+                if (isset($datas["_id"]) && $datas["_id"] === null) {
+                    unset($options["_id"]);
+                }
 
-        $res = $collection->insertMany($datas);
+                foreach ($options["metadata"] as $key => $value) {
+                    if (null === $value) {
+                        unset($options["metadata"][$key]);
+                    }
+                }
+
+                if (empty($options["metadata"])) {
+                    unset($options["metadata"]);
+                }
+                
+                $filename = basename(stream_get_meta_data($stream)["uri"]);
+
+                $id = $bucket->uploadFromStream($filename, $stream, $options);
+                
+                $hydrator->hydrate($obj, ["_id" => $id]);
+                $this->refresh($obj);
+            }
+        } else {
+            $collection = $rep->getCollection();
+
+            $datas = [];
+            foreach ($objects as $object) {
+                $datas[] = $hydrator->unhydrate($object);
+                Tools\ArrayModifier::clearNullValues($datas);
+            }
+
+            foreach ($this->getModifier(self::INSERT_STATEMENT_MODIFIER) as $callback) {
+                $datas = call_user_func($callback, $update, $object);
+            }
+
+            $res = $collection->insertMany($datas);
 
 
-        if ($res->isAcknowledged()) {
-            foreach ($res->getInsertedIds() as $index => $id) {
-                $hydrator->hydrate($objects[$index], ["_id" => $id]);
-                $this->objectManager->setObjectState($objects[$index], ObjectManager::OBJ_MANAGED);
-                $this->refresh($objects[$index]);
-                $rep->cacheObject($objects[$index]);
+            if ($res->isAcknowledged()) {
+                foreach ($res->getInsertedIds() as $index => $id) {
+                    $hydrator->hydrate($objects[$index], ["_id" => $id]);
+                    $this->objectManager->setObjectState($objects[$index], ObjectManager::OBJ_MANAGED);
+                    $this->refresh($objects[$index]);
+                    $rep->cacheObject($objects[$index]);
+                }
             }
         }
     }
