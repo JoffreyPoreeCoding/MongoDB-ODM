@@ -16,7 +16,7 @@
         "doctrine/annotations": "1.2.*",
         "doctrine/cache": "1.6.0",
         "mongodb/mongodb": "1.1.0-alpha1",
-        "jpc/design-pattern": "1.0.*"
+        "jpc/design-pattern": "~1.0"
     },
     "require-dev": {
         "symfony/var-dumper": "*"
