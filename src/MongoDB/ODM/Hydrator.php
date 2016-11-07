@@ -8,9 +8,9 @@ namespace JPC\MongoDB\ODM;
  * @author poree
  */
 class Hydrator {
-    
+
     use \JPC\DesignPattern\Multiton;
-    
+
     protected $documentManager;
 
     /**
@@ -45,6 +45,18 @@ class Hydrator {
     function hydrate(&$object, $datas) {
         $propertiesAnnotations = $this->classMetadata->getProperties();
 
+        if (isset($datas["_id"])) {
+            $field = $this->classMetadata->getPropertyWithAnnotation("JPC\MongoDB\ODM\Annotations\Id");
+            if (is_array($field)) {
+                $field = key($field);
+                $prop = $this->classMetadata->getProperty($field);
+                $prop->setAccessible(true);
+
+                $prop->setValue($object, $this->convertEmbedded($datas["_id"], "JPC\MongoDB\ODM\GridFS\FileInfos"));
+                unset($datas["_id"]);
+            }
+        }
+
         foreach ($propertiesAnnotations as $name => $propertyAnnotations) {
             $prop = $this->classMetadata->getProperty($name);
             $prop->setAccessible(true);
@@ -74,11 +86,20 @@ class Hydrator {
     }
 
     public function unhydrate($object) {
-        if(!is_object($object)){
+        if (!is_object($object)) {
             return [];
         }
-        
+
         $properties = $this->classMetadata->getProperties();
+
+        if (false !== ($file = $this->classMetadata->getPropertyWithAnnotation("JPC\MongoDB\ODM\Annotations\Id"))) {
+            $field = key($file);
+            $prop = $this->classMetadata->getProperty($field);
+            $prop->setAccessible(true);
+            $value = $prop->getValue($object);
+
+            $datas["_id"] = $value;
+        }
 
         foreach ($properties as $name => $property) {
             $value = null;
@@ -251,7 +272,7 @@ class Hydrator {
         if (!$embeddedClass) {
             return false;
         }
-        return Hydrator::getInstance($embeddedClass.  spl_object_hash($this->documentManager), $this->documentManager, Tools\ClassMetadataFactory::getInstance()->getMetadataForClass($embeddedClass));
+        return Hydrator::getInstance($embeddedClass . spl_object_hash($this->documentManager), $this->documentManager, Tools\ClassMetadataFactory::getInstance()->getMetadataForClass($embeddedClass));
     }
 
     public function isEmbedded($field) {

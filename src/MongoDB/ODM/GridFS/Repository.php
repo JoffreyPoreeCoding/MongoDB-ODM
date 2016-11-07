@@ -75,15 +75,80 @@ class Repository extends BaseRep {
     }
 
     public function findAll($projections = array(), $sorts = array(), $options = array()) {
-        return parent::findAll($projections, $sorts, $options);
+        if (!empty($projections) && isset($projections["_id"]) && !$projections["_id"]) {
+            $projections["_id"] = true;
+        }
+        $options = array_merge($options, [
+            "projection" => $this->castMongoQuery($projections),
+            "sort" => $this->castMongoQuery($sorts)
+        ]);
+        
+        $result = $this->collection->find([], $options);
+
+        $objects = [];
+
+        foreach ($result as $datas) {
+            $datas = $this->createHytratableResult($datas);
+            $object = new $this->modelName();
+            $this->hydrator->hydrate($object, $datas);
+            $this->cacheObject($object);
+            $this->objectManager->addObject($object, ObjectManager::OBJ_MANAGED);
+            $objects[] = $object;
+        }
+
+        return $objects;
     }
 
     public function findBy($filters, $projections = array(), $sorts = array(), $options = array()) {
-        return parent::findBy($filters, $projections, $sorts, $options);
+        trigger_error("Filters will not work correctly in this version", E_USER_WARNING);
+        
+        if (!empty($projections) && isset($projections["_id"]) && !$projections["_id"]) {
+            $projections["_id"] = true;
+        }
+        $options = array_merge($options, [
+            "projection" => $this->castMongoQuery($projections),
+            "sort" => $this->castMongoQuery($sorts)
+        ]);
+        
+        $result = $this->collection->find($this->castMongoQuery($filters), $options);
+
+        $objects = [];
+
+        foreach ($result as $datas) {
+            $datas = $this->createHytratableResult($datas);
+            $object = new $this->modelName();
+            $this->hydrator->hydrate($object, $datas);
+            $this->cacheObject($object);
+            $this->objectManager->addObject($object, ObjectManager::OBJ_MANAGED);
+            $objects[] = $object;
+        }
+
+        return $objects;
     }
 
     public function findOneBy($filters = array(), $projections = array(), $sorts = array(), $options = array()) {
-        return parent::findOneBy($filters, $projections, $sorts, $options);
+        trigger_error("Filters will not work correctly in this version", E_USER_WARNING);
+        
+        if (!empty($projections) && isset($projections["_id"]) && !$projections["_id"]) {
+            $projections["_id"] = true;
+        }
+        $options = array_merge($options, [
+            "projection" => $this->castMongoQuery($projections),
+            "sort" => $this->castMongoQuery($sorts)
+        ]);
+
+        $result = (array) $this->collection->findOne($this->castMongoQuery($filters), $options);
+
+
+        if ($result !== null) {
+            $result = $this->createHytratableResult($result);
+            $object = new $this->modelName();
+            $this->hydrator->hydrate($object, $result);
+
+            $this->cacheObject($object);
+            $this->objectManager->addObject($object, ObjectManager::OBJ_MANAGED);
+            return $object;
+        }
     }
 
     public function createHytratableResult($result) {

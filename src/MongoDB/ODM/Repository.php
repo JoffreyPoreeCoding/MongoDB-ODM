@@ -33,8 +33,7 @@ class Repository {
      * Object Manager
      * @var ObjectManager
      */
-
-    private $objectManager;
+    protected $objectManager;
 
     /**
      * Cache for object changes

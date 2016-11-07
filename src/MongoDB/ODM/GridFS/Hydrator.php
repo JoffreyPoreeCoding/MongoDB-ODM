@@ -17,9 +17,6 @@ use JPC\MongoDB\ODM\Hydrator as BaseHydrator;
  */
 class Hydrator extends BaseHydrator {
 
-    /**
-     * @TODO
-     */
     public function hydrate(&$object, $datas) {
         if (isset($datas["file"])) {
             $field = key($this->classMetadata->getPropertyWithAnnotation("JPC\MongoDB\ODM\Annotations\GridFS\FileInfos"));
@@ -27,21 +24,21 @@ class Hydrator extends BaseHydrator {
             $prop->setAccessible(true);
 
             $prop->setValue($object, $this->convertEmbedded($datas["file"], "JPC\MongoDB\ODM\GridFS\FileInfos"));
+            unset($datas["file"]);
         }
 
         if (isset($datas["stream"])) {
             $field = key($this->classMetadata->getPropertyWithAnnotation("JPC\MongoDB\ODM\Annotations\GridFS\Stream"));
             $prop = $this->classMetadata->getProperty($field);
             $prop->setAccessible(true);
+            
 
             $prop->setValue($object, $datas["stream"]);
+            unset($datas["stream"]);
         }
         parent::hydrate($object, $datas);
     }
 
-    /**
-     * @TODO
-     */
     public function unhydrate($object) {
         $datas = parent::unhydrate($object);
 

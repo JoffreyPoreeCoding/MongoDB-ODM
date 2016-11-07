@@ -26,6 +26,18 @@ class Document {
 }
 
 /**
+ * Annotation to map '_id' field on a property
+ * 
+ * @param   string  $name               Name of the field in MongoDB document
+ * 
+ * @Annotation
+ * @Target("PROPERTY")
+ */
+class Id {
+    
+}
+
+/**
  * Annotation for map a field of document on PHP attribut
  * 
  * @param   string  $name               Name of the field in MongoDB document
