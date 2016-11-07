@@ -44,15 +44,15 @@ class Hydrator {
 
     function hydrate(&$object, $datas) {
         $propertiesAnnotations = $this->classMetadata->getProperties();
-
+        
         if (isset($datas["_id"])) {
-            $field = $this->classMetadata->getPropertyWithAnnotation("JPC\MongoDB\ODM\Annotations\Id");
+            $field = $this->classMetadata->getPropertyWithAnnotation("JPC\MongoDB\ODM\Annotations\Mapping\Id");
             if (is_array($field)) {
                 $field = key($field);
                 $prop = $this->classMetadata->getProperty($field);
                 $prop->setAccessible(true);
 
-                $prop->setValue($object, $this->convertEmbedded($datas["_id"], "JPC\MongoDB\ODM\GridFS\FileInfos"));
+                $prop->setValue($object,$datas["_id"]);
                 unset($datas["_id"]);
             }
         }
@@ -92,7 +92,7 @@ class Hydrator {
 
         $properties = $this->classMetadata->getProperties();
 
-        if (false !== ($file = $this->classMetadata->getPropertyWithAnnotation("JPC\MongoDB\ODM\Annotations\Id"))) {
+        if (false !== ($file = $this->classMetadata->getPropertyWithAnnotation("JPC\MongoDB\ODM\Annotations\Mapping\Id"))) {
             $field = key($file);
             $prop = $this->classMetadata->getProperty($field);
             $prop->setAccessible(true);

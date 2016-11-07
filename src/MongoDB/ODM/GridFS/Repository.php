@@ -152,8 +152,6 @@ class Repository extends BaseRep {
     }
 
     public function createHytratableResult($result) {
-
-        dump($result);
         $newResult = ["_id" => $result["_id"]];
         $newResult["file"] = [];
         foreach ($result as $name => $value) {
