@@ -100,7 +100,9 @@ class Repository extends BaseRep {
     }
 
     public function findBy($filters, $projections = array(), $sorts = array(), $options = array()) {
-        trigger_error("Filters will not work correctly in this version", E_USER_WARNING);
+        if (!empty($filter)) {
+            trigger_error("Filters will not work correctly in this version", E_USER_WARNING);
+        }
 
         if (!empty($projections) && isset($projections["_id"]) && !$projections["_id"]) {
             $projections["_id"] = true;
@@ -127,11 +129,14 @@ class Repository extends BaseRep {
     }
 
     public function findOneBy($filters = array(), $projections = array(), $sorts = array(), $options = array()) {
-        trigger_error("Filters will not work correctly in this version", E_USER_WARNING);
+        if (!empty($filter)) {
+            trigger_error("Filters will not work correctly in this version", E_USER_WARNING);
+        }
 
         if (!empty($projections) && isset($projections["_id"]) && !$projections["_id"]) {
             $projections["_id"] = true;
         }
+
         $options = array_merge($options, [
             "projection" => $this->castMongoQuery($projections),
             "sort" => $this->castMongoQuery($sorts)
