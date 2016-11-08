@@ -26,6 +26,24 @@ class Document {
 }
 
 /**
+ * Option for collection reading/writing
+ * 
+ * @param   string  $collectionName     Name of the collection by default for the document
+ * @param   string  $repositoryClass    Class containing repository of document
+ * @param   string  $repositoryClass    Class containing repository of document
+ * @param   string  $repositoryClass    Class containing repository of document
+ * 
+ * @Annotation 
+ * @Target("CLASS")
+ */
+class Option {
+    public $readConcern;
+    public $readPreference;
+    public $typeMap;
+    public $writeConcern;
+}
+
+/**
  * Annotation to map '_id' field on a property
  * 
  * @param   string  $name               Name of the field in MongoDB document

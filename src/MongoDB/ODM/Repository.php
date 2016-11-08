@@ -4,6 +4,7 @@ namespace JPC\MongoDB\ODM;
 
 use JPC\MongoDB\ODM\DocumentManager;
 use JPC\MongoDB\ODM\ObjectManager;
+use JPC\MongoDB\ODM\Tools\ClassMetadata;
 use Doctrine\Common\Cache\ArrayCache;
 
 /**
@@ -13,8 +14,16 @@ use Doctrine\Common\Cache\ArrayCache;
  */
 class Repository {
 
+    /**
+     * Contain all of MongoDD Operators
+     * @var array<string>
+     */
     protected static $mongoDbQueryOperators;
     
+    /**
+     * Document manager
+     * @var DocumentManager
+     */
     protected $documentManager;
 
     /**
@@ -24,7 +33,7 @@ class Repository {
     protected $hydrator;
 
     /**
-     *
+     * MongoDB collection
      * @var \MongoDB\Collection
      */
     protected $collection;
@@ -46,7 +55,7 @@ class Repository {
      * 
      * @param   Tools\ClassMetadata     $classMetadata      Metadata of managed class
      */
-    public function __construct(DocumentManager $documentManager, ObjectManager $objectManager, $classMetadata, $collection) {
+    public function __construct(DocumentManager $documentManager, ObjectManager $objectManager, ClassMetadata $classMetadata, $collection) {
         if (!isset(self::$mongoDbQueryOperators)) {
             $callBack = [$this, 'aggregOnMongoDbOperators'];
             self::$mongoDbQueryOperators = [
@@ -64,7 +73,17 @@ class Repository {
         $this->objectCache = new ArrayCache();
     }
     
-    private function createcollection($collectionName, $classMetadata){
+    private function getCollectionOptions(){
+        
+    }
+    
+    /**
+     * Create the collection
+     * 
+     * @param   string                  $collectionName     Name of the collection
+     * @param   ClassMetadata           $classMetadata      Metadatas of the model
+     */
+    private function createcollection($collectionName, ClassMetadata $classMetadata){
         $db = $this->documentManager->getMongoDBDatabase();
         foreach ($db->listCollections()as $collection){
             if($collection->getName() == $collectionName){
@@ -73,6 +92,8 @@ class Repository {
         }
 
         $options = [];
+        
+        dump(\MongoDB\Driver\WriteConcern::MAJORITY);
         
         /**
          * INIT OPTIONS HERE
