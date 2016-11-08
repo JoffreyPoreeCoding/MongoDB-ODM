@@ -82,7 +82,7 @@ class Repository extends BaseRep {
             "projection" => $this->castMongoQuery($projections),
             "sort" => $this->castMongoQuery($sorts)
         ]);
-        
+
         $result = $this->collection->find([], $options);
 
         $objects = [];
@@ -101,7 +101,7 @@ class Repository extends BaseRep {
 
     public function findBy($filters, $projections = array(), $sorts = array(), $options = array()) {
         trigger_error("Filters will not work correctly in this version", E_USER_WARNING);
-        
+
         if (!empty($projections) && isset($projections["_id"]) && !$projections["_id"]) {
             $projections["_id"] = true;
         }
@@ -109,7 +109,7 @@ class Repository extends BaseRep {
             "projection" => $this->castMongoQuery($projections),
             "sort" => $this->castMongoQuery($sorts)
         ]);
-        
+
         $result = $this->collection->find($this->castMongoQuery($filters), $options);
 
         $objects = [];
@@ -128,7 +128,7 @@ class Repository extends BaseRep {
 
     public function findOneBy($filters = array(), $projections = array(), $sorts = array(), $options = array()) {
         trigger_error("Filters will not work correctly in this version", E_USER_WARNING);
-        
+
         if (!empty($projections) && isset($projections["_id"]) && !$projections["_id"]) {
             $projections["_id"] = true;
         }
@@ -160,8 +160,10 @@ class Repository extends BaseRep {
             }
         }
 
-        foreach ($result["metadata"] as $key => $value) {
-            $newResult[$key] = $value;
+        if (isset($result["metadata"])) {
+            foreach ($result["metadata"] as $key => $value) {
+                $newResult[$key] = $value;
+            }
         }
 
         $stream = $this->bucket->openDownloadStream($result["_id"]);
