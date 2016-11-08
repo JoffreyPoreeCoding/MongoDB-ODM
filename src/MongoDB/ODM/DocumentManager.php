@@ -257,7 +257,7 @@ class DocumentManager {
         $collection = isset($this->objectCollection[spl_object_hash($object)]) ? $this->objectCollection[spl_object_hash($object)] : $rep->getCollection()->getCollectionName();
         $mongoCollection = $this->mongodatabase->selectCollection($collection);
         
-        $datas = (array) $mongoCollection->findOne(["_id" => $object->getId()]);
+        $datas = (array) $mongoCollection->findOne(["_id" => $rep->getHydrator()->unhydrate($object)["_id"]]);
         if($rep instanceof GridFS\Repository){
             $datas = $rep->createHytratableResult($datas);
         }

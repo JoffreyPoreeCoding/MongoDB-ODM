@@ -144,7 +144,6 @@ class Repository extends BaseRep {
 
         $result = (array) $this->collection->findOne($this->castMongoQuery($filters), $options);
 
-
         if ($result !== null) {
             $result = $this->createHytratableResult($result);
             $object = new $this->modelName();

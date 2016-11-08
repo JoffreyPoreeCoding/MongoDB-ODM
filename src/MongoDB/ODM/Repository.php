@@ -201,7 +201,7 @@ class Repository {
             "projection" => $this->castMongoQuery($projections),
             "sort" => $this->castMongoQuery($sorts)
         ]);
-
+        
         $result = $this->collection->findOne($this->castMongoQuery($filters), $options);
 
         if ($result != null) {
@@ -238,7 +238,7 @@ class Repository {
         }
     }
 
-    protected function castMongoQuery($query, $hydrator = null, $initial = true) {
+    public function castMongoQuery($query, $hydrator = null, $initial = true) {
         if (!isset($hydrator)) {
             $hydrator = $this->hydrator;
         }

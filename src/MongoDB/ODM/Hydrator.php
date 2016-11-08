@@ -44,15 +44,17 @@ class Hydrator {
 
     function hydrate(&$object, $datas) {
         $propertiesAnnotations = $this->classMetadata->getProperties();
-        
+
         if (isset($datas["_id"])) {
             $field = $this->classMetadata->getPropertyWithAnnotation("JPC\MongoDB\ODM\Annotations\Mapping\Id");
+
             if (is_array($field)) {
                 $field = key($field);
+
                 $prop = $this->classMetadata->getProperty($field);
                 $prop->setAccessible(true);
 
-                $prop->setValue($object,$datas["_id"]);
+                $prop->setValue($object, $datas["_id"]);
                 unset($datas["_id"]);
             }
         }
@@ -86,6 +88,8 @@ class Hydrator {
     }
 
     public function unhydrate($object) {
+        $datas = [];
+
         if (!is_object($object)) {
             return [];
         }
@@ -168,6 +172,10 @@ class Hydrator {
                 if ($this->classMetadata->hasPropertyAnnotation($name, "JPC\MongoDB\ODM\Annotations\Mapping\MultiEmbeddedDocument")) {
                     $this->propertiesInfos[$name]["multiEmbedded"] = $this->classMetadata->getPropertyAnnotation($name, "JPC\MongoDB\ODM\Annotations\Mapping\MultiEmbeddedDocument")->document;
                 }
+            }
+            if ($this->classMetadata->hasPropertyAnnotation($name, "JPC\MongoDB\ODM\Annotations\Mapping\Id")) {
+                $this->propertiesInfos[$name]["field"] = "_id";
+                $this->fieldMapping["_id"] = $name;
             }
         }
 
