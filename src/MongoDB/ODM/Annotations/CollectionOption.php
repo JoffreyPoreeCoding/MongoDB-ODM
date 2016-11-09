@@ -8,24 +8,32 @@ namespace JPC\MongoDB\ODM\Annotations\Mapping\CollectionOption;
  * @Annotation
  */
 class WriteConcern {
-    private $wstring;
-    private $wtimeout;
+    private $w;
+    private $timeout;
     private $journal;
     
     public function __construct(array $values) {
         $default = [
-            "wstring" => 1,
-            "wtimeout" => 0,
+            "w" => 1,
+            "timeout" => 0,
             "journal" => true,
         ];
         
         $diffs = array_diff(array_keys($values), array_keys($default));
         
         dump($diffs);
+        if(!empty($diffs)){
+            throw new \Doctrine\Common\Annotations\AnnotationException("Parameter '" . $diffs[0] . "' is not valid parameter. Accepted parameter are : 'w', 'timeout' and 'journal'.");
+        }
         
-        $values = array_merge($default, $values);
+        $finalValues = array_merge($default, $values);
         
-        dump($values);
-        
+        $this->w = $finalValues["w"];
+        $this->timeout = $finalValues["timeout"];
+        $this->journal = $finalValues["journal"];
+    }
+    
+    public function getWriteConcern(){
+        return new \MongoDB\Driver\WriteConcern($this->w, $this->timeout, $this->journal);
     }
 }
