@@ -420,7 +420,7 @@ class DocumentManager {
      * @param   mixed       $object     Object to insert
      */
     private function doRemove($collection, $object) {
-        $rep = $this->getRepository(get_class($object));
+        $rep = $this->getRepository(get_class($object), $collection);
         $collection = $rep->getCollection();
         
         $id = $rep->getHydrator()->unhydrate($object)["_id"];
