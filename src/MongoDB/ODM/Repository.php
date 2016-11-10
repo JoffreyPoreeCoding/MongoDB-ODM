@@ -4,6 +4,7 @@ namespace JPC\MongoDB\ODM;
 
 use JPC\MongoDB\ODM\DocumentManager;
 use JPC\MongoDB\ODM\ObjectManager;
+use JPC\MongoDB\ODM\Tools\ClassMetadata;
 use Doctrine\Common\Cache\ArrayCache;
 
 /**
@@ -13,6 +14,10 @@ use Doctrine\Common\Cache\ArrayCache;
  */
 class Repository {
 
+    /**
+     * Contain all of MongoDD Operators
+     * @var array<string>
+     */
     protected static $mongoDbQueryOperators;
     
     /**
@@ -28,7 +33,7 @@ class Repository {
     protected $hydrator;
 
     /**
-     *
+     * MongoDB collection
      * @var \MongoDB\Collection
      */
     protected $collection;
@@ -50,7 +55,7 @@ class Repository {
      * 
      * @param   Tools\ClassMetadata     $classMetadata      Metadata of managed class
      */
-    public function __construct(DocumentManager $documentManager, ObjectManager $objectManager, $classMetadata, $collection) {
+    public function __construct(DocumentManager $documentManager, ObjectManager $objectManager, ClassMetadata $classMetadata, $collection) {
         if (!isset(self::$mongoDbQueryOperators)) {
             $callBack = [$this, 'aggregOnMongoDbOperators'];
             self::$mongoDbQueryOperators = [
@@ -62,26 +67,44 @@ class Repository {
         $this->modelName = $classMetadata->getName();
         $this->hydrator = Hydrator::getInstance($this->modelName . spl_object_hash($documentManager), $documentManager, $classMetadata);
         $this->createCollection($collection, $classMetadata);
-        $this->collection = $this->documentManager->getMongoDBDatabase()->selectCollection($collection);
-        
+        $this->collection = $this->documentManager->getMongoDBDatabase()->selectCollection($collection, $this->getCollectionOptions($classMetadata));
+        var_dump($this->collection);
+
         $this->objectManager = $objectManager;
         $this->objectCache = new ArrayCache();
     }
-    
-    private function createcollection($collectionName, $classMetadata){
+
+    private function getCollectionOptions(ClassMetadata $classMetadata) {
+        $collOptionAnnot = $classMetadata->getClassAnnotation("JPC\MongoDB\ODM\Annotations\Mapping\Option");
+        $options = [];
+        if (isset($collOptionAnnot->writeConcern)) {
+            $options["writeConcern"] = $collOptionAnnot->writeConcern->getWriteConcern();
+        }
+        
+        return $options;
+    }
+
+    /**
+     * Create the collection
+     * 
+     * @param   string                  $collectionName     Name of the collection
+     * @param   ClassMetadata           $classMetadata      Metadatas of the model
+     */
+    private function createcollection($collectionName, ClassMetadata $classMetadata) {
         $db = $this->documentManager->getMongoDBDatabase();
-        foreach ($db->listCollections()as $collection){
-            if($collection->getName() == $collectionName){
+        foreach ($db->listCollections()as $collection) {
+            if ($collection->getName() == $collectionName) {
                 return;
             }
         }
 
         $options = [];
-        
+
+        dump(\MongoDB\Driver\WriteConcern::MAJORITY);
+
         /**
          * INIT OPTIONS HERE
          */
-        
         $db->createCollection($collectionName, $options);
     }
 
@@ -208,7 +231,7 @@ class Repository {
             "projection" => $this->castMongoQuery($projections),
             "sort" => $this->castMongoQuery($sorts)
         ]);
-        
+
         $result = $this->collection->findOne($this->castMongoQuery($filters), $options);
 
         if ($result != null) {
