@@ -68,7 +68,6 @@ class Repository {
         $this->hydrator = Hydrator::getInstance($this->modelName . spl_object_hash($documentManager), $documentManager, $classMetadata);
         $this->createCollection($collection, $classMetadata);
         $this->collection = $this->documentManager->getMongoDBDatabase()->selectCollection($collection, $this->getCollectionOptions($classMetadata));
-        var_dump($this->collection);
 
         $this->objectManager = $objectManager;
         $this->objectCache = new ArrayCache();
@@ -99,8 +98,6 @@ class Repository {
         }
 
         $options = [];
-
-        dump(\MongoDB\Driver\WriteConcern::MAJORITY);
 
         /**
          * INIT OPTIONS HERE

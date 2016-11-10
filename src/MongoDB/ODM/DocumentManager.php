@@ -256,12 +256,12 @@ class DocumentManager {
         $rep = $this->getRepository(get_class($object));
         $collection = isset($this->objectCollection[spl_object_hash($object)]) ? $this->objectCollection[spl_object_hash($object)] : $rep->getCollection()->getCollectionName();
         $mongoCollection = $this->mongodatabase->selectCollection($collection);
-        
+
         $datas = (array) $mongoCollection->findOne(["_id" => $rep->getHydrator()->unhydrate($object)["_id"]]);
-        if($rep instanceof GridFS\Repository){
+        if ($rep instanceof GridFS\Repository) {
             $datas = $rep->createHytratableResult($datas);
         }
-        
+
         if ($datas != null) {
             $rep->getHydrator()->hydrate($object, $datas);
             $rep->cacheObject($object);
@@ -280,8 +280,10 @@ class DocumentManager {
         }
 
         $updateObjs = $this->objectManager->getObject(ObjectManager::OBJ_MANAGED);
+
         foreach ($updateObjs as $object) {
-            $this->update($object);
+            $collection = isset($this->objectCollection[spl_object_hash($object)]) ? $this->objectCollection[spl_object_hash($object)] : $this->getRepository(get_class($object))->getCollection()->getCollectionName();
+            $this->update($collection, $object);
         }
 
         $newObjs = $this->objectManager->getObject(ObjectManager::OBJ_NEW);
@@ -318,7 +320,7 @@ class DocumentManager {
      * @param   mixed       $object     Object to insert
      */
     private function insert($collection, $objects) {
-        if($pos = strpos($collection, ".files")){
+        if ($pos = strpos($collection, ".files")) {
             $collection = substr($collection, 0, $pos);
         }
         $rep = $this->getRepository(get_class($objects[key($objects)]), $collection);
@@ -326,10 +328,10 @@ class DocumentManager {
 
         if (is_a($rep, "JPC\MongoDB\ODM\GridFS\Repository")) {
             $bucket = $rep->getBucket();
-            
+
             foreach ($objects as $obj) {
                 $datas = $hydrator->unhydrate($obj);
-                
+
                 $stream = $datas["stream"];
 
                 $options = $datas;
@@ -347,11 +349,11 @@ class DocumentManager {
                 if (empty($options["metadata"])) {
                     unset($options["metadata"]);
                 }
-                
+
                 $filename = basename(stream_get_meta_data($stream)["uri"]);
 
                 $id = $bucket->uploadFromStream($filename, $stream, $options);
-                
+
                 $hydrator->hydrate($obj, ["_id" => $id]);
                 $this->refresh($obj);
             }
@@ -387,8 +389,8 @@ class DocumentManager {
      * 
      * @param   mixed       $object     Object to update
      */
-    private function update($object) {
-        $rep = $this->getRepository(get_class($object));
+    private function update($collection, $object) {
+        $rep = $this->getRepository(get_class($object), $collection);
         $collection = $rep->getCollection();
 
         $diffs = $rep->getObjectChanges($object);
@@ -397,9 +399,13 @@ class DocumentManager {
         foreach ($this->getModifier(self::UPDATE_STATEMENT_MODIFIER) as $callback) {
             $update = call_user_func($callback, $update, $object);
         }
+        
+        $hydrator = $rep->getHydrator();
+        
+        $id = $hydrator->unhydrate($object)["_id"];
 
         if (!empty($update)) {
-            $res = $collection->updateOne(["_id" => $object->getId()], $update);
+            $res = $collection->updateOne(["_id" => $id], $update);
             if ($res->isAcknowledged()) {
                 $this->refresh($object);
                 $rep->cacheObject($object);
