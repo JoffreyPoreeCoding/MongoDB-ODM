@@ -15,6 +15,10 @@ class Repository {
 
     protected static $mongoDbQueryOperators;
     
+    /**
+     * Document manager
+     * @var DocumentManager 
+     */
     protected $documentManager;
 
     /**
@@ -121,7 +125,8 @@ class Repository {
             $this->hydrator->hydrate($object, $result);
 
             $this->cacheObject($object);
-            $this->objectManager->addObject($object, ObjectManager::OBJ_MANAGED);
+            $this->documentManager->persist($object, $this->collection->getCollectionName());
+            $this->objectManager->setObjectState($object, ObjectManager::OBJ_MANAGED);
             return $object;
         }
 
@@ -150,7 +155,8 @@ class Repository {
             $object = new $this->modelName();
             $this->hydrator->hydrate($object, $datas);
             $this->cacheObject($object);
-            $this->objectManager->addObject($object, ObjectManager::OBJ_MANAGED);
+            $this->documentManager->persist($object, $this->collection->getCollectionName());
+            $this->objectManager->setObjectState($object, ObjectManager::OBJ_MANAGED);
             $objects[] = $object;
         }
 
@@ -179,7 +185,8 @@ class Repository {
             $object = new $this->modelName();
             $this->hydrator->hydrate($object, $datas);
             $this->cacheObject($object);
-            $this->objectManager->addObject($object, ObjectManager::OBJ_MANAGED);
+            $this->documentManager->persist($object, $this->collection->getCollectionName());
+            $this->objectManager->setObjectState($object, ObjectManager::OBJ_MANAGED);
             $objects[] = $object;
         }
 
@@ -207,8 +214,9 @@ class Repository {
         if ($result != null) {
             $object = new $this->modelName();
             $this->hydrator->hydrate($object, $result);
-            $this->objectManager->addObject($object, ObjectManager::OBJ_MANAGED);
             $this->cacheObject($object);
+            $this->documentManager->persist($object, $this->collection->getCollectionName());
+            $this->objectManager->setObjectState($object, ObjectManager::OBJ_MANAGED);
             return $object;
         }
 
