@@ -276,7 +276,8 @@ class DocumentManager {
     public function flush() {
         $removeObjs = $this->objectManager->getObject(ObjectManager::OBJ_REMOVED);
         foreach ($removeObjs as $object) {
-            $this->doRemove($object);
+            $collection = isset($this->objectCollection[spl_object_hash($object)]) ? $this->objectCollection[spl_object_hash($object)] : $this->getRepository(get_class($object))->getCollection()->getCollectionName();
+            $this->doRemove($collection, $object);
         }
 
         $updateObjs = $this->objectManager->getObject(ObjectManager::OBJ_MANAGED);
@@ -399,9 +400,9 @@ class DocumentManager {
         foreach ($this->getModifier(self::UPDATE_STATEMENT_MODIFIER) as $callback) {
             $update = call_user_func($callback, $update, $object);
         }
-        
+
         $hydrator = $rep->getHydrator();
-        
+
         $id = $hydrator->unhydrate($object)["_id"];
 
         if (!empty($update)) {
@@ -418,11 +419,13 @@ class DocumentManager {
      * 
      * @param   mixed       $object     Object to insert
      */
-    private function doRemove($object) {
+    private function doRemove($collection, $object) {
         $rep = $this->getRepository(get_class($object));
         $collection = $rep->getCollection();
+        
+        $id = $rep->getHydrator()->unhydrate($object)["_id"];
 
-        $res = $collection->deleteOne(["_id" => $object->getId()]);
+        $res = $collection->deleteOne(["_id" => $id]);
 
         if ($res->isAcknowledged()) {
             $this->objectManager->removeObject($object);
