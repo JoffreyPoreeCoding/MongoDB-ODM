@@ -356,6 +356,7 @@ class DocumentManager {
                 $id = $bucket->uploadFromStream($filename, $stream, $options);
 
                 $hydrator->hydrate($obj, ["_id" => $id]);
+                $this->objectManager->setObjectState($obj, ObjectManager::OBJ_MANAGED);
                 $this->refresh($obj);
             }
         } else {
