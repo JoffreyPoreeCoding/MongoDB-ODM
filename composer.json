@@ -1,7 +1,7 @@
 {
     "name": "jpc/mongodb-odm",
     "description": "A small MongoDB ODM",
-    "version": "1.0.0-alpha1",
+    "version": "1.0.x-dev",
     "type": "library",
     "keywords" : [
         "MongoDB",

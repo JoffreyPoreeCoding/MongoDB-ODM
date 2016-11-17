@@ -263,13 +263,8 @@ class DocumentManager {
         }
         
         $mongoCollection = $rep->getCollection();
-        
-        dump($rep->getHydrator()->unhydrate($object)["_id"]);
-        dump($mongoCollection);
 
         $datas = (array) $mongoCollection->findOne(["_id" => $rep->getHydrator()->unhydrate($object)["_id"]]);
-        
-        dump($datas);
         
         if ($rep instanceof GridFS\Repository) {
             $datas = $rep->createHytratableResult($datas);
