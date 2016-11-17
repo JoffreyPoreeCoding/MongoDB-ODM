@@ -253,11 +253,24 @@ class DocumentManager {
      * @param   mixed       $object     Object to refresh
      */
     public function refresh(&$object) {
-        $rep = $this->getRepository(get_class($object));
-        $collection = isset($this->objectCollection[spl_object_hash($object)]) ? $this->objectCollection[spl_object_hash($object)] : $rep->getCollection()->getCollectionName();
-        $mongoCollection = $this->mongodatabase->selectCollection($collection);
+        
+        
+        if(isset($this->objectCollection[spl_object_hash($object)])){
+            $collection = $this->objectCollection[spl_object_hash($object)];
+            $rep = $this->getRepository(get_class($object), $collection);
+        } else {
+            $rep = $this->getRepository(get_class($object));
+        }
+        
+        $mongoCollection = $rep->getCollection();
+        
+        dump($rep->getHydrator()->unhydrate($object)["_id"]);
+        dump($mongoCollection);
 
         $datas = (array) $mongoCollection->findOne(["_id" => $rep->getHydrator()->unhydrate($object)["_id"]]);
+        
+        dump($datas);
+        
         if ($rep instanceof GridFS\Repository) {
             $datas = $rep->createHytratableResult($datas);
         }
