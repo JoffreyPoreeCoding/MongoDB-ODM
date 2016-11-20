@@ -61,7 +61,7 @@ class Repository extends BaseRep {
         $result = (array) $this->collection->findOne(["_id" => $id], $options);
 
 
-        if ($result !== null) {
+        if (!empty($result)) {
             $result = $this->createHytratableResult($result);
             $object = new $this->modelName();
             $this->hydrator->hydrate($object, $result);
@@ -100,10 +100,6 @@ class Repository extends BaseRep {
     }
 
     public function findBy($filters, $projections = array(), $sorts = array(), $options = array()) {
-        if (!empty($filter)) {
-            trigger_error("Filters will not work correctly in this version", E_USER_WARNING);
-        }
-
         if (!empty($projections) && isset($projections["_id"]) && !$projections["_id"]) {
             $projections["_id"] = true;
         }
@@ -129,10 +125,6 @@ class Repository extends BaseRep {
     }
 
     public function findOneBy($filters = array(), $projections = array(), $sorts = array(), $options = array()) {
-        if (!empty($filter)) {
-            trigger_error("Filters will not work correctly in this version", E_USER_WARNING);
-        }
-
         if (!empty($projections) && isset($projections["_id"]) && !$projections["_id"]) {
             $projections["_id"] = true;
         }
@@ -143,8 +135,8 @@ class Repository extends BaseRep {
         ]);
 
         $result = (array) $this->collection->findOne($this->castMongoQuery($filters), $options);
-
-        if ($result !== null) {
+        
+        if (!empty($result)) {
             $result = $this->createHytratableResult($result);
             $object = new $this->modelName();
             $this->hydrator->hydrate($object, $result);
@@ -174,6 +166,29 @@ class Repository extends BaseRep {
         $newResult["stream"] = $stream;
 
         return $newResult;
+    }
+    
+    public function castMongoQuery($query, $hydrator = null, $initial = true) {
+        parent::castMongoQuery($query, $hydrator, $initial);
+        
+        foreach ($query as $field => $value){
+            if($field != "file" && $field != "_id"){
+                $query["metadata.$field"] = $value;
+                unset($query[$field]);
+            }
+            if(substr($field, 0, 4) == "file"){
+                $query[substr($field, 5)] = $value;
+            }
+        }
+        
+        if(isset($query["file"])){
+                foreach ($query["file"] as $field => $value) {
+                    $query[$field] = $value;
+                }
+                unset($query["file"]);
+            }
+        
+        return $query;
     }
 
 }
