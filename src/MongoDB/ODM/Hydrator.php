@@ -94,6 +94,14 @@ class Hydrator {
                 }
                 $value = $array;
             }
+            
+            if($value instanceof \DateTime){
+                $value = new \MongoDB\BSON\UTCDateTime($value->getTimestamp() * 1000);
+            }
+            
+            if($value instanceof \MongoDB\Model\BSONDocument){
+                $value = (array) $value;
+            }
 
             $datas[$infos->getField()] = $value;
         }

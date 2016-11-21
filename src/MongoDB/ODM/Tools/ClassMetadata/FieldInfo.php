@@ -7,6 +7,7 @@ class FieldInfo {
     private $embedded = false;
     private $multiEmbedded = false;
     private $embeddedClass;
+    private $metadata = false;
     
     function getField() {
         return $this->field;
@@ -23,7 +24,11 @@ class FieldInfo {
     function getEmbeddedClass() {
         return $this->embeddedClass;
     }
-
+    
+    function getMetadata() {
+        return $this->metadata;
+    }
+    
     function setField($field) {
         $this->field = $field;
         return $this;
@@ -43,6 +48,8 @@ class FieldInfo {
         $this->embeddedClass = $embeddedClass;
         return $this;
     }
-
-
+    
+    function setMetadata($metadata) {
+        $this->metadata = $metadata;
+    }
 }

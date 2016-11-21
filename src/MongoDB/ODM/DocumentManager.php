@@ -130,12 +130,9 @@ class DocumentManager {
 
         $classMetadata = $this->classMetadataFactory->getMetadataForClass($modelName);
 
-        if (isset($collection)) {
-            $classMetadata->setCollection($collection);
-        } else {
+        if (!isset($collection)) {
             $collection = $classMetadata->getCollection();
         }
-
 
         $repClass = $classMetadata->getRepositoryClass();
 
@@ -301,13 +298,18 @@ class DocumentManager {
 
             foreach ($objects as $obj) {
                 $datas = $hydrator->unhydrate($obj);
-
                 $stream = $datas["stream"];
 
                 $options = $datas;
                 unset($options["stream"]);
                 if (isset($datas["_id"]) && $datas["_id"] === null) {
                     unset($options["_id"]);
+                }
+
+                $filename = isset($options["filename"]) && null != $datas["filename"] ? $datas["filename"] : md5(uniqid());
+
+                if (isset($options["filename"])) {
+                    unset($options["filename"]);
                 }
 
                 foreach ($options["metadata"] as $key => $value) {
@@ -320,12 +322,12 @@ class DocumentManager {
                     unset($options["metadata"]);
                 }
 
-                $filename = basename(stream_get_meta_data($stream)["uri"]);
 
                 $id = $bucket->uploadFromStream($filename, $stream, $options);
 
                 $hydrator->hydrate($obj, ["_id" => $id]);
                 $this->refresh($obj);
+                $this->objectManager->setObjectState($obj, ObjectManager::OBJ_MANAGED);
             }
         } else {
             $collection = $rep->getCollection();

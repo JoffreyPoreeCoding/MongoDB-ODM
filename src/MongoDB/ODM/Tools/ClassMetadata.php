@@ -199,6 +199,33 @@ class ClassMetadata {
             case "JPC\MongoDB\ODM\Annotations\Mapping\Id" :
                 $this->propertiesInfos[$name]->setField("_id");
                 break;
+            case "JPC\MongoDB\ODM\Annotations\GridFS\Stream" :
+                $this->propertiesInfos[$name]->setField("stream");
+                break;
+            case "JPC\MongoDB\ODM\Annotations\GridFS\Filename" :
+                $this->propertiesInfos[$name]->setField("filename");
+                break;
+            case "JPC\MongoDB\ODM\Annotations\GridFS\Aliases" :
+                $this->propertiesInfos[$name]->setField("aliases");
+                break;
+            case "JPC\MongoDB\ODM\Annotations\GridFS\ChunkSize" :
+                $this->propertiesInfos[$name]->setField("chunkSize");
+                break;
+            case "JPC\MongoDB\ODM\Annotations\GridFS\UploadDate" :
+                $this->propertiesInfos[$name]->setField("uploadDate");
+                break;
+            case "JPC\MongoDB\ODM\Annotations\GridFS\Length" :
+                $this->propertiesInfos[$name]->setField("length");
+                break;
+            case "JPC\MongoDB\ODM\Annotations\GridFS\ContentType" :
+                $this->propertiesInfos[$name]->setField("contentType");
+                break;
+            case "JPC\MongoDB\ODM\Annotations\GridFS\Md5" :
+                $this->propertiesInfos[$name]->setField("md5");
+                break;
+            case "JPC\MongoDB\ODM\Annotations\GridFS\Metadata" :
+                $this->propertiesInfos[$name]->setMetadata(true);
+                break;
         }
     }
 

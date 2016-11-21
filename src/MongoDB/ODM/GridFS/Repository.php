@@ -28,12 +28,6 @@ class Repository extends BaseRep {
 
     public function __construct(DocumentManager $documentManager, ObjectManager $objectManager, $classMetadata, $collection) {
         $this->bucket = $documentManager->getMongoDBDatabase()->selectGridFSBucket(['bucketName' => $collection]);
-        if (!isset(self::$mongoDbQueryOperators)) {
-            $callBack = [$this, 'aggregOnMongoDbOperators'];
-            self::$mongoDbQueryOperators = [
-                '$gt' => $callBack, '$lt' => $callBack, '$gte' => $callBack, '$lte' => $callBack, '$eq' => $callBack, '$ne' => $callBack, '$in' => $callBack, '$nin' => $callBack
-            ];
-        }
 
         $this->documentManager = $documentManager;
         $this->modelName = $classMetadata->getName();
@@ -148,18 +142,14 @@ class Repository extends BaseRep {
     }
 
     public function createHytratableResult($result) {
-        $newResult = ["_id" => $result["_id"]];
-        $newResult["file"] = [];
-        foreach ($result as $name => $value) {
-            if ($name != "_id" && $name != "metadata") {
-                $newResult["file"][$name] = $value;
-            }
-        }
-
+        $newResult = $result;
+        
         if (isset($result["metadata"])) {
             foreach ($result["metadata"] as $key => $value) {
                 $newResult[$key] = $value;
             }
+            
+            unset($newResult["metadata"]);
         }
 
         $stream = $this->bucket->openDownloadStream($result["_id"]);

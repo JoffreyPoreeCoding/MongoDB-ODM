@@ -19,10 +19,51 @@ class Document {
  * @Annotation
  * @Target("PROPERTY")
  */
-class FileInfos {}
+class Filename {}
+
+/**
+ * @Annotation
+ * @Target("PROPERTY")
+ */
+class Aliases {}
+/**
+ * @Annotation
+ * @Target("PROPERTY")
+ */
+class ChunkSize {}
+
+/**
+ * @Annotation
+ * @Target("PROPERTY")
+ */
+class UploadDate {}
+
+/**
+ * @Annotation
+ * @Target("PROPERTY")
+ */
+class Length {}
+
+/**
+ * @Annotation
+ * @Target("PROPERTY")
+ */
+class ContentType {}
+
+/**
+ * @Annotation
+ * @Target("PROPERTY")
+ */
+class Md5 {}
 
 /**
  * @Annotation
  * @Target("PROPERTY")
  */
 class Stream {}
+
+/**
+ * @Annotation
+ * @Target("PROPERTY")
+ */
+class Metadata {}

@@ -20,7 +20,6 @@ class QueryCaster {
      * @var array<string>
      */
     protected static $mongoDbQueryOperators;
-    
     private $query;
     private $castedQuery;
     private $initialMetadata;
@@ -55,6 +54,14 @@ class QueryCaster {
             if (is_array($value)) {
                 if (false !== ($fieldInfos = $classMetadata->getPropertyInfoForField($field)) && $fieldInfos->getEmbedded()) {
                     $value = $this->castArray($value, $this->lastUsedMetadata);
+                }
+
+                if (false !== ($fieldInfos = $classMetadata->getPropertyInfoForField($field)) && $fieldInfos->getMultiEmbedded()) {
+                    $newValue = [];
+                    foreach ($value as $v) {
+                        $newValue[] = $this->castArray($v, $this->lastUsedMetadata);
+                    }
+                    $value = $newValue;
                 }
             }
 
