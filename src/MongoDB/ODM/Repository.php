@@ -15,16 +15,16 @@ use Doctrine\Common\Cache\ArrayCache;
 class Repository {
 
     /**
-     * Contain all of MongoDD Operators
-     * @var array<string>
-     */
-    protected static $mongoDbQueryOperators;
-    
-    /**
      * Document manager
-     * @var DocumentManager 
+     * @var DocumentManager
      */
     protected $documentManager;
+
+    /**
+     * Class metadatas
+     * @var ClassMetadata
+     */
+    protected $classMetadata;
 
     /**
      * Hydrator of model
@@ -56,14 +56,8 @@ class Repository {
      * @param   Tools\ClassMetadata     $classMetadata      Metadata of managed class
      */
     public function __construct(DocumentManager $documentManager, ObjectManager $objectManager, ClassMetadata $classMetadata, $collection) {
-        if (!isset(self::$mongoDbQueryOperators)) {
-            $callBack = [$this, 'aggregOnMongoDbOperators'];
-            self::$mongoDbQueryOperators = [
-                '$gt' => $callBack, '$lt' => $callBack, '$gte' => $callBack, '$lte' => $callBack, '$eq' => $callBack, '$ne' => $callBack, '$in' => $callBack, '$nin' => $callBack
-            ];
-        }
-
         $this->documentManager = $documentManager;
+        $this->classMetadata = $classMetadata;
         $this->modelName = $classMetadata->getName();
         $this->hydrator = Hydrator::getInstance($this->modelName . spl_object_hash($documentManager), $documentManager, $classMetadata);
         $this->createCollection($collection, $classMetadata);
@@ -74,13 +68,17 @@ class Repository {
     }
 
     private function getCollectionOptions(ClassMetadata $classMetadata) {
-        $collOptionAnnot = $classMetadata->getClassAnnotation("JPC\MongoDB\ODM\Annotations\Mapping\Option");
+//        $collOptionAnnot = $classMetadata->getClassAnnotation("JPC\MongoDB\ODM\Annotations\Mapping\Option");
         $options = [];
-        if (isset($collOptionAnnot->writeConcern)) {
-            $options["writeConcern"] = $collOptionAnnot->writeConcern->getWriteConcern();
-        }
-        
+//        if (isset($collOptionAnnot->writeConcern)) {
+//            $options["writeConcern"] = $collOptionAnnot->writeConcern->getWriteConcern();
+//        }
+
         return $options;
+    }
+
+    public function getCollection() {
+        return $this->collection;
     }
 
     /**
@@ -122,7 +120,7 @@ class Repository {
      * @return  int                                         Number of corresponding documents
      */
     public function count($filters = [], $options = []) {
-        return $this->collection->count($this->castMongoQuery($filters), $options);
+        return $this->collection->count($this->castQuery($filters), $options);
     }
 
     /**
@@ -135,7 +133,7 @@ class Repository {
      */
     public function find($id, $projections = [], $options = []) {
         $options = array_merge($options, [
-            "projection" => $this->castMongoQuery($projections)
+            "projection" => $this->castQuery($projections)
         ]);
 
         $result = $this->collection->findOne(["_id" => $id], $options);
@@ -145,8 +143,7 @@ class Repository {
             $this->hydrator->hydrate($object, $result);
 
             $this->cacheObject($object);
-            $this->documentManager->persist($object, $this->collection->getCollectionName());
-            $this->objectManager->setObjectState($object, ObjectManager::OBJ_MANAGED);
+            $this->objectManager->addObject($object, ObjectManager::OBJ_MANAGED);
             return $object;
         }
 
@@ -163,8 +160,8 @@ class Repository {
      */
     public function findAll($projections = [], $sorts = [], $options = []) {
         $options = array_merge($options, [
-            "projection" => $this->castMongoQuery($projections),
-            "sort" => $this->castMongoQuery($sorts)
+            "projection" => $this->castQuery($projections),
+            "sort" => $this->castQuery($sorts)
         ]);
 
         $result = $this->collection->find([], $options);
@@ -175,8 +172,7 @@ class Repository {
             $object = new $this->modelName();
             $this->hydrator->hydrate($object, $datas);
             $this->cacheObject($object);
-            $this->documentManager->persist($object, $this->collection->getCollectionName());
-            $this->objectManager->setObjectState($object, ObjectManager::OBJ_MANAGED);
+            $this->objectManager->addObject($object, ObjectManager::OBJ_MANAGED);
             $objects[] = $object;
         }
 
@@ -194,19 +190,18 @@ class Repository {
      */
     public function findBy($filters, $projections = [], $sorts = [], $options = []) {
         $options = array_merge($options, [
-            "projection" => $this->castMongoQuery($projections),
-            "sort" => $this->castMongoQuery($sorts)
+            "projection" => $this->castQuery($projections),
+            "sort" => $this->castQuery($sorts)
         ]);
 
-        $result = $this->collection->find($this->castMongoQuery($filters), $options);
+        $result = $this->collection->find($this->castQuery($filters), $options);
         $objects = [];
 
         foreach ($result as $datas) {
             $object = new $this->modelName();
             $this->hydrator->hydrate($object, $datas);
             $this->cacheObject($object);
-            $this->documentManager->persist($object, $this->collection->getCollectionName());
-            $this->objectManager->setObjectState($object, ObjectManager::OBJ_MANAGED);
+            $this->objectManager->addObject($object, ObjectManager::OBJ_MANAGED);
             $objects[] = $object;
         }
 
@@ -225,18 +220,17 @@ class Repository {
     public function findOneBy($filters = [], $projections = [], $sorts = [], $options = []) {
 
         $options = array_merge($options, [
-            "projection" => $this->castMongoQuery($projections),
-            "sort" => $this->castMongoQuery($sorts)
+            "projection" => $this->castQuery($projections),
+            "sort" => $this->castQuery($sorts)
         ]);
 
-        $result = $this->collection->findOne($this->castMongoQuery($filters), $options);
+        $result = $this->collection->findOne($this->castQuery($filters), $options);
 
         if ($result != null) {
             $object = new $this->modelName();
             $this->hydrator->hydrate($object, $result);
+            $this->objectManager->addObject($object, ObjectManager::OBJ_MANAGED);
             $this->cacheObject($object);
-            $this->documentManager->persist($object, $this->collection->getCollectionName());
-            $this->objectManager->setObjectState($object, ObjectManager::OBJ_MANAGED);
             return $object;
         }
 
@@ -246,13 +240,13 @@ class Repository {
     public function getTailableCursor($filters = [], $options = []) {
         $options['cursorType'] = \MongoDB\Operation\Find::TAILABLE_AWAIT;
 
-        return $this->collection->find($this->castMongoQuery($filters), $options);
+        return $this->collection->find($this->castQuery($filters), $options);
     }
 
     public function distinct($fieldName, $filters = [], $options = []) {
         $field = $this->hydrator->getFieldNameFor($fieldName);
 
-        $result = $this->collection->distinct($field, $this->castMongoQuery($filters), $options);
+        $result = $this->collection->distinct($field, $this->castQuery($filters), $options);
         return $result;
     }
 
@@ -265,28 +259,10 @@ class Repository {
             return false;
         }
     }
-
-    public function castMongoQuery($query, $hydrator = null, $initial = true) {
-        if (!isset($hydrator)) {
-            $hydrator = $this->hydrator;
-        }
-        $new_query = [];
-        foreach ($query as $name => $value) {
-            $field = $hydrator->getFieldNameFor($name);
-            $realfield = explode(".", $field, 2)[0];
-            $prop = $hydrator->getPropNameFor($realfield);
-            if (is_array($value) && false != ($embName = $hydrator->isEmbedded($prop))) {
-                $hydrator = $this->hydrator->getHydratorForField($field);
-                $value = $this->castMongoQuery($value, $hydrator, false);
-            }
-            $new_query[$field] = $value;
-
-            if ($initial) {
-                $new_query = Tools\ArrayModifier::aggregate($new_query, self::$mongoDbQueryOperators);
-            }
-        }
-
-        return $new_query;
+    
+    private function castQuery($query){
+        $qc = new Tools\QueryCaster($query, $this->classMetadata);
+        return $qc->getCastedQuery();
     }
 
     public function cacheObject($object) {
@@ -366,16 +342,4 @@ class Repository {
 
         return $changes;
     }
-
-    public function getCollection() {
-        return $this->collection;
-    }
-
-    public function aggregOnMongoDbOperators($prefix, $key, $value, $new) {
-        !isset($new[$prefix]) ? $new[$prefix] = [] : null;
-        $new[$prefix] += [$key => $value];
-
-        return $new;
-    }
-
 }

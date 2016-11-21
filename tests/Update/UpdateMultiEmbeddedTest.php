@@ -20,7 +20,6 @@ class UpdateMultiEmbeddedTest extends PHPUnit_Framework_TestCase {
 
     public function __construct() {
        $this->dm = new DocumentManager("mongodb://localhost", "jpc_mongodb_phpunit");
-        $this->dm->addModelPath("globals", __DIR__ . "/../models/");
 
         $this->rep = $this->dm->getRepository("MultiEmbeddedDocument");
     }
