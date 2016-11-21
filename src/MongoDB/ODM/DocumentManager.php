@@ -29,12 +29,6 @@ class DocumentManager {
     /* ================================== */
 
     /**
-     * Contain all models paths
-     * @var array
-     */
-    private $modelPaths = [];
-
-    /**
      * MongoDB Connection
      * @var MongoClient
      */
@@ -100,16 +94,6 @@ class DocumentManager {
     }
 
     /**
-     * Add model path (Diroctory that contain models)
-     * 
-     * @param string        $identifier Name for the path
-     * @param string        $path       Path to folder
-     */
-    public function addModelPath($identifier, $path) {
-        $this->modelPaths[$identifier] = $path;
-    }
-
-    /**
      * Allow to get MongoDB client
      * 
      * @return  MongoClient MongoDB Client
@@ -144,30 +128,15 @@ class DocumentManager {
             return $this->repositories[$repIndex];
         }
 
-        $rep = "\JPC\MongoDB\ODM\Repository";
-        foreach ($this->modelPaths as $modelPath) {
-            if (file_exists($modelPath . "/" . str_replace("\\", "/", $modelName) . ".php")) {
-                require_once $modelPath . "/" . str_replace("\\", "/", $modelName) . ".php";
-            }
-        }
-        if (class_exists($modelName)) {
-            $classMeta = $this->classMetadataFactory->getMetadataForClass($modelName);
-            if ($classMeta->hasClassAnnotation("JPC\MongoDB\ODM\Annotations\Mapping\Document")) {
-                $docAnnotation = $classMeta->getClassAnnotation("JPC\MongoDB\ODM\Annotations\Mapping\Document");
-                $rep = isset($docAnnotation->repositoryClass) ? $docAnnotation->repositoryClass : $rep;
-                $collection = isset($collection) ? $collection : $docAnnotation->collectionName;
-            } else if ($classMeta->hasClassAnnotation("JPC\MongoDB\ODM\Annotations\GridFS\Document")) {
-                $docAnnotation = $classMeta->getClassAnnotation("JPC\MongoDB\ODM\Annotations\GridFS\Document");
-                $rep = isset($docAnnotation->repositoryClass) ? $docAnnotation->repositoryClass : "JPC\MongoDB\ODM\GridFS\Repository";
-                $collection = isset($collection) ? $collection : $docAnnotation->bucketName;
-            } else {
-                throw new Exception\AnnotationException("Model '$modelName' need to have 'Document' annotation.");
-            }
-        } else {
-            throw new ModelNotFoundException("Unable to found class '$modelName'");
+        $classMetadata = $this->classMetadataFactory->getMetadataForClass($modelName);
+
+        if (!isset($collection)) {
+            $collection = $classMetadata->getCollection();
         }
 
-        $this->repositories[$repIndex] = new $rep($this, $this->objectManager, $classMeta, $collection);
+        $repClass = $classMetadata->getRepositoryClass();
+
+        $this->repositories[$repIndex] = new $repClass($this, $this->objectManager, $classMetadata, $collection);
 
         return $this->repositories[$repIndex];
     }
@@ -253,19 +222,11 @@ class DocumentManager {
      * @param   mixed       $object     Object to refresh
      */
     public function refresh(&$object) {
-        
-        
-        if(isset($this->objectCollection[spl_object_hash($object)])){
-            $collection = $this->objectCollection[spl_object_hash($object)];
-            $rep = $this->getRepository(get_class($object), $collection);
-        } else {
-            $rep = $this->getRepository(get_class($object));
-        }
-        
-        $mongoCollection = $rep->getCollection();
+        $rep = $this->getRepository(get_class($object));
+        $collection = isset($this->objectCollection[spl_object_hash($object)]) ? $this->objectCollection[spl_object_hash($object)] : $rep->getCollection()->getCollectionName();
+        $mongoCollection = $this->mongodatabase->selectCollection($collection);
 
         $datas = (array) $mongoCollection->findOne(["_id" => $rep->getHydrator()->unhydrate($object)["_id"]]);
-        
         if ($rep instanceof GridFS\Repository) {
             $datas = $rep->createHytratableResult($datas);
         }
@@ -284,15 +245,12 @@ class DocumentManager {
     public function flush() {
         $removeObjs = $this->objectManager->getObject(ObjectManager::OBJ_REMOVED);
         foreach ($removeObjs as $object) {
-            $collection = isset($this->objectCollection[spl_object_hash($object)]) ? $this->objectCollection[spl_object_hash($object)] : $this->getRepository(get_class($object))->getCollection()->getCollectionName();
-            $this->doRemove($collection, $object);
+            $this->doRemove($object);
         }
 
         $updateObjs = $this->objectManager->getObject(ObjectManager::OBJ_MANAGED);
-
         foreach ($updateObjs as $object) {
-            $collection = isset($this->objectCollection[spl_object_hash($object)]) ? $this->objectCollection[spl_object_hash($object)] : $this->getRepository(get_class($object))->getCollection()->getCollectionName();
-            $this->update($collection, $object);
+            $this->update($object);
         }
 
         $newObjs = $this->objectManager->getObject(ObjectManager::OBJ_NEW);
@@ -340,13 +298,18 @@ class DocumentManager {
 
             foreach ($objects as $obj) {
                 $datas = $hydrator->unhydrate($obj);
-
                 $stream = $datas["stream"];
 
                 $options = $datas;
                 unset($options["stream"]);
                 if (isset($datas["_id"]) && $datas["_id"] === null) {
                     unset($options["_id"]);
+                }
+
+                $filename = isset($options["filename"]) && null != $datas["filename"] ? $datas["filename"] : md5(uniqid());
+
+                if (isset($options["filename"])) {
+                    unset($options["filename"]);
                 }
 
                 foreach ($options["metadata"] as $key => $value) {
@@ -359,13 +322,12 @@ class DocumentManager {
                     unset($options["metadata"]);
                 }
 
-                $filename = basename(stream_get_meta_data($stream)["uri"]);
 
                 $id = $bucket->uploadFromStream($filename, $stream, $options);
 
                 $hydrator->hydrate($obj, ["_id" => $id]);
-                $this->objectManager->setObjectState($obj, ObjectManager::OBJ_MANAGED);
                 $this->refresh($obj);
+                $this->objectManager->setObjectState($obj, ObjectManager::OBJ_MANAGED);
             }
         } else {
             $collection = $rep->getCollection();
@@ -399,8 +361,8 @@ class DocumentManager {
      * 
      * @param   mixed       $object     Object to update
      */
-    private function update($collection, $object) {
-        $rep = $this->getRepository(get_class($object), $collection);
+    private function update($object) {
+        $rep = $this->getRepository(get_class($object));
         $collection = $rep->getCollection();
 
         $diffs = $rep->getObjectChanges($object);
@@ -410,12 +372,8 @@ class DocumentManager {
             $update = call_user_func($callback, $update, $object);
         }
 
-        $hydrator = $rep->getHydrator();
-
-        $id = $hydrator->unhydrate($object)["_id"];
-
         if (!empty($update)) {
-            $res = $collection->updateOne(["_id" => $id], $update);
+            $res = $collection->updateOne(["_id" => $object->getId()], $update);
             if ($res->isAcknowledged()) {
                 $this->refresh($object);
                 $rep->cacheObject($object);
@@ -428,13 +386,11 @@ class DocumentManager {
      * 
      * @param   mixed       $object     Object to insert
      */
-    private function doRemove($collection, $object) {
-        $rep = $this->getRepository(get_class($object), $collection);
+    private function doRemove($object) {
+        $rep = $this->getRepository(get_class($object));
         $collection = $rep->getCollection();
-        
-        $id = $rep->getHydrator()->unhydrate($object)["_id"];
 
-        $res = $collection->deleteOne(["_id" => $id]);
+        $res = $collection->deleteOne(["_id" => $object->getId()]);
 
         if ($res->isAcknowledged()) {
             $this->objectManager->removeObject($object);

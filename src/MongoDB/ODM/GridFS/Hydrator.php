@@ -17,61 +17,18 @@ use JPC\MongoDB\ODM\Hydrator as BaseHydrator;
  */
 class Hydrator extends BaseHydrator {
 
-    public function hydrate(&$object, $datas) {
-        if (isset($datas["file"])) {
-            $field = key($this->classMetadata->getPropertyWithAnnotation("JPC\MongoDB\ODM\Annotations\GridFS\FileInfos"));
-            $prop = $this->classMetadata->getProperty($field);
-            $prop->setAccessible(true);
-
-            $prop->setValue($object, $this->convertEmbedded($datas["file"], "JPC\MongoDB\ODM\GridFS\FileInfos"));
-            unset($datas["file"]);
-        }
-
-        if (isset($datas["stream"])) {
-            $field = key($this->classMetadata->getPropertyWithAnnotation("JPC\MongoDB\ODM\Annotations\GridFS\Stream"));
-            $prop = $this->classMetadata->getProperty($field);
-            $prop->setAccessible(true);
-            
-
-            $prop->setValue($object, $datas["stream"]);
-            unset($datas["stream"]);
-        }
-        parent::hydrate($object, $datas);
-    }
-
     public function unhydrate($object) {
         $datas = parent::unhydrate($object);
+        
+        $properties = $this->classMetadata->getPropertiesInfos();
 
-        foreach ($datas as $key => $value) {
-            if ($key != "_id" || $value == null) {
-                unset($datas[$key]);
-                $datas["metadata"][$key] = $value;
+        foreach ($properties as $name => $infos) {
+            if($infos->getMetadata()){
+                if(isset($datas[$name])){
+                    $datas["metadata"][$name] = $datas[$name];
+                    unset($datas[$name]);
+                }
             }
-        }
-
-        if (false !== ($file = $this->classMetadata->getPropertyWithAnnotation("JPC\MongoDB\ODM\Annotations\GridFS\FileInfos"))) {
-            $field = key($file);
-            $prop = $this->classMetadata->getProperty($field);
-            $prop->setAccessible(true);
-            $value = $prop->getValue($object);
-
-            if (is_a($value, "JPC\MongoDB\ODM\GridFS\FileInfos")) {
-                $hydrator = $this->getHydratorForEmbedded("JPC\MongoDB\ODM\GridFS\FileInfos");
-                $value = $hydrator->unhydrate($value);
-            }
-
-            if ($value != null && is_array($value)) {
-                $datas += $value;
-            }
-        }
-
-        if (false !== ($file = $this->classMetadata->getPropertyWithAnnotation("JPC\MongoDB\ODM\Annotations\GridFS\Stream"))) {
-            $field = key($file);
-            $prop = $this->classMetadata->getProperty($field);
-            $prop->setAccessible(true);
-            $value = $prop->getValue($object);
-
-            $datas["stream"] = $value;
         }
 
         return $datas;

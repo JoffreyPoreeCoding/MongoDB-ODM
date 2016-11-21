@@ -2,291 +2,121 @@
 
 namespace JPC\MongoDB\ODM;
 
-/**
- * Description of Hydrator
- *
- * @author poree
- */
+use JPC\MongoDB\ODM\DocumentManager;
+use JPC\MongoDB\ODM\Tools\ClassMetadata;
+
 class Hydrator {
 
     use \JPC\DesignPattern\Multiton;
 
+    /**
+     * Document Manager
+     * @var DocumentManager
+     */
     protected $documentManager;
 
     /**
-     * Annotation Reader
-     * @var Tools\ClassMetadata
+     * Class metadatas
+     * @var ClassMetadata
      */
     protected $classMetadata;
 
     /**
-     * Reflection classes of embedded documents
-     * @var array
+     * Create new Hydrator
+     * @param   DocumentManager     $documentManager    Document manager of the repository
+     * @param   ClassMetadata       $classMetadata      Class metadata corresponding to class
      */
-    protected $embeddedReflectionClasses = [];
-
-    /**
-     * Properties infos
-     * @var array
-     */
-    protected $propertiesInfos = [];
-
-    /**
-     * Field mapping with mongo field as key and property name as value
-     * @var array
-     */
-    protected $fieldMapping = [];
-
-    function __construct(DocumentManager $documentManager, Tools\ClassMetadata $classMetadata) {
+    function __construct(DocumentManager $documentManager, ClassMetadata $classMetadata) {
         $this->documentManager = $documentManager;
         $this->classMetadata = $classMetadata;
     }
 
+    /**
+     * Hydrate on object
+     * @param   object              $object             Object to hydrate
+     * @param   array               $datas              Data which will hydrate the object
+     */
     function hydrate(&$object, $datas) {
-        $propertiesAnnotations = $this->classMetadata->getProperties();
+        if($datas instanceof \MongoDB\Model\BSONArray || $datas instanceof \MongoDB\Model\BSONDocument){
+            $datas = (array) $datas;
+        }
+        $properties = $this->classMetadata->getPropertiesInfos();
 
-        if (isset($datas["_id"])) {
-            $field = $this->classMetadata->getPropertyWithAnnotation("JPC\MongoDB\ODM\Annotations\Mapping\Id");
-
-            if (is_array($field)) {
-                $field = key($field);
-
-                $prop = $this->classMetadata->getProperty($field);
+        foreach ($properties as $name => $infos) {
+            if (null !== ($field = $infos->getField()) && is_array($datas) && array_key_exists($field, $datas) && $datas[$field] !== null) {
+                $prop = new \ReflectionProperty($this->classMetadata->getName(), $name);
                 $prop->setAccessible(true);
 
-                $prop->setValue($object, $datas["_id"]);
-                unset($datas["_id"]);
-            }
-        }
-
-        foreach ($propertiesAnnotations as $name => $propertyAnnotations) {
-            $prop = $this->classMetadata->getProperty($name);
-            $prop->setAccessible(true);
-            $value = null;
-
-            if (!($modifiers = $this->documentManager->getModifier(DocumentManager::HYDRATE_CONVERTION_MODIFIER))) {
-                $modifiers = [];
-            }
-
-            $fieldInfos = $this->getPropertyInfos($name);
-            if (isset($fieldInfos["field"]) && isset($datas[$fieldInfos["field"]])) {
-                if (isset($fieldInfos["embedded"])) {
-                    $datas[$fieldInfos["field"]] = $this->convertEmbedded($datas[$fieldInfos["field"]], $fieldInfos["embedded"]);
+                if (($datas[$field] instanceof \MongoDB\Model\BSONDocument) && $infos->getEmbedded() && null !== ($class = $infos->getEmbeddedClass())) {
+                    $embedded = new $class();
+                    $this->getHydrator($class)->hydrate($embedded, $datas[$field]);
+                    $datas[$field] = $embedded;
                 }
 
-                if (isset($fieldInfos["multiEmbedded"])) {
-                    $datas[$fieldInfos["field"]] = $this->convertEmbeddeds($datas[$fieldInfos["field"]], $fieldInfos["multiEmbedded"]);
+                if (($datas[$field] instanceof \MongoDB\Model\BSONArray) && $infos->getMultiEmbedded() && null !== ($class = $infos->getEmbeddedClass())) {
+                    $array = [];
+                    foreach ($datas[$field] as $value) {
+                        if($value === null) continue;
+                        $embedded = new $class();
+                        $this->getHydrator($class)->hydrate($embedded, $value);
+                        $array[] = $embedded;
+                    }
+                    $datas[$field] = $array;
                 }
-
-                foreach ($modifiers as $mod) {
-                    $datas[$fieldInfos["field"]] = call_user_func($mod, $datas[$fieldInfos["field"]]);
-                }
-
-                $prop->setValue($object, $datas[$fieldInfos["field"]]);
+                $prop->setValue($object, $datas[$field]);
             }
         }
     }
 
-    public function unhydrate($object) {
+    /**
+     * Unhydrate an object
+     * @param   object              $object             Object to unhydrate
+     * @return  array               Unhydrated Object
+     */
+    function unhydrate($object) {
+        $properties = $this->classMetadata->getPropertiesInfos();
         $datas = [];
 
-        if (!is_object($object)) {
-            return [];
-        }
-
-        $properties = $this->classMetadata->getProperties();
-
-        if (false !== ($file = $this->classMetadata->getPropertyWithAnnotation("JPC\MongoDB\ODM\Annotations\Mapping\Id"))) {
-            $field = key($file);
-            $prop = $this->classMetadata->getProperty($field);
+        foreach ($properties as $name => $infos) {
+            $prop = new \ReflectionProperty($this->classMetadata->getName(), $name);
             $prop->setAccessible(true);
+
             $value = $prop->getValue($object);
 
-            $datas["_id"] = $value;
-        }
-
-        foreach ($properties as $name => $property) {
-            $value = null;
-
-            if ($this->classMetadata->hasPropertyAnnotation($name, "JPC\MongoDB\ODM\Annotations\Mapping\Field")) {
-                $prop = $this->classMetadata->getProperty($name);
-                $prop->setAccessible(true);
-                $value = $prop->getValue($object);
-
-                if (is_object($value) && $this->classMetadata->hasPropertyAnnotation($name, "JPC\MongoDB\ODM\Annotations\Mapping\EmbeddedDocument")) {
-                    $embeddedClass = $this->classMetadata->getPropertyAnnotation($name, "JPC\MongoDB\ODM\Annotations\Mapping\EmbeddedDocument")->document;
-                    $hydrator = $this->getHydratorForEmbedded($embeddedClass);
-                    $value = $hydrator->unhydrate($value);
-                }
-
-                if (is_array($value) && $this->classMetadata->hasPropertyAnnotation($name, "JPC\MongoDB\ODM\Annotations\Mapping\MultiEmbeddedDocument")) {
-                    $hydrator = $this->getHydratorForEmbedded($this->classMetadata->getPropertyAnnotation($name, "JPC\MongoDB\ODM\Annotations\Mapping\MultiEmbeddedDocument")->document);
-                    $realValue = [];
-                    foreach ($value as $embedded) {
-                        $realValue[] = $hydrator->unhydrate($embedded);
-                    }
-                    $value = $realValue;
-                }
-
-                if (is_a($value, "MongoDB\Model\BSONArray") || is_a($value, "MongoDB\Model\BSONDocument")) {
-                    $this->BSONToPHP($value);
-                }
-
-                if (is_a($value, "\DateTime")) {
-                    $value = new \MongoDB\BSON\UTCDateTime($value->getTimestamp() * 1000);
-                }
+            if (is_object($value) && $infos->getEmbedded()) {
+                $value = $this->getHydrator($infos->getEmbeddedClass())->unhydrate($value);
             }
 
-
-            if ($this->classMetadata->hasPropertyAnnotation($name, "JPC\MongoDB\ODM\Annotations\Mapping\Field")) {
-                $datas[$this->classMetadata->getPropertyAnnotation($name, "JPC\MongoDB\ODM\Annotations\Mapping\Field")->name] = $value;
+            if (is_array($value) && $infos->getMultiEmbedded()) {
+                $array = [];
+                foreach ($value as $embeddedValue) {
+                    $array[] = $this->getHydrator($infos->getEmbeddedClass())->unhydrate($embeddedValue);
+                }
+                $value = $array;
             }
-        }
+            
+            if($value instanceof \DateTime){
+                $value = new \MongoDB\BSON\UTCDateTime($value->getTimestamp() * 1000);
+            }
+            
+            if($value instanceof \MongoDB\Model\BSONDocument){
+                $value = (array) $value;
+            }
 
+            $datas[$infos->getField()] = $value;
+        }
 
         return $datas;
     }
 
-    protected function BSONToPHP(&$datas) {
-        if (!is_array($datas)) {
-            $datas = (array) $datas;
-        }
-
-        foreach ($datas as &$value) {
-            if (is_a($value, "MongoDB\Model\BSONArray") || is_a($value, "MongoDB\Model\BSONDocument")) {
-                $value = (array) $value;
-                $this->BSONToPHP($value);
-            }
-        }
-    }
-
-    protected function getPropertyInfos($name) {
-        if (!isset($this->propertiesInfos[$name])) {
-            $this->propertiesInfos[$name] = [];
-            if ($this->classMetadata->hasPropertyAnnotation($name, "JPC\MongoDB\ODM\Annotations\Mapping\Field")) {
-                $this->propertiesInfos[$name]["field"] = $this->classMetadata->getPropertyAnnotation($name, "JPC\MongoDB\ODM\Annotations\Mapping\Field")->name;
-                $this->fieldMapping[$this->propertiesInfos[$name]["field"]] = $name;
-                if ($this->classMetadata->hasPropertyAnnotation($name, "JPC\MongoDB\ODM\Annotations\Mapping\EmbeddedDocument")) {
-                    $this->propertiesInfos[$name]["embedded"] = $this->classMetadata->getPropertyAnnotation($name, "JPC\MongoDB\ODM\Annotations\Mapping\EmbeddedDocument")->document;
-                }
-                if ($this->classMetadata->hasPropertyAnnotation($name, "JPC\MongoDB\ODM\Annotations\Mapping\MultiEmbeddedDocument")) {
-                    $this->propertiesInfos[$name]["multiEmbedded"] = $this->classMetadata->getPropertyAnnotation($name, "JPC\MongoDB\ODM\Annotations\Mapping\MultiEmbeddedDocument")->document;
-                }
-            }
-            if ($this->classMetadata->hasPropertyAnnotation($name, "JPC\MongoDB\ODM\Annotations\Mapping\Id")) {
-                $this->propertiesInfos[$name]["field"] = "_id";
-                $this->fieldMapping["_id"] = $name;
-            }
-        }
-
-        return $this->propertiesInfos[$name];
-    }
-
-    public function getFieldNameFor($name) {
-        if (strstr($name, ".")) {
-            list($name, $embeddedName) = explode(".", $name, 2);
-        }
-
-
-        if (!isset($this->fieldMapping[$name])) {
-            if (false != ($realName = $this->searchFieldForName($name))) {
-                $name = $realName;
-            }
-        }
-
-        if (!isset($this->fieldMapping[$name])) {
-            throw new Exception\MappingException("Unable to map '$name' with any MongoDB document field.");
-        }
-
-        if (isset($embeddedName) && null != ($propInfos = $this->propertiesInfos[$this->fieldMapping[$name]])) {
-            if (isset($propInfos["embedded"])) {
-                $name .= "." . $this->getHydratorForEmbedded($propInfos["embedded"])->getFieldNameFor($embeddedName);
-            } else if (isset($propInfos["multiEmbedded"])) {
-                $name .= "." . $this->getHydratorForEmbedded($propInfos["multiEmbedded"])->getFieldNameFor($embeddedName);
-            } else {
-                return $name . "." . $embeddedName;
-            }
-        }
-
-        return $name;
-    }
-
-    public function getPropNameFor($field) {
-        if (!isset($this->fieldMapping[$field])) {
-            $properties = $this->classMetadata->getProperties();
-            foreach (array_keys($properties) as $name) {
-                $this->getPropertyInfos($name);
-            }
-        }
-
-        return $this->fieldMapping[$field];
-    }
-
-    public function getEmbeddedClassFor($field) {
-        if (!isset($this->fieldMapping[$field])) {
-            throw new \Exception();
-        } else {
-            $field = $this->fieldMapping[$field];
-            $embedded = isset($this->propertiesInfos[$field]["embedded"]) ? $this->propertiesInfos[$field]["embedded"] : false;
-            $embedded = isset($this->propertiesInfos[$field]["multiEmbedded"]) && !$embedded ? $this->propertiesInfos[$field]["multiEmbedded"] : $embedded;
-            return $embedded;
-        }
-    }
-
-    protected function searchFieldForName($name) {
-        $propertiesNames = array_keys($this->classMetadata->getProperties());
-
-        if (in_array($name, $propertiesNames)) {
-            $datas = $this->getPropertyInfos($name);
-            return isset($datas["field"]) ? $datas["field"] : null;
-        } else {
-            foreach ($propertiesNames as $propName) {
-                $this->getPropertyInfos($propName);
-            }
-        }
-
-        return false;
-    }
-
-    protected function convertEmbedded($value, $embeddedDocument) {
-        $object = new $embeddedDocument();
-
-        if (!isset($this->embeddedReflectionClasses[$embeddedDocument])) {
-            $this->embeddedReflectionClasses[$embeddedDocument] = new \ReflectionClass($embeddedDocument);
-        }
-
-        $hydrator = $this->getHydratorForEmbedded($embeddedDocument);
-
-        $hydrator->hydrate($object, $value);
-
-        return $object;
-    }
-
-    protected function convertEmbeddeds($value, $embeddedDocument) {
-        $embeddeds = [];
-        foreach ($value as $embedded) {
-            $embeddeds[] = $this->convertEmbedded($embedded, $embeddedDocument);
-        }
-
-        return $embeddeds;
-    }
-
-    public function getHydratorForField($field) {
-        $emb = $this->getEmbeddedClassFor($field);
-        return $this->getHydratorForEmbedded($emb);
-    }
-
-    protected function getHydratorForEmbedded($embeddedClass) {
-        if (!$embeddedClass) {
-            return false;
-        }
-        return Hydrator::getInstance($embeddedClass . spl_object_hash($this->documentManager), $this->documentManager, Tools\ClassMetadataFactory::getInstance()->getMetadataForClass($embeddedClass));
-    }
-
-    public function isEmbedded($field) {
-        $embedded = isset($this->propertiesInfos[$field]["embedded"]) ? $this->propertiesInfos[$field]["embedded"] : false;
-        $embedded = isset($this->propertiesInfos[$field]["multiEmbedded"]) && !$embedded ? $this->propertiesInfos[$field]["multiEmbedded"] : $embedded;
-        return $embedded;
+    /**
+     * Get hydrator for specified class
+     * @param   string              $class              Class which you will get hydrator
+     * @return  Hydrator            Hydrator corresponding to specified class
+     */
+    public function getHydrator($class) {
+        $metadata = Tools\ClassMetadataFactory::getInstance()->getMetadataForClass($class);
+        return Hydrator::getInstance($class, $this->documentManager, $metadata);
     }
 
 }

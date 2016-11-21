@@ -21,7 +21,6 @@ class WriteConcern {
         
         $diffs = array_diff(array_keys($values), array_keys($default));
         
-        dump($diffs);
         if(!empty($diffs)){
             throw new \Doctrine\Common\Annotations\AnnotationException("Parameter '" . $diffs[0] . "' is not valid parameter. Accepted parameter are : 'w', 'timeout' and 'journal'.");
         }

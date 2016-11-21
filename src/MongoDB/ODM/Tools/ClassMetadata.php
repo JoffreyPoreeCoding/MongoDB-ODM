@@ -2,12 +2,11 @@
 
 namespace JPC\MongoDB\ODM\Tools;
 
-use Doctrine\Common\Cache\ApcuCache;
 use Doctrine\Common\Annotations\AnnotationReader;
+use Doctrine\Common\Cache\ApcuCache;
+use JPC\MongoDB\ODM\Tools\ClassMetadata\CollectionInfo;
+use JPC\MongoDB\ODM\Tools\ClassMetadata\FieldInfo;
 
-/**
- * Allow to interact with class metadatas and annotations
- */
 class ClassMetadata {
     /* ================================== */
     /*              CONSTANTS             */
@@ -15,10 +14,6 @@ class ClassMetadata {
 
     const CLASS_ANNOT = '$CLASS';
     const PROPERTIES_ANNOT = '$PROPETIES';
-
-    /* ================================== */
-    /*             PROPERTIES             */
-    /* ================================== */
 
     /**
      * Salt for caching
@@ -39,32 +34,22 @@ class ClassMetadata {
     private $name;
 
     /**
-     * Class annotations
-     * @var     array
+     * Show if all class metadas ar loaded
+     * @var bool 
      */
-    private $classAnnotations;
+    private $loaded = false;
 
     /**
-     * List of properties
-     * @var     array
+     * Info about the collection
+     * @var CollectionInfos
      */
-    private $properties = [];
+    private $collectionInfo;
 
     /**
-     * Properties annotations
-     * @var     array 
+     * Infos about fields/propeties;
+     * @var type 
      */
-    private $propertiesAnnotations = [];
-
-    /**
-     * Cache
-     * @var     ApcuCache 
-     */
-    private $annotationCache;
-
-    /* ================================== */
-    /*          PUBLICS FUNCTIONS         */
-    /* ================================== */
+    private $propertiesInfos = [];
 
     /**
      * Create new ClassMetadata
@@ -78,215 +63,170 @@ class ClassMetadata {
         $this->name = $className;
         $this->annotationCache = new ApcuCache();
     }
-
-    /**
-     * Allow to get the class name
-     * 
-     * @return  string              Class name
-     */
-    public function getName() {
+    
+    public function getName(){
         return $this->name;
     }
 
-    /**
-     * Check if class has annotation
-     * 
-     * @param   string              $annotationName     Annotation name (Class)
-     * 
-     * @return  boolean             True if yes, else false
-     */
-    public function hasClassAnnotation($annotationName) {
-
-        //Check if annotation are already loaded, if not loaded it
-        if (!isset($this->classAnnotations)) {
-            $this->readClassAnnotations();
+    public function getCollection() {
+        if (!$this->loaded) {
+            $this->load();
         }
 
-        //If annotation exist return true
-        if (isset($this->classAnnotations[$annotationName])) {
-            return true;
+        return $this->collectionInfo->getCollection();
+    }
+    
+    public function getPropertyInfo($prop){
+         if (!$this->loaded) {
+            $this->load();
         }
+        
+        if(isset($this->propertiesInfos[$prop])){
+            return $this->propertiesInfos[$prop];
+        }
+
         return false;
     }
-
-    /**
-     * Allow to get the annotation object
-     * 
-     * @param   string              $annotationName     Annotation name (Class)
-     * 
-     * @return  mixed               Annotation
-     */
-    public function getClassAnnotation($annotationName) {
-        //Check if annotation exist
-        if (!$this->hasClassAnnotation($annotationName)) {
-            return null;
+    
+    public function getPropertiesInfos(){
+        if (!$this->loaded) {
+            $this->load();
         }
-
-        return $this->classAnnotations[$annotationName];
+        
+        return $this->propertiesInfos;
     }
-
-    /**
-     * Allow to get properties of the class
-     * 
-     * @return  array               Properties of the class
-     */
-    public function getProperties() {
-        //Return properties annotation
-        return $this->readPropertiesAnnotations();
-    }
-
-    /**
-     * Allow to get a single property
-     * 
-     * @param   string              $name               Property name
-     * 
-     * @return  \ReflectionProperty Property
-     */
-    public function getProperty($name) {
-        if (!isset($this->properties[$name])) {
-            $this->properties[$name] = (new \ReflectionClass($this->name))->getProperty($name);
-        }
-        return $this->properties[$name];
-    }
-
-    /**
-     * Check if property has annotation
-     * 
-     * @param   string              $propertyName       Property name
-     * @param   string              $annotationName     Annotation name (Class)
-     * 
-     * @return  boolean             True if yes, else false
-     */
-    public function hasPropertyAnnotation($propertyName, $annotationName) {
-        if (!isset($this->propertiesAnnotations[$propertyName])) {
-            $this->readPropertiesAnnotations();
-        }
-
-        if (isset($this->propertiesAnnotations[$propertyName][$annotationName])) {
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * Allow to get property annotation
-     * 
-     * @param   string              $propertyName       Property name
-     * @param   string              $annotationName     Annotation name (Class)
-     * 
-     * @return  mixed               Annotation
-     */
-    public function getPropertyAnnotation($propertyName, $annotationName) {
-        if (!$this->hasPropertyAnnotation($propertyName, $annotationName)) {
-            return false;
-        }
-
-        return $this->propertiesAnnotations[$propertyName][$annotationName];
-    }
-
-    public function getPropertyWithAnnotation($annotationName) {
-        if (empty($this->propertiesAnnotations)) {
-            $this->readPropertiesAnnotations();
-        }
-
-        foreach ($this->propertiesAnnotations as $property => $annotations) {
-            foreach ($annotations as $name => $value) {
-                if ($name == $annotationName) {
-                    return [$property => $value];
-                }
+    
+    public function getPropertyInfoForField($field){
+        foreach ($this->propertiesInfos as $name => $infos) {
+            if($infos->getField() == $field){
+                return $infos;
             }
         }
         
         return false;
     }
-
-    /* ================================== */
-    /*          PRIVATES FUNCTIONS        */
-    /* ================================== */
-
-    /**
-     * Read class annotations (From loaded, then cache, then file)
-     * 
-     * @return  array               All class's annotations
-     */
-    private function readClassAnnotations() {
-        if (isset($this->classAnnotations)) {
-            return $this->classAnnotations;
-        }
-
-        if ($this->annotationCache->contains($this->name . self::CLASS_ANNOT . $this->cacheSalt)) {
-            $this->classAnnotations = $this->annotationCache->fetch($this->name . self::CLASS_ANNOT . $this->cacheSalt);
-            return $this->classAnnotations;
-        }
-
-        return $this->doReadClassAnnotations();
-    }
-
-    /**
-     * Read class annotation from file
-     * 
-     * @return array               All class's annotations
-     */
-    private function doReadClassAnnotations() {
-        $annotations = $this->reader->getClassAnnotations(new \ReflectionClass($this->name));
-
-        foreach ($annotations as $annot) {
-            $class = get_class($annot);
-            if (!isset($this->classAnnotations[$class])) {
-                $this->classAnnotations[$class] = $annot;
-            } else if (is_array($this->classAnnotations[$class])) {
-                $this->classAnnotations[$class][] = $annot;
-            } else {
-                $this->classAnnotations[$class] = [$this->classAnnotations[$class], $annot];
+    
+    public function getPropertyForField($field){
+        foreach ($this->propertiesInfos as $name => $infos) {
+            if($infos->getField() == $field){
+                return new \ReflectionProperty($this->name, $name);
             }
         }
-
-        $this->annotationCache->save($this->name . self::CLASS_ANNOT . $this->cacheSalt, $annotations);
-        return $this->classAnnotations;
+        
+        return false;
     }
-
-    /**
-     * Read all properties's annotations (From loaded, then cache, then file)
-     * 
-     * @return array               All properties's annotations
-     */
-    private function readPropertiesAnnotations() {
-        if (isset($this->propertiesAnnotations) && !empty($this->propertiesAnnotations)) {
-            return $this->propertiesAnnotations;
+    
+    public function setCollection($collection){
+        if (!$this->loaded) {
+            $this->load();
         }
 
-        if ($this->annotationCache->contains($this->name . self::PROPERTIES_ANNOT . $this->cacheSalt)) {
-            $this->propertiesAnnotations = $this->annotationCache->fetch($this->name . self::PROPERTIES_ANNOT . $this->cacheSalt);
-            return $this->propertiesAnnotations;
+        $this->collectionInfo->setCollection($collection);
+        return $this;
+    }
+    
+    public function getRepositoryClass(){
+        if (!$this->loaded) {
+            $this->load();
         }
 
-        return $this->doReadPropertiesAnnotations();
+        return $this->collectionInfo->getRepository();
     }
 
-    /**
-     * Read all properties's annotations from file
-     * 
-     * @return array               All class's annotations
-     */
-    private function doReadPropertiesAnnotations() {
-        foreach ((new \ReflectionClass($this->name))->getProperties() as $property) {
-            $this->properties[$property->name] = $property;
-            $propAnnot = [];
-            foreach ($this->reader->getPropertyAnnotations($property) as $annot) {
-                $class = get_class($annot);
-                if (!isset($propAnnot[$class])) {
-                    $propAnnot[$class] = $annot;
-                } else if (is_array($propAnnot[$class])) {
-                    $propAnnot[$class][] = $annot;
+    private function load() {
+        $reflectionClass = new \ReflectionClass($this->name);
+        $this->collectionInfo = new CollectionInfo();
+
+        foreach ($this->reader->getClassAnnotations($reflectionClass) as $annotation) {
+            $this->processClassAnnotation($annotation);
+        }
+
+        $properties = $reflectionClass->getProperties();
+
+        foreach ($properties as $property) {
+            $this->propertiesInfos[$property->getName()] = new FieldInfo();
+            foreach ($this->reader->getPropertyAnnotations($property) as $annotation) {
+                $this->processPropertiesAnnotation($property->getName(), $annotation);
+            }
+        }
+        
+        $this->loaded = true;
+    }
+
+    private function processClassAnnotation($annotation) {
+        $class = get_class($annotation);
+        switch ($class) {
+            case "JPC\MongoDB\ODM\Annotations\Mapping\Document" :
+                $this->collectionInfo->setCollection($annotation->collectionName);
+
+                if (null !== ($rep = $annotation->repositoryClass)) {
+                    $this->collectionInfo->setRepository($annotation->repositoryClass);
                 } else {
-                    $propAnnot[$class] = [$propAnnot[$class], $annot];
+                    $this->collectionInfo->setRepository("JPC\MongoDB\ODM\Repository");
                 }
-            }
-            $this->propertiesAnnotations[$property->name] = $propAnnot;
-        }
+                break;
+            case "JPC\MongoDB\ODM\Annotations\GridFS\Document" :
+                $this->collectionInfo->setCollection($annotation->bucketName);
 
-        $this->annotationCache->save($this->name . self::PROPERTIES_ANNOT . $this->cacheSalt, $this->propertiesAnnotations);
-        return $this->propertiesAnnotations;
+                if (null !== ($rep = $annotation->repositoryClass)) {
+                    $this->collectionInfo->setRepository($annotation->repositoryClass);
+                } else {
+                    $this->collectionInfo->setRepository("JPC\MongoDB\ODM\GridFS\Repository");
+                }
+                break;
+            case "JPC\MongoDB\ODM\Annotations\Mapping\Option":
+                break;
+        }
+    }
+
+    private function processPropertiesAnnotation($name, $annotation) {
+        $class = get_class($annotation);
+        switch ($class) {
+            case "JPC\MongoDB\ODM\Annotations\Mapping\Id" :
+                $this->propertiesInfos[$name]->setField("_id");
+                break;
+            case "JPC\MongoDB\ODM\Annotations\Mapping\Field" :
+                $this->propertiesInfos[$name]->setField($annotation->name);
+                break;
+            case "JPC\MongoDB\ODM\Annotations\Mapping\EmbeddedDocument" :
+                $this->propertiesInfos[$name]->setEmbedded(true);
+                $this->propertiesInfos[$name]->setEmbeddedClass($annotation->document);
+                break;
+            case "JPC\MongoDB\ODM\Annotations\Mapping\MultiEmbeddedDocument" :
+                $this->propertiesInfos[$name]->setMultiEmbedded(true);
+                $this->propertiesInfos[$name]->setEmbeddedClass($annotation->document);
+                break;
+            case "JPC\MongoDB\ODM\Annotations\Mapping\Id" :
+                $this->propertiesInfos[$name]->setField("_id");
+                break;
+            case "JPC\MongoDB\ODM\Annotations\GridFS\Stream" :
+                $this->propertiesInfos[$name]->setField("stream");
+                break;
+            case "JPC\MongoDB\ODM\Annotations\GridFS\Filename" :
+                $this->propertiesInfos[$name]->setField("filename");
+                break;
+            case "JPC\MongoDB\ODM\Annotations\GridFS\Aliases" :
+                $this->propertiesInfos[$name]->setField("aliases");
+                break;
+            case "JPC\MongoDB\ODM\Annotations\GridFS\ChunkSize" :
+                $this->propertiesInfos[$name]->setField("chunkSize");
+                break;
+            case "JPC\MongoDB\ODM\Annotations\GridFS\UploadDate" :
+                $this->propertiesInfos[$name]->setField("uploadDate");
+                break;
+            case "JPC\MongoDB\ODM\Annotations\GridFS\Length" :
+                $this->propertiesInfos[$name]->setField("length");
+                break;
+            case "JPC\MongoDB\ODM\Annotations\GridFS\ContentType" :
+                $this->propertiesInfos[$name]->setField("contentType");
+                break;
+            case "JPC\MongoDB\ODM\Annotations\GridFS\Md5" :
+                $this->propertiesInfos[$name]->setField("md5");
+                break;
+            case "JPC\MongoDB\ODM\Annotations\GridFS\Metadata" :
+                $this->propertiesInfos[$name]->setMetadata(true);
+                break;
+        }
     }
 
 }
