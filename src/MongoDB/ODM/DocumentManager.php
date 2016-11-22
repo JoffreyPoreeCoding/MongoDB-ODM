@@ -136,6 +136,11 @@ class DocumentManager {
 
         $repClass = $classMetadata->getRepositoryClass();
 
+		$repIndex = $modelName . $collection;
+        if (isset($this->repositories[$repIndex])) {
+            return $this->repositories[$repIndex];
+        }
+        
         $this->repositories[$repIndex] = new $repClass($this, $this->objectManager, $classMetadata, $collection);
 
         return $this->repositories[$repIndex];
