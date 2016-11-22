@@ -251,7 +251,7 @@ class DocumentManager {
         $removeObjs = $this->objectManager->getObject(ObjectManager::OBJ_REMOVED);
         foreach ($removeObjs as $object) {
             $collection = isset($this->objectCollection[spl_object_hash($object)]) ? $this->objectCollection[spl_object_hash($object)] : $this->getRepository(get_class($object))->getCollection()->getCollectionName();
-            $this->doRemove($object, $collection);
+            $this->doRemove($collection, $object);
         }
 
         $updateObjs = $this->objectManager->getObject(ObjectManager::OBJ_MANAGED);
