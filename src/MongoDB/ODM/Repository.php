@@ -141,8 +141,8 @@ class Repository {
         if ($result !== null) {
             $object = new $this->modelName();
             $this->hydrator->hydrate($object, $result);
-
             $this->cacheObject($object);
+			$this->documentManager->persist($object, $this->getCollection()->getCollectionName());
             $this->objectManager->addObject($object, ObjectManager::OBJ_MANAGED);
             return $object;
         }
@@ -172,6 +172,7 @@ class Repository {
             $object = new $this->modelName();
             $this->hydrator->hydrate($object, $datas);
             $this->cacheObject($object);
+			$this->documentManager->persist($object, $this->getCollection()->getCollectionName());
             $this->objectManager->addObject($object, ObjectManager::OBJ_MANAGED);
             $objects[] = $object;
         }
@@ -201,6 +202,7 @@ class Repository {
             $object = new $this->modelName();
             $this->hydrator->hydrate($object, $datas);
             $this->cacheObject($object);
+			$this->documentManager->persist($object, $this->getCollection()->getCollectionName());
             $this->objectManager->addObject($object, ObjectManager::OBJ_MANAGED);
             $objects[] = $object;
         }
@@ -229,6 +231,7 @@ class Repository {
         if ($result != null) {
             $object = new $this->modelName();
             $this->hydrator->hydrate($object, $result);
+			$this->documentManager->persist($object, $this->getCollection()->getCollectionName());
             $this->objectManager->addObject($object, ObjectManager::OBJ_MANAGED);
             $this->cacheObject($object);
             return $object;
