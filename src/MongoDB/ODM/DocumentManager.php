@@ -222,9 +222,14 @@ class DocumentManager {
      * @param   mixed       $object     Object to refresh
      */
     public function refresh(&$object) {
-        $rep = $this->getRepository(get_class($object));
-        $collection = isset($this->objectCollection[spl_object_hash($object)]) ? $this->objectCollection[spl_object_hash($object)] : $rep->getCollection()->getCollectionName();
-        $mongoCollection = $this->mongodatabase->selectCollection($collection);
+        if(isset($this->objectCollection[spl_object_hash($object)])){
+            $collection = $this->objectCollection[spl_object_hash($object)];
+            $rep = $this->getRepository(get_class($object), $collection);
+        } else {
+            $rep = $this->getRepository(get_class($object));
+        }
+        
+        $mongoCollection = $rep->getCollection();
 
         $datas = (array) $mongoCollection->findOne(["_id" => $rep->getHydrator()->unhydrate($object)["_id"]]);
         if ($rep instanceof GridFS\Repository) {
@@ -245,12 +250,14 @@ class DocumentManager {
     public function flush() {
         $removeObjs = $this->objectManager->getObject(ObjectManager::OBJ_REMOVED);
         foreach ($removeObjs as $object) {
+            $collection = isset($this->objectCollection[spl_object_hash($object)]) ? $this->objectCollection[spl_object_hash($object)] : $this->getRepository(get_class($object))->getCollection()->getCollectionName();
             $this->doRemove($object);
         }
 
         $updateObjs = $this->objectManager->getObject(ObjectManager::OBJ_MANAGED);
         foreach ($updateObjs as $object) {
-            $this->update($object);
+            $collection = isset($this->objectCollection[spl_object_hash($object)]) ? $this->objectCollection[spl_object_hash($object)] : $this->getRepository(get_class($object))->getCollection()->getCollectionName();
+            $this->update($collection, $object);
         }
 
         $newObjs = $this->objectManager->getObject(ObjectManager::OBJ_NEW);
@@ -326,8 +333,8 @@ class DocumentManager {
                 $id = $bucket->uploadFromStream($filename, $stream, $options);
 
                 $hydrator->hydrate($obj, ["_id" => $id]);
-                $this->refresh($obj);
                 $this->objectManager->setObjectState($obj, ObjectManager::OBJ_MANAGED);
+                $this->refresh($obj);
             }
         } else {
             $collection = $rep->getCollection();
@@ -361,8 +368,8 @@ class DocumentManager {
      * 
      * @param   mixed       $object     Object to update
      */
-    private function update($object) {
-        $rep = $this->getRepository(get_class($object));
+    private function update($collection, $object) {
+        $rep = $this->getRepository(get_class($object), $collection);
         $collection = $rep->getCollection();
 
         $diffs = $rep->getObjectChanges($object);
@@ -371,9 +378,13 @@ class DocumentManager {
         foreach ($this->getModifier(self::UPDATE_STATEMENT_MODIFIER) as $callback) {
             $update = call_user_func($callback, $update, $object);
         }
+        
+        $hydrator = $rep->getHydrator();
+        
+        $id = $hydrator->unhydrate($object)["_id"];
 
         if (!empty($update)) {
-            $res = $collection->updateOne(["_id" => $object->getId()], $update);
+            $res = $collection->updateOne(["_id" => $id], $update);
             if ($res->isAcknowledged()) {
                 $this->refresh($object);
                 $rep->cacheObject($object);
@@ -386,11 +397,13 @@ class DocumentManager {
      * 
      * @param   mixed       $object     Object to insert
      */
-    private function doRemove($object) {
-        $rep = $this->getRepository(get_class($object));
+    private function doRemove($collection, $object) {
+        $rep = $this->getRepository(get_class($object), $collection);
         $collection = $rep->getCollection();
+        
+        $id = $rep->getHydrator()->unhydrate($object)["_id"];
 
-        $res = $collection->deleteOne(["_id" => $object->getId()]);
+        $res = $collection->deleteOne(["_id" => $id]);
 
         if ($res->isAcknowledged()) {
             $this->objectManager->removeObject($object);
