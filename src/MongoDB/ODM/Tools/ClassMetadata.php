@@ -208,6 +208,10 @@ class ClassMetadata {
             $options["readConcern"] = $annotation->readConcern->getReadConcern();
         }
         
+        if(isset($annotation->readPreference)){
+            
+        }
+        
         dump($options);
     }
 
