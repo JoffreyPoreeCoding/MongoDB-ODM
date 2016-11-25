@@ -23,6 +23,21 @@ class Document {
      * @var string
      */
     public $repositoryClass = null;
+
+    /**
+     * @var bool 
+     */
+    public $capped = false;
+    
+    /**
+     * @var int
+     */
+    public $size = 536900000;
+    
+    /**
+     * @var int 
+     */
+    public $max = false;
 }
 
 /**

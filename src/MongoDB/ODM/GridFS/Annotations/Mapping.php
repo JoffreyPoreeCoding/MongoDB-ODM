@@ -1,6 +1,6 @@
 <?php
 
-namespace JPC\MongoDB\ODM\Annotations\GridFS;
+namespace JPC\MongoDB\ODM\GridFS\Annotations\Mapping;
 
 /**
  * @Annotation

@@ -2,10 +2,9 @@
 
 namespace JPC\MongoDB\ODM\Annotations\Mapping\CollectionOption;
 
-//use MongoDB\Driver\WriteConcern;
-
 /**
  * @Annotation
+ * @Target("ANNOTATION")
  */
 class WriteConcern {
     private $w;
@@ -34,5 +33,65 @@ class WriteConcern {
     
     public function getWriteConcern(){
         return new \MongoDB\Driver\WriteConcern($this->w, $this->timeout, $this->journal);
+    }
+}
+
+/**
+ * @Annotation
+ * @Target("ANNOTATION")
+ */
+class ReadConcern {
+    
+    private $level;
+    
+    public function __construct(array $values) {
+        if(isset($values["value"]) && !isset($values["level"])){
+            $values["level"] = $values["value"];
+        }
+        
+        $expected = [\MongoDB\Driver\ReadConcern::LOCAL, \MongoDB\Driver\ReadConcern::MAJORITY];
+        if(!isset($values["level"]) || !in_array($values["level"], $expected)){
+            throw new \JPC\MongoDB\ODM\Exception\AnnotationException("level value could only be '". \MongoDB\Driver\ReadConcern::LOCAL . "' or '" . \MongoDB\Driver\ReadConcern::MAJORITY . "'.");
+        }
+        
+        $this->level = $values["level"];
+    }
+    
+    public function getReadConcern(){
+        return new \MongoDB\Driver\ReadConcern($this->level);
+    }
+}
+
+/**
+ * @Annotation
+ * @Target("ANNOTATION")
+ */
+class ReadPreference {
+    
+    /**
+     * @Enum({
+     * 
+     * })
+     * @var type 
+     */
+    public $mode;
+    
+    public $tagset;
+    
+//    public function __construct(array $values) {
+//        if(isset($values["value"]) && !isset($values["level"])){
+//            $values["level"] = $values["value"];
+//        }
+//        
+//        $expected = [\MongoDB\Driver\ReadConcern::LOCAL, \MongoDB\Driver\ReadConcern::MAJORITY];
+//        if(!in_array($values["level"], $expected)){
+//            throw new \JPC\MongoDB\ODM\Exception\AnnotationException("level value could only be '". \MongoDB\Driver\ReadConcern::LOCAL . "' or '" . \MongoDB\Driver\ReadConcern::MAJORITY . "'.");
+//        }
+//        
+//        $this->level = $values["level"];
+//    }
+    
+    public function getReadConcern(){
+        return new \MongoDB\Driver\ReadConcern($this->level);
     }
 }

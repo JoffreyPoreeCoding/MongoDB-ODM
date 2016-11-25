@@ -2,7 +2,7 @@
 
 namespace JPC\MongoDB\ODM\GridFS;
 
-use JPC\MongoDB\ODM\Annotations\GridFS as GFS;
+use JPC\MongoDB\ODM\GridFS\Annotations\Mapping as GFS;
 use JPC\MongoDB\ODM\Annotations\Mapping as ODM;
 
 class Document {

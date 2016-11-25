@@ -66,21 +66,7 @@ class Repository {
         $this->objectManager = $objectManager;
         $this->objectCache = new ArrayCache();
     }
-
-    private function getCollectionOptions(ClassMetadata $classMetadata) {
-//        $collOptionAnnot = $classMetadata->getClassAnnotation("JPC\MongoDB\ODM\Annotations\Mapping\Option");
-        $options = [];
-//        if (isset($collOptionAnnot->writeConcern)) {
-//            $options["writeConcern"] = $collOptionAnnot->writeConcern->getWriteConcern();
-//        }
-
-        return $options;
-    }
-
-    public function getCollection() {
-        return $this->collection;
-    }
-
+    
     /**
      * Create the collection
      * 
@@ -95,12 +81,25 @@ class Repository {
             }
         }
 
-        $options = [];
+        $options = $classMetadata->getCollectionCreationOptions();
 
-        /**
-         * INIT OPTIONS HERE
-         */
-        $db->createCollection($collectionName, $options);
+        if (!empty($options)) {
+            $db->createCollection($collectionName, $options);
+        }
+    }
+
+    private function getCollectionOptions(ClassMetadata $classMetadata) {
+//        $collOptionAnnot = $classMetadata->getClassAnnotation("JPC\MongoDB\ODM\Annotations\Mapping\Option");
+        $options = [];
+//        if (isset($collOptionAnnot->writeConcern)) {
+//            $options["writeConcern"] = $collOptionAnnot->writeConcern->getWriteConcern();
+//        }
+
+        return $options;
+    }
+
+    public function getCollection() {
+        return $this->collection;
     }
 
     /**
@@ -142,7 +141,7 @@ class Repository {
             $object = new $this->modelName();
             $this->hydrator->hydrate($object, $result);
             $this->cacheObject($object);
-			$this->documentManager->persist($object, $this->getCollection()->getCollectionName());
+            $this->documentManager->persist($object, $this->getCollection()->getCollectionName());
             $this->objectManager->setObjectState($object, ObjectManager::OBJ_MANAGED);
             return $object;
         }
@@ -172,7 +171,7 @@ class Repository {
             $object = new $this->modelName();
             $this->hydrator->hydrate($object, $datas);
             $this->cacheObject($object);
-			$this->documentManager->persist($object, $this->getCollection()->getCollectionName());
+            $this->documentManager->persist($object, $this->getCollection()->getCollectionName());
             $this->objectManager->setObjectState($object, ObjectManager::OBJ_MANAGED);
             $objects[] = $object;
         }
@@ -202,7 +201,7 @@ class Repository {
             $object = new $this->modelName();
             $this->hydrator->hydrate($object, $datas);
             $this->cacheObject($object);
-			$this->documentManager->persist($object, $this->getCollection()->getCollectionName());
+            $this->documentManager->persist($object, $this->getCollection()->getCollectionName());
             $this->objectManager->setObjectState($object, ObjectManager::OBJ_MANAGED);
             $objects[] = $object;
         }
@@ -231,7 +230,7 @@ class Repository {
         if ($result != null) {
             $object = new $this->modelName();
             $this->hydrator->hydrate($object, $result);
-			$this->documentManager->persist($object, $this->getCollection()->getCollectionName());
+            $this->documentManager->persist($object, $this->getCollection()->getCollectionName());
             $this->objectManager->setObjectState($object, ObjectManager::OBJ_MANAGED);
             $this->cacheObject($object);
             return $object;
@@ -262,8 +261,8 @@ class Repository {
             return false;
         }
     }
-    
-    private function castQuery($query){
+
+    private function castQuery($query) {
         $qc = new Tools\QueryCaster($query, $this->classMetadata);
         return $qc->getCastedQuery();
     }
@@ -345,4 +344,5 @@ class Repository {
 
         return $changes;
     }
+
 }

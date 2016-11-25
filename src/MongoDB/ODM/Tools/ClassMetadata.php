@@ -97,6 +97,10 @@ class ClassMetadata {
     }
     
     public function getPropertyInfoForField($field){
+        if (!$this->loaded) {
+            $this->load();
+        }
+        
         foreach ($this->propertiesInfos as $name => $infos) {
             if($infos->getField() == $field){
                 return $infos;
@@ -107,6 +111,10 @@ class ClassMetadata {
     }
     
     public function getPropertyForField($field){
+        if (!$this->loaded) {
+            $this->load();
+        }
+        
         foreach ($this->propertiesInfos as $name => $infos) {
             if($infos->getField() == $field){
                 return new \ReflectionProperty($this->name, $name);
@@ -114,6 +122,14 @@ class ClassMetadata {
         }
         
         return false;
+    }
+    
+    public function getCollectionCreationOptions(){
+        if (!$this->loaded) {
+            $this->load();
+        }
+        
+        return $this->collectionInfo->getCreationOptions();
     }
     
     public function setCollection($collection){
@@ -164,8 +180,9 @@ class ClassMetadata {
                 } else {
                     $this->collectionInfo->setRepository("JPC\MongoDB\ODM\Repository");
                 }
+                $this->checkCollectionCreationOptions($annotation);
                 break;
-            case "JPC\MongoDB\ODM\Annotations\GridFS\Document" :
+            case "JPC\MongoDB\ODM\GridFS\Annotations\Mapping\Document" :
                 $this->collectionInfo->setCollection($annotation->bucketName);
 
                 if (null !== ($rep = $annotation->repositoryClass)) {
@@ -175,8 +192,23 @@ class ClassMetadata {
                 }
                 break;
             case "JPC\MongoDB\ODM\Annotations\Mapping\Option":
+                $this->processOptionAnnotation($annotation);
                 break;
         }
+    }
+    
+    private function processOptionAnnotation(\JPC\MongoDB\ODM\Annotations\Mapping\Option $annotation){
+        dump($annotation);
+        $options = [];
+        if(isset($annotation->writeConcern)){
+            $options["writeConcern"] = $annotation->writeConcern->getWriteConcern();
+        }
+        
+        if(isset($annotation->readConcern)){
+            $options["readConcern"] = $annotation->readConcern->getReadConcern();
+        }
+        
+        dump($options);
     }
 
     private function processPropertiesAnnotation($name, $annotation) {
@@ -199,34 +231,47 @@ class ClassMetadata {
             case "JPC\MongoDB\ODM\Annotations\Mapping\Id" :
                 $this->propertiesInfos[$name]->setField("_id");
                 break;
-            case "JPC\MongoDB\ODM\Annotations\GridFS\Stream" :
+            case "JPC\MongoDB\ODM\GridFS\Annotations\Mapping\Stream" :
                 $this->propertiesInfos[$name]->setField("stream");
                 break;
-            case "JPC\MongoDB\ODM\Annotations\GridFS\Filename" :
+            case "JPC\MongoDB\ODM\GridFS\Annotations\Mapping\Filename" :
                 $this->propertiesInfos[$name]->setField("filename");
                 break;
-            case "JPC\MongoDB\ODM\Annotations\GridFS\Aliases" :
+            case "JPC\MongoDB\ODM\GridFS\Annotations\Mapping\Aliases" :
                 $this->propertiesInfos[$name]->setField("aliases");
                 break;
-            case "JPC\MongoDB\ODM\Annotations\GridFS\ChunkSize" :
+            case "JPC\MongoDB\ODM\GridFS\Annotations\Mapping\ChunkSize" :
                 $this->propertiesInfos[$name]->setField("chunkSize");
                 break;
-            case "JPC\MongoDB\ODM\Annotations\GridFS\UploadDate" :
+            case "JPC\MongoDB\ODM\GridFS\Annotations\Mapping\UploadDate" :
                 $this->propertiesInfos[$name]->setField("uploadDate");
                 break;
-            case "JPC\MongoDB\ODM\Annotations\GridFS\Length" :
+            case "JPC\MongoDB\ODM\GridFS\Annotations\Mapping\Length" :
                 $this->propertiesInfos[$name]->setField("length");
                 break;
-            case "JPC\MongoDB\ODM\Annotations\GridFS\ContentType" :
+            case "JPC\MongoDB\ODM\GridFS\Annotations\Mapping\ContentType" :
                 $this->propertiesInfos[$name]->setField("contentType");
                 break;
-            case "JPC\MongoDB\ODM\Annotations\GridFS\Md5" :
+            case "JPC\MongoDB\ODM\GridFS\Annotations\Mapping\Md5" :
                 $this->propertiesInfos[$name]->setField("md5");
                 break;
-            case "JPC\MongoDB\ODM\Annotations\GridFS\Metadata" :
+            case "JPC\MongoDB\ODM\GridFS\Annotations\Mapping\Metadata" :
                 $this->propertiesInfos[$name]->setMetadata(true);
                 break;
         }
     }
-
+    
+    private function checkCollectionCreationOptions(\JPC\MongoDB\ODM\Annotations\Mapping\Document $annotation){
+        $options = [];
+        if($annotation->capped){
+            $options["capped"] = true;
+            $options["size"] = $annotation->size;
+            
+            if($annotation->max != false){
+                $options["max"] = $annotation->max;
+            }
+        }
+        
+        $this->collectionInfo->setCreationOptions($options);
+    }
 }

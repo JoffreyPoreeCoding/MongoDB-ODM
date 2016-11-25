@@ -136,11 +136,11 @@ class DocumentManager {
 
         $repClass = $classMetadata->getRepositoryClass();
 
-		$repIndex = $modelName . $collection;
+        $repIndex = $modelName . $collection;
         if (isset($this->repositories[$repIndex])) {
             return $this->repositories[$repIndex];
         }
-        
+
         $this->repositories[$repIndex] = new $repClass($this, $this->objectManager, $classMetadata, $collection);
 
         return $this->repositories[$repIndex];
@@ -227,13 +227,13 @@ class DocumentManager {
      * @param   mixed       $object     Object to refresh
      */
     public function refresh(&$object) {
-        if(isset($this->objectCollection[spl_object_hash($object)])){
+        if (isset($this->objectCollection[spl_object_hash($object)])) {
             $collection = $this->objectCollection[spl_object_hash($object)];
             $rep = $this->getRepository(get_class($object), $collection);
         } else {
             $rep = $this->getRepository(get_class($object));
         }
-        
+
         $mongoCollection = $rep->getCollection();
 
         $datas = (array) $mongoCollection->findOne(["_id" => $rep->getHydrator()->unhydrate($object)["_id"]]);
@@ -314,24 +314,26 @@ class DocumentManager {
 
                 $options = $datas;
                 unset($options["stream"]);
-                if (isset($datas["_id"]) && $datas["_id"] === null) {
+                if (isset($datas["_id"]) && $datas["_id"] == null || !isset($datas["_id"])) {
                     unset($options["_id"]);
                 }
-
+                
                 $filename = isset($options["filename"]) && null != $datas["filename"] ? $datas["filename"] : md5(uniqid());
 
                 if (isset($options["filename"])) {
                     unset($options["filename"]);
                 }
 
-                foreach ($options["metadata"] as $key => $value) {
-                    if (null === $value) {
-                        unset($options["metadata"][$key]);
+                if (isset($options["metadata"])) {
+                    foreach ($options["metadata"] as $key => $value) {
+                        if (null === $value) {
+                            unset($options["metadata"][$key]);
+                        }
                     }
-                }
 
-                if (empty($options["metadata"])) {
-                    unset($options["metadata"]);
+                    if (empty($options["metadata"])) {
+                        unset($options["metadata"]);
+                    }
                 }
 
 
@@ -383,9 +385,9 @@ class DocumentManager {
         foreach ($this->getModifier(self::UPDATE_STATEMENT_MODIFIER) as $callback) {
             $update = call_user_func($callback, $update, $object);
         }
-        
+
         $hydrator = $rep->getHydrator();
-        
+
         $id = $hydrator->unhydrate($object)["_id"];
 
         if (!empty($update)) {
@@ -405,7 +407,7 @@ class DocumentManager {
     private function doRemove($collection, $object) {
         $rep = $this->getRepository(get_class($object), $collection);
         $collection = $rep->getCollection();
-        
+
         $id = $rep->getHydrator()->unhydrate($object)["_id"];
 
         $res = $collection->deleteOne(["_id" => $id]);
