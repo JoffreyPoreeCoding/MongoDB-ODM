@@ -14,7 +14,7 @@ class WriteConcern {
     public function __construct(array $values) {
         $default = [
             "w" => 1,
-            "timeout" => 0,
+            "timeout" => null,
             "journal" => true,
         ];
         
@@ -51,7 +51,7 @@ class ReadConcern {
         
         $expected = [\MongoDB\Driver\ReadConcern::LOCAL, \MongoDB\Driver\ReadConcern::MAJORITY];
         if(!isset($values["level"]) || !in_array($values["level"], $expected)){
-            throw new \JPC\MongoDB\ODM\Exception\AnnotationException("level value could only be '". \MongoDB\Driver\ReadConcern::LOCAL . "' or '" . \MongoDB\Driver\ReadConcern::MAJORITY . "'.");
+            throw new \JPC\MongoDB\ODM\Exception\AnnotationException("Level value could only be '". \MongoDB\Driver\ReadConcern::LOCAL . "' or '" . \MongoDB\Driver\ReadConcern::MAJORITY . "'.");
         }
         
         $this->level = $values["level"];
@@ -68,30 +68,40 @@ class ReadConcern {
  */
 class ReadPreference {
     
-    /**
-     * @Enum({
-     * 
-     * })
-     * @var type 
-     */
-    public $mode;
+    const READ_PREFERENCES_ALLOWED = [
+        \MongoDB\Driver\ReadPreference::RP_PRIMARY,
+        \MongoDB\Driver\ReadPreference::RP_PRIMARY_PREFERRED,
+        \MongoDB\Driver\ReadPreference::RP_SECONDARY,
+        \MongoDB\Driver\ReadPreference::RP_SECONDARY_PREFERRED,
+        \MongoDB\Driver\ReadPreference::RP_NEAREST
+    ];
     
-    public $tagset;
+    private $mode;
     
-//    public function __construct(array $values) {
-//        if(isset($values["value"]) && !isset($values["level"])){
-//            $values["level"] = $values["value"];
-//        }
-//        
-//        $expected = [\MongoDB\Driver\ReadConcern::LOCAL, \MongoDB\Driver\ReadConcern::MAJORITY];
-//        if(!in_array($values["level"], $expected)){
-//            throw new \JPC\MongoDB\ODM\Exception\AnnotationException("level value could only be '". \MongoDB\Driver\ReadConcern::LOCAL . "' or '" . \MongoDB\Driver\ReadConcern::MAJORITY . "'.");
-//        }
-//        
-//        $this->level = $values["level"];
-//    }
+    private $tagset = [];
     
-    public function getReadConcern(){
-        return new \MongoDB\Driver\ReadConcern($this->level);
+    public function __construct(array $values) {
+        if(isset($values["value"]) && !isset($values["mode"])){
+            $values["mode"] = $values["value"];
+        }
+        
+        if(!isset($values["mode"]) || !in_array($values["mode"], self::READ_PREFERENCES_ALLOWED)){
+            $values = $prefix = "";
+            foreach (self::READ_PREFERENCES_ALLOWED as $allowed) {
+                $values .= $prefix . "'" . $allowed . "'";
+                $prefix = ", ";
+            }
+            throw new \JPC\MongoDB\ODM\Exception\AnnotationException("Mode value could only be $values.");
+        }
+        
+        $this->mode = $values["mode"];
+        
+        if(isset($values["tagset"]) && is_array($values["tagset"])){
+            $this->tagset = $values["tagset"];
+        }
+    }
+    
+    public function getReadPreference(){
+        return new \MongoDB\Driver\ReadPreference($this->mode, $this->tagset);
     }
 }

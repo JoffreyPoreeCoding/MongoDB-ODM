@@ -61,7 +61,8 @@ class Repository {
         $this->modelName = $classMetadata->getName();
         $this->hydrator = Hydrator::getInstance($this->modelName . spl_object_hash($documentManager), $documentManager, $classMetadata);
         $this->createCollection($collection, $classMetadata);
-        $this->collection = $this->documentManager->getMongoDBDatabase()->selectCollection($collection, $this->getCollectionOptions($classMetadata));
+        $this->collection = $this->documentManager->getMongoDBDatabase()->selectCollection($collection, $classMetadata->getCollectionOptions());
+        var_dump($this->collection);
 
         $this->objectManager = $objectManager;
         $this->objectCache = new ArrayCache();
@@ -86,16 +87,6 @@ class Repository {
         if (!empty($options)) {
             $db->createCollection($collectionName, $options);
         }
-    }
-
-    private function getCollectionOptions(ClassMetadata $classMetadata) {
-//        $collOptionAnnot = $classMetadata->getClassAnnotation("JPC\MongoDB\ODM\Annotations\Mapping\Option");
-        $options = [];
-//        if (isset($collOptionAnnot->writeConcern)) {
-//            $options["writeConcern"] = $collOptionAnnot->writeConcern->getWriteConcern();
-//        }
-
-        return $options;
     }
 
     public function getCollection() {

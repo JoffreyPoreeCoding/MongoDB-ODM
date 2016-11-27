@@ -132,6 +132,14 @@ class ClassMetadata {
         return $this->collectionInfo->getCreationOptions();
     }
     
+    public function getCollectionOptions(){
+        if (!$this->loaded) {
+            $this->load();
+        }
+        
+        return $this->collectionInfo->getOptions();
+    }
+    
     public function setCollection($collection){
         if (!$this->loaded) {
             $this->load();
@@ -198,7 +206,6 @@ class ClassMetadata {
     }
     
     private function processOptionAnnotation(\JPC\MongoDB\ODM\Annotations\Mapping\Option $annotation){
-        dump($annotation);
         $options = [];
         if(isset($annotation->writeConcern)){
             $options["writeConcern"] = $annotation->writeConcern->getWriteConcern();
@@ -209,10 +216,10 @@ class ClassMetadata {
         }
         
         if(isset($annotation->readPreference)){
-            
+            $options["readPreference"] = $annotation->readPreference->getReadPreference();
         }
         
-        dump($options);
+        $this->collectionInfo->setOptions($options);
     }
 
     private function processPropertiesAnnotation($name, $annotation) {
