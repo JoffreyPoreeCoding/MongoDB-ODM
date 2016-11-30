@@ -353,7 +353,7 @@ class DocumentManager {
             }
 
             foreach ($this->getModifier(self::INSERT_STATEMENT_MODIFIER) as $callback) {
-                $datas = call_user_func($callback, $update, $object);
+                $datas = call_user_func($callback, $datas, $object);
             }
 
             $res = $collection->insertMany($datas);
@@ -409,6 +409,10 @@ class DocumentManager {
         $collection = $rep->getCollection();
 
         $id = $rep->getHydrator()->unhydrate($object)["_id"];
+		
+		if(is_array($id)){
+			$id = Tools\ArrayModifier::clearNullValues($id);
+		}
 
         $res = $collection->deleteOne(["_id" => $id]);
 
