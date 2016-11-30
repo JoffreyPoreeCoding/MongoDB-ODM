@@ -62,7 +62,6 @@ class Repository {
         $this->hydrator = Hydrator::getInstance($this->modelName . spl_object_hash($documentManager), $documentManager, $classMetadata);
         $this->createCollection($collection, $classMetadata);
         $this->collection = $this->documentManager->getMongoDBDatabase()->selectCollection($collection, $classMetadata->getCollectionOptions());
-        var_dump($this->collection);
 
         $this->objectManager = $objectManager;
         $this->objectCache = new ArrayCache();

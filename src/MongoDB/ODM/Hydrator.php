@@ -74,6 +74,7 @@ class Hydrator {
      * @return  array               Unhydrated Object
      */
     function unhydrate($object) {
+    function unhydrate($object) {
         $properties = $this->classMetadata->getPropertiesInfos();
         $datas = [];
 
