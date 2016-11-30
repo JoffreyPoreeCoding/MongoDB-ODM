@@ -31,7 +31,7 @@ class CollectionInfo {
      * Options for collection constructor
      * @var array
      */
-    private $options;
+    private $options = [];
     
     function getCollection() {
         return $this->collectionName;
