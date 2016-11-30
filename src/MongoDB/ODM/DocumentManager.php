@@ -389,6 +389,10 @@ class DocumentManager {
         $hydrator = $rep->getHydrator();
 
         $id = $hydrator->unhydrate($object)["_id"];
+		
+        if(is_array($id)){
+            $id = Tools\ArrayModifier::clearNullValues($id);
+        }
 
         if (!empty($update)) {
             $res = $collection->updateOne(["_id" => $id], $update);
@@ -410,9 +414,9 @@ class DocumentManager {
 
         $id = $rep->getHydrator()->unhydrate($object)["_id"];
 		
-		if(is_array($id)){
-			$id = Tools\ArrayModifier::clearNullValues($id);
-		}
+        if(is_array($id)){
+            $id = Tools\ArrayModifier::clearNullValues($id);
+        }
 
         $res = $collection->deleteOne(["_id" => $id]);
 
