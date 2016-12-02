@@ -252,7 +252,7 @@ class Repository {
         }
     }
 
-    private function castQuery($query) {
+    protected function castQuery($query) {
         $qc = new Tools\QueryCaster($query, $this->classMetadata);
         return $qc->getCastedQuery();
     }
