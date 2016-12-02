@@ -142,6 +142,10 @@ class Repository extends BaseRep {
             return $object;
         }
     }
+	
+	public function drop() {
+        $this->bucket->drop();
+    }
 
     public function createHytratableResult($result) {
         $newResult = $result;

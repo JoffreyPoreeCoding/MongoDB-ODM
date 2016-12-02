@@ -409,19 +409,30 @@ class DocumentManager {
      * @param   mixed       $object     Object to insert
      */
     private function doRemove($collection, $object) {
+        if(false != ($pos = strpos($collection, ".files"))){
+            $collection = substr($collection, 0, $pos);
+        }
+        
         $rep = $this->getRepository(get_class($object), $collection);
-        $collection = $rep->getCollection();
-
-        $id = $rep->getHydrator()->unhydrate($object)["_id"];
-		
-        if(is_array($id)){
+        
+        $unhydrated = $rep->getHydrator()->unhydrate($object);
+        $id = $unhydrated["_id"];
+        if (is_array($id)) {
             $id = Tools\ArrayModifier::clearNullValues($id);
         }
 
-        $res = $collection->deleteOne(["_id" => $id]);
-
-        if ($res->isAcknowledged()) {
+        if ($rep instanceof GridFS\Repository) {
+            fclose($unhydrated["stream"]);
             $this->objectManager->removeObject($object);
+            $rep->getBucket()->delete($id);
+        } else {
+
+
+            $res = $rep->getCollection()->deleteOne(["_id" => $id]);
+
+            if ($res->isAcknowledged()) {
+                $this->objectManager->removeObject($object);
+            }
         }
     }
 
