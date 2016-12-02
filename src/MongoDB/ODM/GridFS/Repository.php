@@ -28,6 +28,8 @@ class Repository extends BaseRep {
 
     public function __construct(DocumentManager $documentManager, ObjectManager $objectManager, $classMetadata, $collection) {
         $this->bucket = $documentManager->getMongoDBDatabase()->selectGridFSBucket(['bucketName' => $collection]);
+		
+		$this->classMetadata = $classMetadata;
 
         $this->documentManager = $documentManager;
         $this->modelName = $classMetadata->getName();
