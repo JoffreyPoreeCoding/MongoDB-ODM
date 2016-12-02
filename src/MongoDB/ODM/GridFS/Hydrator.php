@@ -24,9 +24,9 @@ class Hydrator extends BaseHydrator {
 
         foreach ($properties as $name => $infos) {
             if($infos->getMetadata()){
-                if(isset($datas[$name])){
-                    $datas["metadata"][$name] = $datas[$name];
-                    unset($datas[$name]);
+                if(isset($datas[$infos->getField()])){
+                    $datas["metadata"][$infos->getField()] = $datas[$infos->getField()];
+                    unset($datas[$infos->getField()]);
                 }
             }
         }
