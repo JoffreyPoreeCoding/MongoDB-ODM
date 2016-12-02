@@ -49,7 +49,7 @@ class Repository extends BaseRep {
         }
 
         $options = array_merge($options, [
-            "projection" => $this->castMongoQuery($projections)
+            "projection" => $this->castQuery($projections)
         ]);
 
         $result = (array) $this->collection->findOne(["_id" => $id], $options);
@@ -73,8 +73,8 @@ class Repository extends BaseRep {
             $projections["_id"] = true;
         }
         $options = array_merge($options, [
-            "projection" => $this->castMongoQuery($projections),
-            "sort" => $this->castMongoQuery($sorts)
+            "projection" => $this->castQuery($projections),
+            "sort" => $this->castQuery($sorts)
         ]);
 
         $result = $this->collection->find([], $options);
@@ -98,11 +98,11 @@ class Repository extends BaseRep {
             $projections["_id"] = true;
         }
         $options = array_merge($options, [
-            "projection" => $this->castMongoQuery($projections),
-            "sort" => $this->castMongoQuery($sorts)
+            "projection" => $this->castQuery($projections),
+            "sort" => $this->castQuery($sorts)
         ]);
 
-        $result = $this->collection->find($this->castMongoQuery($filters), $options);
+        $result = $this->collection->find($this->castQuery($filters), $options);
 
         $objects = [];
 
@@ -124,11 +124,11 @@ class Repository extends BaseRep {
         }
 
         $options = array_merge($options, [
-            "projection" => $this->castMongoQuery($projections),
-            "sort" => $this->castMongoQuery($sorts)
+            "projection" => $this->castQuery($projections),
+            "sort" => $this->castQuery($sorts)
         ]);
 
-        $result = (array) $this->collection->findOne($this->castMongoQuery($filters), $options);
+        $result = (array) $this->collection->findOne($this->castQuery($filters), $options);
         
         if (!empty($result)) {
             $result = $this->createHytratableResult($result);
@@ -158,8 +158,8 @@ class Repository extends BaseRep {
         return $newResult;
     }
     
-    public function castMongoQuery($query, $hydrator = null, $initial = true) {
-        parent::castMongoQuery($query, $hydrator, $initial);
+    public function castQuery($query, $hydrator = null, $initial = true) {
+        parent::castQuery($query, $hydrator, $initial);
         
         foreach ($query as $field => $value){
             if($field != "file" && $field != "_id"){

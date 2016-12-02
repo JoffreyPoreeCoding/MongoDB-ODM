@@ -85,6 +85,12 @@ class Field {
      * @var string 
      */
     public $name;
+    
+    /**
+     * 
+     * @var string 
+     */
+    public $index;
 }
 
 /**
