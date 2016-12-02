@@ -141,7 +141,7 @@ class Repository extends BaseRep {
         }
     }
 
-    /* public function createHytratableResult($result) {
+    public function createHytratableResult($result) {
         $newResult = $result;
         
         if (isset($result["metadata"])) {
@@ -156,6 +156,6 @@ class Repository extends BaseRep {
         $newResult["stream"] = $stream;
 
         return $newResult;
-    } */
+    }
 
 }
