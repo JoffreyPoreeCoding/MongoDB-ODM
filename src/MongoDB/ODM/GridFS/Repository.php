@@ -141,7 +141,7 @@ class Repository extends BaseRep {
         }
     }
 
-    public function createHytratableResult($result) {
+    /* public function createHytratableResult($result) {
         $newResult = $result;
         
         if (isset($result["metadata"])) {
@@ -156,29 +156,6 @@ class Repository extends BaseRep {
         $newResult["stream"] = $stream;
 
         return $newResult;
-    }
-    
-    public function castQuery($query, $hydrator = null, $initial = true) {
-        parent::castQuery($query, $hydrator, $initial);
-        
-        foreach ($query as $field => $value){
-            if($field != "file" && $field != "_id"){
-                $query["metadata.$field"] = $value;
-                unset($query[$field]);
-            }
-            if(substr($field, 0, 4) == "file"){
-                $query[substr($field, 5)] = $value;
-            }
-        }
-        
-        if(isset($query["file"])){
-                foreach ($query["file"] as $field => $value) {
-                    $query[$field] = $value;
-                }
-                unset($query["file"]);
-            }
-        
-        return $query;
-    }
+    } */
 
 }

@@ -73,7 +73,7 @@ class QueryCaster {
 
     private function castDottedString($string, $classMetadata = null) {
         if (!isset($classMetadata)) {
-            $classMetadata = $this->classMetadata;
+            $classMetadata = $this->lastUsedMetadata;
         }
         $this->lastUsedMetadata = $classMetadata;
 
