@@ -146,6 +146,14 @@ class Repository extends BaseRep {
 	public function drop() {
         $this->bucket->drop();
     }
+	
+	public function cacheObject($object) {
+        if (is_object($object)) {
+            $unhyd = $this->hydrator->unhydrate($object);
+            unset($unhyd["stream"]);
+            $this->objectCache->save(spl_object_hash($object), $unhyd);
+        }
+    }
 
     public function createHytratableResult($result) {
         $newResult = $result;
