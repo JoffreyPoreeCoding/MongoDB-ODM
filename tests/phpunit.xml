@@ -1,0 +1,11 @@
+<phpunit
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    bootstrap="bootstrap.php"
+    colors="true"
+>
+    <testsuites>
+        <testsuite name="MongoDB-ODM">
+            <directory suffix="Test.php">.</directory>
+        </testsuite>
+    </testsuites>
+</phpunit>

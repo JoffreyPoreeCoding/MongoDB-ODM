@@ -13,6 +13,7 @@ use JPC\MongoDB\ODM\ObjectManager;
  * @author Joffrey Porée <contact@joffreyporee.com>
  */
 class DocumentManager {
+    
     /* ================================== */
     /*              CONSTANTS             */
     /* ================================== */
@@ -41,10 +42,9 @@ class DocumentManager {
     private $mongodatabase;
 
     /**
-     * Annotation Reader
-     * @var CacheReader
+     * Loaded repositories
+     * @var array<Repository> 
      */
-    private $reader;
     private $repositories = [];
 
     /**
@@ -176,11 +176,12 @@ class DocumentManager {
     }
 
     /**
-     * Allow to get modifiers for the specified type
+     * Remove modifier with specidfied type and id
      * 
      * @param   integer     $type       Type of modifier (See constants)
+     * @param   mixed       $id         Id of modifier (See constants)
      * 
-     * @return  mixed       All modifiers or false if there arn't modifiers for specified type
+     * @return  bool        true if removed, else false
      */
     public function removeModifier($type, $id) {
         if (array_key_exists($id, $this->modifiers[$type])) {
@@ -189,6 +190,13 @@ class DocumentManager {
         }
 
         return false;
+    }
+    
+    /**
+     * Clear all modiiers
+     */
+    public function clearModifiers() {
+        $this->modifiers = [];
     }
 
     /**
@@ -285,9 +293,6 @@ class DocumentManager {
         $this->objectManager->clear();
     }
 
-    public function clearModifiers() {
-        $this->modifiers = [];
-    }
 
     /* ================================== */
     /*         PRIVATES FUNCTIONS         */
