@@ -2,7 +2,7 @@
 
 namespace JPC\MongoDB\ODM\Tools\ClassMetadata;
 
-class FieldInfo {
+class PropertyInfo {
     private $field;
     private $embedded = false;
     private $multiEmbedded = false;

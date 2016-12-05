@@ -22,6 +22,9 @@ class ArrayModifier {
                 unset($array[$key]);
             } else if (is_array($value)) {
                 self::clearNullValues($value);
+                if(empty($value)){
+                    unset($array[$key]);
+                }
             }
         }
 

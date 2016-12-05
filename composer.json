@@ -19,7 +19,8 @@
         "jpc/design-pattern": "~1.0"
     },
     "require-dev": {
-        "symfony/var-dumper": "*"
+        "symfony/var-dumper": "*",
+        "phpunit/phpunit": "^5.7"
     },
     "authors": [
         {
@@ -34,6 +35,20 @@
         },
         "psr-0": {
             "JPC\\": "src/"
+        },
+        "files": ["src/MongoDB/ODM/register_annotations.php"]
+    },
+    
+    "autoload-dev": {
+        "psr-4": {
+            "JPC\\": "src/",
+            "JPC\\Test\\MongoDB\\ODM\\Model\\": "tests/models/",
+            "JPC\\Test\\MongoDB\\ODM\\": "tests/"
+        },
+        "psr-0": {
+            "JPC\\": "src/",
+            "JPC\\Test\\MongoDB\\ODM\\Model\\": "tests/models/",
+            "JPC\\Test\\MongoDB\\ODM\\": "tests/"
         },
         "files": ["src/MongoDB/ODM/register_annotations.php"]
     }

@@ -1,18 +1,8 @@
 <?php
 
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 
 namespace JPC\MongoDB\ODM\Tools;
 
-/**
- * Description of QueryCaster
- *
- * @author poree
- */
 class QueryCaster {
 
     /**
@@ -20,10 +10,23 @@ class QueryCaster {
      * @var array<string>
      */
     protected static $mongoDbQueryOperators;
+    
+    /**
+     * Initial Query
+     * @var array
+     */
     private $query;
-    private $castedQuery;
+    
+    /**
+     * Inital class metadata
+     * @var ClassMetadata
+     */
     private $initialMetadata;
-    private $lastFieldInfos;
+    
+    /**
+     * last used class metadata by query caster
+     * @var ClassMetadata
+     */
     private $lastUsedMetadata;
 
     function __construct($query, $classMetadata) {
@@ -52,11 +55,11 @@ class QueryCaster {
         foreach ($array as $field => $value) {
             $field = $this->castDottedString($field, $classMetadata);
             if (is_array($value)) {
-                if (false !== ($fieldInfos = $classMetadata->getPropertyInfoForField($field)) && $fieldInfos->getEmbedded()) {
+                if (false != ($fieldInfos = $classMetadata->getPropertyInfoForField($field)) && $fieldInfos->getEmbedded()) {
                     $value = $this->castArray($value, $this->lastUsedMetadata);
                 }
 
-                if (false !== ($fieldInfos = $classMetadata->getPropertyInfoForField($field)) && $fieldInfos->getMultiEmbedded()) {
+                if (false != ($fieldInfos = $classMetadata->getPropertyInfoForField($field)) && $fieldInfos->getMultiEmbedded()) {
                     $newValue = [];
                     foreach ($value as $v) {
                         $newValue[] = $this->castArray($v, $this->lastUsedMetadata);
@@ -85,20 +88,23 @@ class QueryCaster {
 
         $propInfo = ($classMetadata->getPropertyForField($realField)) ? $classMetadata->getPropertyInfoForField($realField) : $classMetadata->getPropertyInfo($realField);
 
-        if ($propInfo !== false && ($propInfo->getEmbedded() || $propInfo->getMultiEmbedded())) {
+        if (isset($propInfo) && $propInfo !== false && ($propInfo->getEmbedded() || $propInfo->getMultiEmbedded())) {
             $this->lastUsedMetadata = $classMetadata = ClassMetadataFactory::getInstance()->getMetadataForClass($propInfo->getEmbeddedClass());
             if (isset($remainingField)) {
                 return $propInfo->getField() . "." . $this->castDottedString($remainingField, $classMetadata);
             }
             return $propInfo->getField();
-        } else if ($propInfo !== false) {
-            return $propInfo->getField();
+        } else if (isset($propInfo) && $propInfo !== false) {
+            if(!empty($remainingField)){
+                $remainingField = "." . $remainingField;
+            }
+            return $propInfo->getField() . $remainingField;
         } else {
             return $string;
         }
     }
 
-    public function aggregOnMongoDbOperators($prefix, $key, $value, $new) {
+    private function aggregOnMongoDbOperators($prefix, $key, $value, $new) {
         !isset($new[$prefix]) ? $new[$prefix] = [] : null;
         $new[$prefix] += [$key => $value];
 

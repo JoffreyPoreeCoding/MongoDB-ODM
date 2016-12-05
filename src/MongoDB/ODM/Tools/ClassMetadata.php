@@ -3,23 +3,15 @@
 namespace JPC\MongoDB\ODM\Tools;
 
 use Doctrine\Common\Annotations\AnnotationReader;
+use Doctrine\Common\Annotations\CachedReader;
 use Doctrine\Common\Cache\ApcuCache;
 use JPC\MongoDB\ODM\Tools\ClassMetadata\CollectionInfo;
-use JPC\MongoDB\ODM\Tools\ClassMetadata\FieldInfo;
+use JPC\MongoDB\ODM\Tools\ClassMetadata\PropertyInfo;
 
 class ClassMetadata {
     /* ================================== */
     /*              CONSTANTS             */
     /* ================================== */
-
-    const CLASS_ANNOT = '$CLASS';
-    const PROPERTIES_ANNOT = '$PROPETIES';
-
-    /**
-     * Salt for caching
-     * @var     string
-     */
-    private $cacheSalt = '$ANNOTATIONS';
 
     /**
      * Annotation Reader
@@ -57,11 +49,9 @@ class ClassMetadata {
      * @param   string              $className          Name of the class
      * @param   AnnotationReader    $reader             Annotation reader
      */
-    public function __construct($className, $reader) {
-        $this->reader = $reader;
-
+    public function __construct($className) {
+        $this->reader = new CachedReader(new AnnotationReader(), new ApcuCache(), false);
         $this->name = $className;
-        $this->annotationCache = new ApcuCache();
     }
     
     public function getName(){
@@ -168,7 +158,7 @@ class ClassMetadata {
         $properties = $reflectionClass->getProperties();
 
         foreach ($properties as $property) {
-            $this->propertiesInfos[$property->getName()] = new FieldInfo();
+            $this->propertiesInfos[$property->getName()] = new PropertyInfo();
             foreach ($this->reader->getPropertyAnnotations($property) as $annotation) {
                 $this->processPropertiesAnnotation($property->getName(), $annotation);
             }
