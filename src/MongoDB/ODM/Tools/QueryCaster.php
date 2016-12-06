@@ -97,7 +97,9 @@ class QueryCaster {
         } else if (isset($propInfo) && $propInfo !== false) {
             if(!empty($remainingField)){
                 $remainingField = "." . $remainingField;
-            }
+            } else {
+				$remainingField = "";
+			}
             return $propInfo->getField() . $remainingField;
         } else {
             return $string;
