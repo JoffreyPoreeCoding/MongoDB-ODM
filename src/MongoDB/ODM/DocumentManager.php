@@ -13,7 +13,6 @@ use JPC\MongoDB\ODM\ObjectManager;
  * @author Joffrey Porée <contact@joffreyporee.com>
  */
 class DocumentManager {
-    
     /* ================================== */
     /*              CONSTANTS             */
     /* ================================== */
@@ -191,7 +190,7 @@ class DocumentManager {
 
         return false;
     }
-    
+
     /**
      * Clear all modiiers
      */
@@ -293,7 +292,6 @@ class DocumentManager {
         $this->objectManager->clear();
     }
 
-
     /* ================================== */
     /*         PRIVATES FUNCTIONS         */
     /* ================================== */
@@ -322,7 +320,7 @@ class DocumentManager {
                 if (isset($datas["_id"]) && $datas["_id"] == null || !isset($datas["_id"])) {
                     unset($options["_id"]);
                 }
-                
+
                 $filename = isset($options["filename"]) && null != $datas["filename"] ? $datas["filename"] : md5(uniqid());
 
                 if (isset($options["filename"])) {
@@ -394,8 +392,8 @@ class DocumentManager {
         $hydrator = $rep->getHydrator();
 
         $id = $hydrator->unhydrate($object)["_id"];
-		
-        if(is_array($id)){
+
+        if (is_array($id)) {
             $id = Tools\ArrayModifier::clearNullValues($id);
         }
 
@@ -414,12 +412,12 @@ class DocumentManager {
      * @param   mixed       $object     Object to insert
      */
     private function doRemove($collection, $object) {
-        if(false != ($pos = strpos($collection, ".files"))){
+        if (false != ($pos = strpos($collection, ".files"))) {
             $collection = substr($collection, 0, $pos);
         }
-        
+
         $rep = $this->getRepository(get_class($object), $collection);
-        
+
         $unhydrated = $rep->getHydrator()->unhydrate($object);
         $id = $unhydrated["_id"];
         if (is_array($id)) {
@@ -461,8 +459,14 @@ class DocumentManager {
                         $update['$push'][$field] = ['$each' => $fieldValue];
                     }
                 }
+                $inc = $this->checkInc($value, $key);
+                if ($inc != null) {
+                    foreach ($inc as $field => $fieldValue) {
+                        $update['$inc'][$field] = $fieldValue;
+                    }
+                }
                 $update['$set'] += Tools\ArrayModifier::aggregate($value, [
-                            '$set' => [$this, 'onAggregSet']
+                            '$set' => [$this, 'onAggregSet'],
                                 ], $key);
             } else {
                 $update['$set'][$key] = $value;
@@ -477,6 +481,12 @@ class DocumentManager {
             if (array_key_exists($key, $update['$set']) && $update['$set'][$key] === null) {
                 unset($update['$set'][$key]);
                 $update['$unset'][$key] = "";
+            }
+        }
+
+        if (isset($update['$inc'])) {
+            foreach ($update['$inc'] as $key => $value) {
+                unset($update['$set'][$key]);
             }
         }
 
@@ -503,6 +513,25 @@ class DocumentManager {
         }
     }
 
+    private function checkInc($array, $prefix = '') {
+        foreach ($array as $key => $value) {
+            if ($key == '$set') {
+                $key = "";
+            }
+            if ($key === '$inc') {
+                $return = $value;
+                return [$prefix => $return];
+            } else if (is_array($value)) {
+                if ($key != '') {
+                    $prefix = $prefix . '.' . $key;
+                }
+                if (null != ($inc = $this->checkInc($value, $prefix))) {
+                    return $inc;
+                }
+            }
+        }
+    }
+
     public function onAggregSet($prefix, $key, $value, $new) {
         if (is_array($value)) {
             foreach ($value as $k => $val) {
@@ -511,6 +540,14 @@ class DocumentManager {
         } else {
             $new[$prefix] = $value;
         }
+
+        return $new;
+    }
+
+    public function onAggregInc($prefix, $key, $value, $new) {
+        dump($prefix);
+        die;
+        $new[$prefix] = [$key => $value];
 
         return $new;
     }
