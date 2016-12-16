@@ -92,6 +92,11 @@ class Document {
         $this->id = $id;
         return $this;
     }
+	
+	function setContentType($contentType){
+		$this->contentType = $contentType;
+		return $this;
+	}
 
     function setFilename($filename) {
         $this->filename = $filename;
