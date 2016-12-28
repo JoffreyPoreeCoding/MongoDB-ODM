@@ -63,7 +63,8 @@ class Repository extends BaseRep {
             $this->hydrator->hydrate($object, $result);
 
             $this->cacheObject($object);
-            $this->objectManager->addObject($object, ObjectManager::OBJ_MANAGED);
+            $this->documentManager->persist($object, $this->getCollection()->getCollectionName());
+            $this->objectManager->setObjectState($object, ObjectManager::OBJ_MANAGED);
             return $object;
         }
 
@@ -88,7 +89,8 @@ class Repository extends BaseRep {
             $object = new $this->modelName();
             $this->hydrator->hydrate($object, $datas);
             $this->cacheObject($object);
-            $this->objectManager->addObject($object, ObjectManager::OBJ_MANAGED);
+            $this->documentManager->persist($object, $this->getCollection()->getCollectionName());
+            $this->objectManager->setObjectState($object, ObjectManager::OBJ_MANAGED);
             $objects[] = $object;
         }
 
@@ -113,7 +115,8 @@ class Repository extends BaseRep {
             $object = new $this->modelName();
             $this->hydrator->hydrate($object, $datas);
             $this->cacheObject($object);
-            $this->objectManager->addObject($object, ObjectManager::OBJ_MANAGED);
+            $this->documentManager->persist($object, $this->getCollection()->getCollectionName());
+            $this->objectManager->setObjectState($object, ObjectManager::OBJ_MANAGED);
             $objects[] = $object;
         }
 
@@ -138,7 +141,8 @@ class Repository extends BaseRep {
             $this->hydrator->hydrate($object, $result);
 
             $this->cacheObject($object);
-            $this->objectManager->addObject($object, ObjectManager::OBJ_MANAGED);
+            $this->documentManager->persist($object, $this->getCollection()->getCollectionName());
+            $this->objectManager->setObjectState($object, ObjectManager::OBJ_MANAGED);
             return $object;
         }
     }
