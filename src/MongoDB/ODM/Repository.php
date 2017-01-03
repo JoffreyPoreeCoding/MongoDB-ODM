@@ -236,7 +236,12 @@ class Repository {
     }
 
     public function distinct($fieldName, $filters = [], $options = []) {
-        $field = $this->hydrator->getFieldNameFor($fieldName);
+        $propInfos = $this->classMetadata->getPropertyForField($fieldName);
+        if(!$propInfos){
+            $propInfos = $this->classMetadata->getPropertyInfo($fieldName);
+        }
+        
+        $field = $propInfos->getField();
 
         $result = $this->collection->distinct($field, $this->castQuery($filters), $options);
         return $result;
