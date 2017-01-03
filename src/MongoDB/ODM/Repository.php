@@ -236,7 +236,7 @@ class Repository {
     }
 
     public function distinct($fieldName, $filters = [], $options = []) {
-        $propInfos = $this->classMetadata->getPropertyForField($fieldName);
+        $propInfos = $this->classMetadata->getPropertyInfoForField($fieldName);
         if(!$propInfos){
             $propInfos = $this->classMetadata->getPropertyInfo($fieldName);
         }
