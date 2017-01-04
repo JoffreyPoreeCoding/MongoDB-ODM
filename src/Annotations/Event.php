@@ -37,6 +37,19 @@ class PreFlush {}
  * @Target("METHOD")
  */
 class PostFlush {}
+
+/**
+ * @Annotation
+ * @Target("METHOD")
+ */
+class PreInsert {}
+
+/**
+ * @Annotation
+ * @Target("METHOD")
+ */
+class PostInsert {}
+
 /**
  * @Annotation
  * @Target("METHOD")
