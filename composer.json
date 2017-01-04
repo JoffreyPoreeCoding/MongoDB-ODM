@@ -31,22 +31,22 @@
     "minimum-stability": "dev",
     "autoload": {
         "psr-4": {
-            "JPC\\": "src/"
+            "JPC\\MongoDB\\ODM\\": "src/"
         },
         "psr-0": {
-            "JPC\\": "src/"
+            "JPC\\MongoDB\\ODM\\": "src/"
         },
         "files": ["src/MongoDB/ODM/register_annotations.php"]
     },
     
     "autoload-dev": {
         "psr-4": {
-            "JPC\\": "src/",
+            "JPC\\MongoDB\\ODM\\": "src/",
             "JPC\\Test\\MongoDB\\ODM\\Model\\": "tests/models/",
             "JPC\\Test\\MongoDB\\ODM\\": "tests/"
         },
         "psr-0": {
-            "JPC\\": "src/",
+            "JPC\\MongoDB\\ODM\\": "src/",
             "JPC\\Test\\MongoDB\\ODM\\Model\\": "tests/models/",
             "JPC\\Test\\MongoDB\\ODM\\": "tests/"
         },
