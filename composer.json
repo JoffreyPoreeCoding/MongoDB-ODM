@@ -36,7 +36,7 @@
         "psr-0": {
             "JPC\\MongoDB\\ODM\\": "src/"
         },
-        "files": ["src/MongoDB/ODM/register_annotations.php"]
+        "files": ["src/register_annotations.php"]
     },
     
     "autoload-dev": {
