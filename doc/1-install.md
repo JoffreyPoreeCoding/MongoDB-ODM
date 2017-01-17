@@ -12,7 +12,7 @@ Or in your ```composer.json``` :
 
 ```json
 {
-    require : {
+    "require" : {
         "jpc/mongodb-odm" : "^1.0"
     }
 }
