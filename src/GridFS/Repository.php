@@ -146,6 +146,39 @@ class Repository extends BaseRep {
             return $object;
         }
     }
+
+    /**
+     * FindAndModifyOne document
+     *
+     * @param   array                   $filters            Filters of the query
+     * @param   array                   $update             Update of the query
+     * @param   array                   $projections        Projection of the query
+     * @param   array                   $sorts              Sort options
+     * @param   array                   $options            Options for the query
+     * @return  array                                       Array containing all the document of the collection
+     */
+    public function findAndModifyOne($filters = [], $update = [], $projections = [], $sorts = [], $options = []) {
+
+        $options = array_merge($options, [
+            "projection" => $this->castQuery($projections),
+            "sort" => $this->castQuery($sorts)
+        ]);
+
+        $result = $this->collection->findOneAndUpdate($this->castQuery($filters), $this->castQuery($update), $options);
+
+        if ($result != null) {
+            $result = $this->createHytratableResult($result);
+            $object = new $this->modelName();
+            $this->hydrator->hydrate($object, $result);
+            
+            $this->documentManager->persist($object, $this->getCollection()->getCollectionName());
+            $this->objectManager->setObjectState($object, ObjectManager::OBJ_MANAGED);
+            $this->cacheObject($object);
+            return $object;
+        }
+
+        return null;
+    }
 	
 	public function drop() {
         $this->bucket->drop();
