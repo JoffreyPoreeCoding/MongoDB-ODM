@@ -246,7 +246,7 @@ class Repository {
             "sort" => $this->castQuery($sorts)
         ]);
 
-        $result = $this->collection->findOneAndUpdate($this->castQuery($filters), $this->castQuery($update), $options);
+        $result = (array) $this->collection->findOneAndUpdate($this->castQuery($filters), $this->castQuery($update), $options);
 
         if ($result != null) {
             $object = new $this->modelName();

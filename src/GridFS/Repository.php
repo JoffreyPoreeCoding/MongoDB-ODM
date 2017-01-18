@@ -164,7 +164,7 @@ class Repository extends BaseRep {
             "sort" => $this->castQuery($sorts)
         ]);
 
-        $result = $this->collection->findOneAndUpdate($this->castQuery($filters), $this->castQuery($update), $options);
+        $result = (array) $this->collection->findOneAndUpdate($this->castQuery($filters), $this->castQuery($update), $options);
 
         if ($result != null) {
             $result = $this->createHytratableResult($result);
