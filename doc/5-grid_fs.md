@@ -1,124 +1,51 @@
-# Grid FS Documents
+# GridFS Document
 
-To map a GridFS Document you will need to use `JPC\MongoDB\ODM\Annotations\GridFS` annotations.
+## Create mapping for GridFS document
 
-## Basic document (Without metadata)
+Your class need to inherit class `JPC\MongoDB\ODM\GridFS\Document`. This class define all default field of a gridFS document like `md5`, `filename`, etc... See this class for more details.
 
-This is a basic document (without metadatas) mapped in PHP object :
+To add metadata to your doc, you need to use the `Metadata` annotations.
+
+Here is an example :
 
 ```php
-<?php
 
-namespace Model;
+namespace ACME\Model;
 
 use JPC\MongoDB\ODM\Annotations\Mapping as ODM;
-use JPC\MongoDB\ODM\Annotations\GFS     as GFS;
+use JPC\MongoDB\ODM\GridFS\Annotations\Mapping as GFS;
+use JPC\MongoDB\ODM\GridFS\Document;
 
 /**
- * @GFS\Document("gridFSBucketName")
+ * @GFS\Document("my_gridfs_bucket")
  */
-class GridFSDocument {
+class MyGridFSDoc extends Document {
+    
+    /**
+     * @ODM\Field('my_meta_1')
+     * @GFS\Metadata
+     */
+    private $meta1;
 
-	/**
-     * @ODM\Id
-     */
-    private $id;
-    
-    /**
-     * @GFS\FileInfos
-     */
-    private $fileInfos;
-    
-    /**
-     * @GFS\Stream
-     */
-    private $stream;
-    
-    /**
-     * GETTERS / SETTERS
-     */
 }
 ```
 
-Some explanations :
+> Note that class `Document` annotation is provided from `GFS` and not by `ODM` namespace 
 
-* `@GFS\FileInfos` will contains file infos (uploadDate, filename, etc...) after insertion or on selection.
-* `@GFS\Stream` must contain the stream to insert in MongoDB or, on find,  will contain the saved stream.
+## Insert your document
 
-Here is an example for insertion :
+Insert a document in gridFS is like insert a document in basic mongoDB collection.
+
+Here's a full example :
 
 ```php
-<?php
+$doc = new MyGridFSDoc();
+$doc->setId("my_super_id")
+$doc->setFilename("my_file.txt");
+$doc->setContentType("text/plain");
+$doc->setMeta1("my_value");
+$doc->setStream(fopen("my_file.txt", 'r'));
 
-//...
-use Model\GridFSDocument;
-
-$myDoc = new GridFSDocument();
-$myDoc->setStream(fopen("/some/file/path", "r"));
-
-$documentManager->persist($myDoc);
+$documentManager->persist($doc);
 $documentManager->flush();
-//...
-```
-
-
-## Complex document (With metadata)
-
-To add metadata, you just have to put them in the PHP mapping class :
-
-```php
-<?php
-
-namespace Model;
-
-use JPC\MongoDB\ODM\Annotations\Mapping as ODM;
-use JPC\MongoDB\ODM\Annotations\GFS     as GFS;
-
-/**
- * @GFS\Document("gridFSBucketName")
- */
-class GridFSDocument {
-
-	/**
-     * @ODM\Id
-     */
-    private $id;
-    
-    /**
-     * @GFS\FileInfos
-     */
-    private $fileInfos;
-    
-    /**
-     * @GFS\Stream
-     */
-    private $stream;
-    
-    /**
-     * @ODM\Field("first_meta")
-     */
-    private $myFirstMeta;
-    
-    /**
-     * @ODM\Field("second_meta")
-     */
-    private $mySecondMeta;
-    
-    /**
-     * GETTERS / SETTERS
-     */
-}
-```
-
-This will be mapped into :
-
-```javascript
-{
-	_id: "...",
-    //...
-    metadata: {
-    	first_meta : "...",
-        second_meta: "..."
-    }
-}
 ```
