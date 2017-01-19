@@ -225,7 +225,6 @@ class DocumentManager {
      * @param   mixed       $object     Object to delete
      */
     public function delete($object) {
-        trigger_error("This function is deprecated, use 'remove instead'.", E_NOTICE);
         $this->objectManager->setObjectState($object, ObjectManager::OBJ_REMOVED);
     }
 
