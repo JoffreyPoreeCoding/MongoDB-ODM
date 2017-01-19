@@ -438,12 +438,12 @@ class DocumentManager {
             $this->objectManager->removeObject($object);
             $rep->getBucket()->delete($id);
         } else {
-
-
             $res = $rep->getCollection()->deleteOne(["_id" => $id]);
 
             if ($res->isAcknowledged()) {
                 $this->objectManager->removeObject($object);
+            } else {
+                throw new \Exception("Error on removing the document with _id : " . (string) $id . "in collection " . $collection);
             }
         }
     }
