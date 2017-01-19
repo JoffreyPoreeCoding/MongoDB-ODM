@@ -15,7 +15,7 @@
         "php": ">=5.4",
         "doctrine/annotations": "1.2.*",
         "doctrine/cache": "1.6.0",
-        "mongodb/mongodb": "1.1.0-alpha1",
+        "mongodb/mongodb": "1.1.*",
         "jpc/design-pattern": "~1.0"
     },
     "require-dev": {
@@ -50,6 +50,6 @@
             "JPC\\Test\\MongoDB\\ODM\\Model\\": "tests/models/",
             "JPC\\Test\\MongoDB\\ODM\\": "tests/"
         },
-        "files": ["src/MongoDB/ODM/register_annotations.php"]
+        "files": ["src/register_annotations.php"]
     }
 }

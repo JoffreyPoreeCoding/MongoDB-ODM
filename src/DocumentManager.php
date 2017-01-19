@@ -554,8 +554,6 @@ class DocumentManager {
     }
 
     public function onAggregInc($prefix, $key, $value, $new) {
-        dump($prefix);
-        die;
         $new[$prefix] = [$key => $value];
 
         return $new;
