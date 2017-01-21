@@ -1,37 +1,32 @@
 <?php
 
+namespace JPC\Test\MongoDB\ODM\Tools;
+
+use JPC\Test\MongoDB\ODM\TestCase;
 use JPC\MongoDB\ODM\Tools\ClassMetadataFactory;
 
-require_once __DIR__."/../models/SimpleDocument.php";
-
-class ClassMetadataFactoryTest extends PHPUnit_Framework_TestCase {
+class ClassMetadataFactoryTest extends TestCase {
     
     /**
-     * Reflection Class
-     * @var \ReflectionClass
-     */
-    private $reflectionClass;
-    
-    /**
-     * Class Metadata Factory
-     * @var ClassMetadataFactory 
+     * @var ClassMetadataFactory
      */
     private $classMetadataFactory;
-
-    public function __construct() {
-        $this->reflectionClass = new ReflectionClass("JPC\MongoDB\ODM\Tools\ClassMetadataFactory");
+    
+    public function setUp(){
         $this->classMetadataFactory = new ClassMetadataFactory();
     }
-
-    public function testGetMetadataForClass() {
-        $metadata = $this->classMetadataFactory->getMetadataForClass("SimpleDocument");
+    
+    public function test_getMetadataForClass_inexisting(){
+        $this->expectException(\Exception::class);
         
-        $this->assertInstanceOf("JPC\MongoDB\ODM\Tools\ClassMetadata", $metadata);
-        
-        $loaded = $this->reflectionClass->getProperty("loadedMetadatas");
-        $loaded->setAccessible(true);
-        
-        $this->assertCount(1, $loaded->getValue($this->classMetadataFactory));
+        $this->classMetadataFactory->getMetadataForClass("Inexisting");
     }
-
+    
+    public function test_getMetadataForClass(){
+        $classMeta = $this->classMetadataFactory->getMetadataForClass("JPC\Test\MongoDB\ODM\Model\ObjectMapping");
+        
+        $this->assertInstanceOf(\JPC\MongoDB\ODM\Tools\ClassMetadata::class, $classMeta);
+        
+        $this->assertCount(1, $this->getPropertyValue($this->classMetadataFactory, "loadedMetadatas"));
+    }
 }

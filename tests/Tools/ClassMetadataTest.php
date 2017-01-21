@@ -1,72 +1,58 @@
 <?php
 
+namespace JPC\Test\MongoDB\ODM\Tools;
+
+use JPC\Test\MongoDB\ODM\TestCase;
 use JPC\MongoDB\ODM\Tools\ClassMetadata;
-use Doctrine\Common\Annotations\AnnotationReader;
 
-require_once __DIR__."/../models/SimpleDocument.php";
-
-class ClassMetadataTest extends PHPUnit_Framework_TestCase {
-
-    /**
-     * Reflection Class
-     * @var \ReflectionClass
-     */
-    private $reflectionClass;
+class ClassMetadataTest extends TestCase {
     
     /**
-     * Class Metadata Factory
      * @var ClassMetadata
      */
     private $classMetadata;
-
-    public function __construct() {
-        apcu_clear_cache();
-        $this->reflectionClass = new ReflectionClass("JPC\MongoDB\ODM\Tools\ClassMetadata");
-        $this->classMetadata = new ClassMetadata("SimpleDocument", new Doctrine\Common\Annotations\IndexedReader(new AnnotationReader()));
-    }
-
-    public function testGetName() {
-        $this->assertEquals("SimpleDocument", $this->classMetadata->getName());
+    
+    public function setUp(){
+        $this->classMetadata = new ClassMetadata(\JPC\Test\MongoDB\ODM\Model\ObjectMapping::class);
     }
     
-    public function testHasClassAnnotation(){
-        $result = $this->classMetadata->hasClassAnnotation("JPC\MongoDB\ODM\Annotations\Mapping\Document");
-        
-        $this->assertTrue($result);
-        
-        $prop = $this->reflectionClass->getProperty("classAnnotations");
-        $prop->setAccessible(true);
-        $this->assertNotEmpty($prop->getValue($this->classMetadata));
+    public function test_getName(){
+        $this->assertEquals("JPC\Test\MongoDB\ODM\Model\ObjectMapping", $this->classMetadata->getName());
     }
     
-    public function testGetClassAnnotation(){
-        $result = $this->classMetadata->getClassAnnotation("JPC\MongoDB\ODM\Annotations\Mapping\Document");
-        
-        $this->assertInstanceOf("JPC\MongoDB\ODM\Annotations\Mapping\Document", $result);
-        $this->assertEquals("simple_doc", $result->collectionName);
-        $this->assertNull($result->repositoryClass);
-        
-        $prop = $this->reflectionClass->getProperty("classAnnotations");
-        $prop->setAccessible(true);
-        $this->assertNotEmpty($prop->getValue($this->classMetadata));
+    public function test_getColection(){
+        $this->assertEquals("object_mapping", $this->classMetadata->getCollection());
     }
     
-    public function testHasPropertyAnnotation(){
-        $result = $this->classMetadata->hasPropertyAnnotation("attr1", "JPC\MongoDB\ODM\Annotations\Mapping\Field");
-        
-        $this->assertTrue($result);
-        
-        $prop = $this->reflectionClass->getProperty("propertiesAnnotations");
-        $prop->setAccessible(true);
-        $this->assertNotEmpty($prop->getValue($this->classMetadata));
+    public function test_getPropertiesInfos(){
+        $this->assertContainsOnlyInstancesOf("JPC\MongoDB\ODM\Tools\ClassMetadata\PropertyInfo", $this->classMetadata->getPropertiesInfos());
     }
     
-    public function testGetPropertyAnnotation() {
-        $result_first = $this->classMetadata->getPropertyAnnotation("attr1", "JPC\MongoDB\ODM\Annotations\Mapping\Field");
-        $this->assertInstanceOf("JPC\MongoDB\ODM\Annotations\Mapping\Field", $result_first);
-        
-        $result_second = $this->classMetadata->hasPropertyAnnotation("attr1", "Nothing");
-        $this->assertFalse($result_second);
+    public function test_getPropertyForField(){
+        $this->assertInstanceOf("ReflectionProperty", $this->classMetadata->getPropertyForField("simple_field"));
+        $this->assertFalse($this->classMetadata->getPropertyForField("inexisting"));
     }
-
+    
+    public function test_getPropertyInfoForField(){
+        $this->assertInstanceOf("JPC\MongoDB\ODM\Tools\ClassMetadata\PropertyInfo", $this->classMetadata->getPropertyInfo("simpleField"));
+        $this->assertFalse($this->classMetadata->getPropertyInfo("inexisting"));
+    }
+    
+    public function test_getPropertyInfo(){
+        $this->assertInstanceOf("JPC\MongoDB\ODM\Tools\ClassMetadata\PropertyInfo", $this->classMetadata->getPropertyInfoForField("simple_field"));
+        $this->assertFalse($this->classMetadata->getPropertyInfoForField("inexisting"));
+    }
+    
+    public function test_getRepositoryClass(){
+        $this->assertEquals("JPC\MongoDB\ODM\Repository", $this->classMetadata->getRepositoryClass());
+    }
+    
+    public function test_getCollectionOptions(){
+        $this->assertEmpty($this->classMetadata->getCollectionOptions());
+    }
+    
+    public function test_getCollectionCreationOptions(){
+        $this->assertEmpty($this->classMetadata->getCollectionCreationOptions());
+    }
+    
 }
