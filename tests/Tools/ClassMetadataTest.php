@@ -34,7 +34,7 @@ class ClassMetadataTest extends TestCase {
     }
     
     public function test_getPropertyInfoForField(){
-        $this->assertInstanceOf("JPC\MongoDB\ODM\Tools\ClassMetadata\PropertyInfo", $this->classMetadata->getPropertyInfo("simple"));
+        $this->assertInstanceOf("JPC\MongoDB\ODM\Tools\ClassMetadata\PropertyInfo", $this->classMetadata->getPropertyInfo("simpleField"));
         $this->assertFalse($this->classMetadata->getPropertyInfo("inexisting"));
     }
     

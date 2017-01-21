@@ -26,6 +26,12 @@ class ClassMetadata {
     private $name;
 
     /**
+     * Namespace of the class
+     * @var     string
+     */
+    private $namespace;
+
+    /**
      * Show if all class metadas ar loaded
      * @var bool 
      */
@@ -56,6 +62,14 @@ class ClassMetadata {
     
     public function getName(){
         return $this->name;
+    }
+
+    public function getNamespace(){
+        if(!isset($this->namespace)){
+            $reflectionClass = new \ReflectionClass($this->name);
+            $this->namespace = $reflectionClass->getNamespaceName();
+        }
+        return $this->namespace;
     }
 
     public function getCollection() {

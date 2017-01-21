@@ -60,8 +60,13 @@ class Repository {
         $this->classMetadata = $classMetadata;
         $this->modelName = $classMetadata->getName();
         $this->hydrator = Hydrator::getInstance($this->modelName . spl_object_hash($documentManager), $documentManager, $classMetadata);
-        $this->createCollection($collection, $classMetadata);
-        $this->collection = $this->documentManager->getMongoDBDatabase()->selectCollection($collection, $classMetadata->getCollectionOptions());
+
+        if(is_string($collection)){
+            $this->createCollection($collection, $classMetadata);
+            $this->collection = $this->documentManager->getMongoDBDatabase()->selectCollection($collection, $classMetadata->getCollectionOptions());
+        } else {
+            $this->collection = $collection;
+        }
 
         $this->objectManager = $objectManager;
         $this->objectCache = new ArrayCache();
@@ -88,6 +93,11 @@ class Repository {
         }
     }
 
+    /**
+     * Get the collection
+     * 
+     * @return \MongoDB\Collection A mongoDb collection
+     */
     public function getCollection() {
         return $this->collection;
     }
@@ -123,7 +133,7 @@ class Repository {
     public function find($id, $projections = [], $options = []) {
         $options = array_merge($options, [
             "projection" => $this->castQuery($projections)
-        ]);
+            ]);
 
         $result = $this->collection->findOne(["_id" => $id], $options);
 
@@ -136,7 +146,7 @@ class Repository {
             return $object;
         }
 
-        return false;
+        return null;
     }
 
     /**
@@ -151,7 +161,7 @@ class Repository {
         $options = array_merge($options, [
             "projection" => $this->castQuery($projections),
             "sort" => $this->castQuery($sorts)
-        ]);
+            ]);
 
         $result = $this->collection->find([], $options);
 
@@ -182,7 +192,7 @@ class Repository {
         $options = array_merge($options, [
             "projection" => $this->castQuery($projections),
             "sort" => $this->castQuery($sorts)
-        ]);
+            ]);
 
         $result = $this->collection->find($this->castQuery($filters), $options);
         $objects = [];
@@ -213,7 +223,7 @@ class Repository {
         $options = array_merge($options, [
             "projection" => $this->castQuery($projections),
             "sort" => $this->castQuery($sorts)
-        ]);
+            ]);
 
         $result = $this->collection->findOne($this->castQuery($filters), $options);
 
@@ -244,7 +254,7 @@ class Repository {
         $options = array_merge($options, [
             "projection" => $this->castQuery($projections),
             "sort" => $this->castQuery($sorts)
-        ]);
+            ]);
 
         $result = (array) $this->collection->findOneAndUpdate($this->castQuery($filters), $this->castQuery($update), $options);
 

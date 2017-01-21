@@ -47,13 +47,19 @@ class Hydrator {
                 $prop = new \ReflectionProperty($this->classMetadata->getName(), $name);
                 $prop->setAccessible(true);
 
-                if (($datas[$field] instanceof \MongoDB\Model\BSONDocument) && $infos->getEmbedded() && null !== ($class = $infos->getEmbeddedClass())) {
+                if ((($datas[$field] instanceof \MongoDB\Model\BSONDocument) || is_array($datas[$field])) && $infos->getEmbedded() && null !== ($class = $infos->getEmbeddedClass())) {
+                    if(!class_exists($class)){
+                        $class = $this->classMetadata->getNamespace() . "\\" . $class;
+                    }
                     $embedded = new $class();
                     $this->getHydrator($class)->hydrate($embedded, $datas[$field]);
                     $datas[$field] = $embedded;
                 }
 
-                if (($datas[$field] instanceof \MongoDB\Model\BSONArray) && $infos->getMultiEmbedded() && null !== ($class = $infos->getEmbeddedClass())) {
+                if ((($datas[$field] instanceof \MongoDB\Model\BSONArray) || is_array($datas[$field])) && $infos->getMultiEmbedded() && null !== ($class = $infos->getEmbeddedClass())) {
+                    if(!class_exists($class)){
+                        $class = $this->classMetadata->getNamespace() . "\\" . $class;
+                    }
                     $array = [];
                     foreach ($datas[$field] as $value) {
                         if($value === null) continue;
@@ -63,6 +69,7 @@ class Hydrator {
                     }
                     $datas[$field] = $array;
                 }
+
                 $prop->setValue($object, $datas[$field]);
             }
         }
@@ -84,13 +91,21 @@ class Hydrator {
             $value = $prop->getValue($object);
 
             if (is_object($value) && $infos->getEmbedded()) {
-                $value = $this->getHydrator($infos->getEmbeddedClass())->unhydrate($value);
+                $class = $infos->getEmbeddedClass();
+                if(!class_exists($class)){
+                    $class = $this->classMetadata->getNamespace() . "\\" . $class;
+                }
+                $value = $this->getHydrator($class)->unhydrate($value);
             }
 
             if (is_array($value) && $infos->getMultiEmbedded()) {
                 $array = [];
                 foreach ($value as $embeddedValue) {
-                    $array[] = $this->getHydrator($infos->getEmbeddedClass())->unhydrate($embeddedValue);
+                    $class = $infos->getEmbeddedClass();
+                    if(!class_exists($class)){
+                        $class = $this->classMetadata->getNamespace() . "\\" . $class;
+                    }
+                    $array[] = $this->getHydrator($class)->unhydrate($embeddedValue);
                 }
                 $value = $array;
             }
@@ -111,10 +126,11 @@ class Hydrator {
 
     /**
      * Get hydrator for specified class
+     * 
      * @param   string              $class              Class which you will get hydrator
      * @return  Hydrator            Hydrator corresponding to specified class
      */
-    public function getHydrator($class) {
+    private function getHydrator($class) {
         $metadata = Tools\ClassMetadataFactory::getInstance()->getMetadataForClass($class);
         return Hydrator::getInstance($class, $this->documentManager, $metadata);
     }
