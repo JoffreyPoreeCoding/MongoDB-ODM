@@ -4,7 +4,7 @@ namespace JPC\MongoDB\ODM;
 
 use JPC\MongoDB\ODM\DocumentManager;
 use JPC\MongoDB\ODM\ObjectManager;
-use JPC\MongoDB\ODM\Tools\ClassMetadata;
+use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
 use Doctrine\Common\Cache\ArrayCache;
 
 /**

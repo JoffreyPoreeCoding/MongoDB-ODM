@@ -4,7 +4,7 @@ namespace JPC\Test\MongoDB\ODM;
 
 use JPC\MongoDB\ODM\DocumentManager;
 use JPC\MongoDB\ODM\Hydrator;
-use JPC\MongoDB\ODM\Tools\ClassMetadata;
+use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
 use JPC\Test\MongoDB\ODM\Model\ObjectMapping;
 use PHPUnit\Framework\TestCase;
 

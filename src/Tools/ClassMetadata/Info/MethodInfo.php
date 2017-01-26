@@ -1,6 +1,6 @@
 <?php
 
-namespace JPC\MongoDB\ODM\Tools\ClassMetadata;
+namespace JPC\MongoDB\ODM\Tools\ClassMetadata\Info;
 
 class MethodInfo {
     private $isPreLoadEvent;

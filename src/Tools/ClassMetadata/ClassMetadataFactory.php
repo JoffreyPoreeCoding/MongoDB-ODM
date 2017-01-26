@@ -1,12 +1,11 @@
 <?php
 
-namespace JPC\MongoDB\ODM\Tools;
+namespace JPC\MongoDB\ODM\Tools\ClassMetadata;
 
 use Doctrine\Common\Cache\ApcuCache;
 use Doctrine\Common\Annotations\CachedReader;
 use Doctrine\Common\Annotations\IndexedReader;
 use Doctrine\Common\Annotations\AnnotationReader;
-use JPC\MongoDB\ODM\Tools\ClassMetadata;
 
 /**
  * Allow to get Class metadatas

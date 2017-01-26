@@ -3,7 +3,7 @@
 namespace JPC\Test\MongoDB\ODM\Tools;
 
 use JPC\Test\MongoDB\ODM\TestCase;
-use JPC\MongoDB\ODM\Tools\ClassMetadata;
+use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
 
 class ClassMetadataTest extends TestCase {
     
@@ -25,7 +25,7 @@ class ClassMetadataTest extends TestCase {
     }
     
     public function test_getPropertiesInfos(){
-        $this->assertContainsOnlyInstancesOf("JPC\MongoDB\ODM\Tools\ClassMetadata\PropertyInfo", $this->classMetadata->getPropertiesInfos());
+        $this->assertContainsOnlyInstancesOf("JPC\MongoDB\ODM\Tools\ClassMetadata\Info\PropertyInfo", $this->classMetadata->getPropertiesInfos());
     }
     
     public function test_getPropertyForField(){
@@ -34,12 +34,12 @@ class ClassMetadataTest extends TestCase {
     }
     
     public function test_getPropertyInfoForField(){
-        $this->assertInstanceOf("JPC\MongoDB\ODM\Tools\ClassMetadata\PropertyInfo", $this->classMetadata->getPropertyInfo("simpleField"));
+        $this->assertInstanceOf("JPC\MongoDB\ODM\Tools\ClassMetadata\Info\PropertyInfo", $this->classMetadata->getPropertyInfo("simpleField"));
         $this->assertFalse($this->classMetadata->getPropertyInfo("inexisting"));
     }
     
     public function test_getPropertyInfo(){
-        $this->assertInstanceOf("JPC\MongoDB\ODM\Tools\ClassMetadata\PropertyInfo", $this->classMetadata->getPropertyInfoForField("simple_field"));
+        $this->assertInstanceOf("JPC\MongoDB\ODM\Tools\ClassMetadata\Info\PropertyInfo", $this->classMetadata->getPropertyInfoForField("simple_field"));
         $this->assertFalse($this->classMetadata->getPropertyInfoForField("inexisting"));
     }
     

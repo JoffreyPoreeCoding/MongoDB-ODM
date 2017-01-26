@@ -1,12 +1,12 @@
 <?php
 
-namespace JPC\MongoDB\ODM\Tools;
+namespace JPC\MongoDB\ODM\Tools\ClassMetadata;
 
 use Doctrine\Common\Annotations\AnnotationReader;
 use Doctrine\Common\Annotations\CachedReader;
 use Doctrine\Common\Cache\ApcuCache;
-use JPC\MongoDB\ODM\Tools\ClassMetadata\CollectionInfo;
-use JPC\MongoDB\ODM\Tools\ClassMetadata\PropertyInfo;
+use JPC\MongoDB\ODM\Tools\ClassMetadata\Info\CollectionInfo;
+use JPC\MongoDB\ODM\Tools\ClassMetadata\Info\PropertyInfo;
 
 class ClassMetadata {
     /* ================================== */

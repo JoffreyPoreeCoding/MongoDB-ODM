@@ -3,7 +3,7 @@
 namespace JPC\Test\MongoDB\ODM\Tools;
 
 use JPC\Test\MongoDB\ODM\TestCase;
-use JPC\MongoDB\ODM\Tools\ClassMetadataFactory;
+use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadataFactory;
 
 class ClassMetadataFactoryTest extends TestCase {
     
@@ -25,7 +25,7 @@ class ClassMetadataFactoryTest extends TestCase {
     public function test_getMetadataForClass(){
         $classMeta = $this->classMetadataFactory->getMetadataForClass("JPC\Test\MongoDB\ODM\Model\ObjectMapping");
         
-        $this->assertInstanceOf(\JPC\MongoDB\ODM\Tools\ClassMetadata::class, $classMeta);
+        $this->assertInstanceOf(\JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata::class, $classMeta);
         
         $this->assertCount(1, $this->getPropertyValue($this->classMetadataFactory, "loadedMetadatas"));
     }

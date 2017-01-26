@@ -3,7 +3,7 @@
 namespace JPC\MongoDB\ODM;
 
 use JPC\MongoDB\ODM\DocumentManager;
-use JPC\MongoDB\ODM\Tools\ClassMetadata;
+use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
 
 class Hydrator {
 
@@ -131,7 +131,7 @@ class Hydrator {
      * @return  Hydrator            Hydrator corresponding to specified class
      */
     private function getHydrator($class) {
-        $metadata = Tools\ClassMetadataFactory::getInstance()->getMetadataForClass($class);
+        $metadata = Tools\ClassMetadata\ClassMetadataFactory::getInstance()->getMetadataForClass($class);
         return Hydrator::getInstance($class, $this->documentManager, $metadata);
     }
 

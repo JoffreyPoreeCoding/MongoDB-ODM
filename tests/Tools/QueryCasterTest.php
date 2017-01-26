@@ -4,8 +4,8 @@ namespace JPC\Test\MongoDB\ODM\Tools;
 
 use JPC\Test\MongoDB\ODM\TestCase;
 use JPC\MongoDB\ODM\Tools\QueryCaster;
-use JPC\MongoDB\ODM\Tools\ClassMetadata;
-use JPC\MongoDB\ODM\Tools\ClassMetadata\PropertyInfo;
+use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
+use JPC\MongoDB\ODM\Tools\ClassMetadata\Info\PropertyInfo;
 
 class QueryCasterTest extends TestCase {
     
