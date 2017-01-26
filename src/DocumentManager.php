@@ -30,6 +30,8 @@ class DocumentManager {
     /*             PROPERTIES             */
     /* ================================== */
 
+    private $debug;
+
     /**
      * MongoDB Connection
      * @var MongoClient
@@ -90,7 +92,9 @@ class DocumentManager {
      * @param boolean       $debug      Debug (Disable caching)
      */
     public function __construct($mongouri, $db, $logger = null, $debug = false) {
-        if ($debug) {
+        $this->debug = $debug;
+
+        if ($this->debug) {
             apcu_clear_cache();
         }
 
