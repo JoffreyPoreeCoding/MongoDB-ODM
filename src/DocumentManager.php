@@ -2,10 +2,11 @@
 
 namespace JPC\MongoDB\ODM;
 
-use MongoDB\Client as MongoClient;
-use MongoDB\Database as MongoDatabase;
 use JPC\MongoDB\ODM\Exception\ModelNotFoundException;
 use JPC\MongoDB\ODM\ObjectManager;
+use JPC\MongoDB\ODM\Tools\Logger\LoggerInterface;
+use MongoDB\Client as MongoClient;
+use MongoDB\Database as MongoDatabase;
 
 /**
  * This allow to interact with document and repositories
@@ -70,6 +71,12 @@ class DocumentManager {
      */
     private $modifiers = [];
 
+    /**
+     * Logger object
+     * @var LoggerInterface
+     */
+    protected $logger;
+
     /* ================================== */
     /*          PUBLICS FUNCTIONS         */
     /* ================================== */
@@ -81,7 +88,7 @@ class DocumentManager {
      * @param string        $db         MongoDB Database Name
      * @param boolean       $debug      Debug (Disable caching)
      */
-    public function __construct($mongouri, $db, $debug = false) {
+    public function __construct($mongouri, $db, LoggerInterface $logger, $debug = false) {
         if ($debug) {
             apcu_clear_cache();
         }
@@ -90,6 +97,14 @@ class DocumentManager {
         $this->mongodatabase = $this->mongoclient->selectDatabase($db);
         $this->classMetadataFactory = Tools\ClassMetadataFactory::getInstance();
         $this->objectManager = new ObjectManager();
+    }
+
+    public function setLogger(LoggerInterface $logger){
+        $this->logger = $logger;
+    }
+
+    public function getLogger(){
+        return $this->logger;
     }
 
     /**
@@ -252,7 +267,9 @@ class DocumentManager {
 
         $mongoCollection = $rep->getCollection();
 
-        $datas = (array) $mongoCollection->findOne(["_id" => $rep->getHydrator()->unhydrate($object)["_id"]]);
+        $id = $rep->getHydrator()->unhydrate($object)["_id"];
+        $this->logger->debug("Refresh datas for object with id " . (string) $id . ' in collection ' . $mongoCollection);
+        $datas = (array) $mongoCollection->findOne(["_id" => $id]);
         if ($rep instanceof GridFS\Repository) {
             $datas = $rep->createHytratableResult($datas);
         }
@@ -269,6 +286,13 @@ class DocumentManager {
      * Flush all changes and write it in mongoDB
      */
     public function flush() {
+        if($this->debug){
+            $countRemove = count($this->objectManager->getObject(ObjectManager::OBJ_REMOVED));
+            $countUpdate = count($this->objectManager->getObject(ObjectManager::OBJ_MANAGED));
+            $countInsert = count($this->objectManager->getObject(ObjectManager::OBJ_NEW));
+            $this->logger->debug("Flushing datas to database, $countInsert to insert, $countUpdate to update, $countRemove to remove.");
+        }
+
         $removeObjs = $this->objectManager->getObject(ObjectManager::OBJ_REMOVED);
         foreach ($removeObjs as $object) {
             $collection = isset($this->objectCollection[spl_object_hash($object)]) ? $this->objectCollection[spl_object_hash($object)] : $this->getRepository(get_class($object))->getCollection()->getCollectionName();
@@ -348,8 +372,8 @@ class DocumentManager {
                     }
                 }
 
-
                 $id = $bucket->uploadFromStream($filename, $stream, $options);
+                $this->logger->debug("Inserted object into GridFS with id '$id'");
 
                 $hydrator->hydrate($obj, ["_id" => $id]);
                 $this->objectManager->setObjectState($obj, ObjectManager::OBJ_MANAGED);
@@ -373,6 +397,7 @@ class DocumentManager {
 
             if ($res->isAcknowledged()) {
                 foreach ($res->getInsertedIds() as $index => $id) {
+                    $this->logger->debug("Inserted object into MongoDB, collection '" . $collection->getCollectionName() . "', with id '$id'");
                     $hydrator->hydrate($objects[$index], ["_id" => $id]);
                     $this->objectManager->setObjectState($objects[$index], ObjectManager::OBJ_MANAGED);
                     $this->refresh($objects[$index]);
@@ -407,6 +432,7 @@ class DocumentManager {
         }
 
         if (!empty($update)) {
+            $this->logger("Update object with id '$id', see metadata for update query", ["update_query" => $update]);
             $res = $collection->updateOne(["_id" => $id], $update);
             if ($res->isAcknowledged()) {
                 $this->refresh($object);
@@ -436,13 +462,16 @@ class DocumentManager {
         if ($rep instanceof GridFS\Repository) {
             fclose($unhydrated["stream"]);
             $this->objectManager->removeObject($object);
+            $this->logger->debug("Delete object in bucket '".$bucket->getBucketName()."' with id '$id'");
             $rep->getBucket()->delete($id);
         } else {
             $res = $rep->getCollection()->deleteOne(["_id" => $id]);
 
             if ($res->isAcknowledged()) {
+                $this->logger->debug("Delete object in collection '".$rep->getCollection()->getCollectionName()."' with id '".(string) $id."'");
                 $this->objectManager->removeObject($object);
             } else {
+                $this->logger->error("Can't delete document in '".$rep->getCollection()->getCollectionName()."' with id '".(string) $id."'");
                 throw new \Exception("Error on removing the document with _id : " . (string) $id . "in collection " . $collection);
             }
         }
@@ -475,8 +504,8 @@ class DocumentManager {
                     }
                 }
                 $update['$set'] += Tools\ArrayModifier::aggregate($value, [
-                            '$set' => [$this, 'onAggregSet'],
-                                ], $key);
+                    '$set' => [$this, 'onAggregSet'],
+                    ], $key);
             } else {
                 $update['$set'][$key] = $value;
             }

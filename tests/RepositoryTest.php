@@ -7,6 +7,7 @@ use JPC\MongoDB\ODM\Hydrator;
 use JPC\MongoDB\ODM\ObjectManager;
 use JPC\MongoDB\ODM\Repository;
 use JPC\MongoDB\ODM\Tools\ClassMetadata;
+use JPC\MongoDB\ODM\Tools\Logger\MemoryLogger;
 use MongoDB\Collection;
 use PHPUnit\Framework\TestCase;
 
@@ -26,6 +27,7 @@ class RepositoryTest extends TestCase {
 
 	public function setUp(){
 		$this->documentManager = $this->createMock(DocumentManager::class);
+		$this->documentManager->method("getLogger")->willReturn(new MemoryLogger());
 		$this->objectManager = $this->createMock(ObjectManager::class);
 		$this->classMetadata = $this->createMock(ClassMetadata::class);
 		$this->classMetadata->method("getName")->willReturn("JPC\\Test\\MongoDB\\ODM\\Model\\ObjectMapping");
