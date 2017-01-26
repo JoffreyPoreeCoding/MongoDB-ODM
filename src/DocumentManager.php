@@ -473,7 +473,7 @@ class DocumentManager {
         if ($rep instanceof GridFS\Repository) {
             fclose($unhydrated["stream"]);
             $this->objectManager->removeObject($object);
-            $this->logger->debug("Delete object in bucket '".$bucket->getBucketName()."' with id '$id'");
+            $this->logger->debug("Delete object in bucket '".$rep->getBucket()->getBucketName()."' with id '$id'");
             $rep->getBucket()->delete($id);
         } else {
             $res = $rep->getCollection()->deleteOne(["_id" => $id]);
