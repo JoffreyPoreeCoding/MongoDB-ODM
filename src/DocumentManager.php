@@ -89,11 +89,15 @@ class DocumentManager {
      * @param string        $db         MongoDB Database Name
      * @param boolean       $debug      Debug (Disable caching)
      */
-    public function __construct($mongouri, $db, LoggerInterface $logger = null, $debug = false) {
+    public function __construct($mongouri, $db, $logger = null, $debug = false) {
         if ($debug) {
             apcu_clear_cache();
         }
 
+        if(isset($logger) && !$logger instanceof LoggerInterface){
+            throw new \Exception("Logger must implements '" . LoggerInterface::class . "'");
+            
+        }
         $this->logger = !isset($logger) ? new MemoryLogger() : $logger;
 
         $this->mongoclient = new MongoClient($mongouri);
