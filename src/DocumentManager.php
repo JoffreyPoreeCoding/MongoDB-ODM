@@ -5,6 +5,7 @@ namespace JPC\MongoDB\ODM;
 use JPC\MongoDB\ODM\Exception\ModelNotFoundException;
 use JPC\MongoDB\ODM\ObjectManager;
 use JPC\MongoDB\ODM\Tools\Logger\LoggerInterface;
+use JPC\MongoDB\ODM\Tools\Logger\MemoryLogger;
 use MongoDB\Client as MongoClient;
 use MongoDB\Database as MongoDatabase;
 
@@ -88,10 +89,12 @@ class DocumentManager {
      * @param string        $db         MongoDB Database Name
      * @param boolean       $debug      Debug (Disable caching)
      */
-    public function __construct($mongouri, $db, LoggerInterface $logger, $debug = false) {
+    public function __construct($mongouri, $db, LoggerInterface $logger = null, $debug = false) {
         if ($debug) {
             apcu_clear_cache();
         }
+
+        $this->logger = !isset($logger) ? new MemoryLogger() : $logger;
 
         $this->mongoclient = new MongoClient($mongouri);
         $this->mongodatabase = $this->mongoclient->selectDatabase($db);
