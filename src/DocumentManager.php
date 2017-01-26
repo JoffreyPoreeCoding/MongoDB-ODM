@@ -118,6 +118,14 @@ class DocumentManager {
         return $this->logger;
     }
 
+    public function getDebug(){
+        return $this->debug;
+    }
+
+    public function setDebug($debug){
+        $this->debug = $debug;
+    }
+
     /**
      * Allow to get MongoDB client
      * 
@@ -279,7 +287,8 @@ class DocumentManager {
         $mongoCollection = $rep->getCollection();
 
         $id = $rep->getHydrator()->unhydrate($object)["_id"];
-        $this->logger->debug("Refresh datas for object with id " . (string) $id . ' in collection ' . $mongoCollection);
+        if($this->debug)
+            $this->logger->debug("Refresh datas for object with id " . (string) $id . ' in collection ' . $mongoCollection);
         $datas = (array) $mongoCollection->findOne(["_id" => $id]);
         if ($rep instanceof GridFS\Repository) {
             $datas = $rep->createHytratableResult($datas);
@@ -384,7 +393,8 @@ class DocumentManager {
                 }
 
                 $id = $bucket->uploadFromStream($filename, $stream, $options);
-                $this->logger->debug("Inserted object into GridFS with id '$id'");
+                if($this->debug)
+                    $this->logger->debug("Inserted object into GridFS with id '$id'");
 
                 $hydrator->hydrate($obj, ["_id" => $id]);
                 $this->objectManager->setObjectState($obj, ObjectManager::OBJ_MANAGED);
@@ -408,7 +418,8 @@ class DocumentManager {
 
             if ($res->isAcknowledged()) {
                 foreach ($res->getInsertedIds() as $index => $id) {
-                    $this->logger->debug("Inserted object into MongoDB, collection '" . $collection->getCollectionName() . "', with id '$id'");
+                    if($this->debug)
+                        $this->logger->debug("Inserted object into MongoDB, collection '" . $collection->getCollectionName() . "', with id '$id'");
                     $hydrator->hydrate($objects[$index], ["_id" => $id]);
                     $this->objectManager->setObjectState($objects[$index], ObjectManager::OBJ_MANAGED);
                     $this->refresh($objects[$index]);
@@ -443,7 +454,8 @@ class DocumentManager {
         }
 
         if (!empty($update)) {
-            $this->logger->debug("Update object with id '$id', see metadata for update query", ["update_query" => $update]);
+            if($this->debug)
+                $this->logger->debug("Update object with id '$id', see metadata for update query", ["update_query" => $update]);
             $res = $collection->updateOne(["_id" => $id], $update);
             if ($res->isAcknowledged()) {
                 $this->refresh($object);
@@ -473,16 +485,19 @@ class DocumentManager {
         if ($rep instanceof GridFS\Repository) {
             fclose($unhydrated["stream"]);
             $this->objectManager->removeObject($object);
-            $this->logger->debug("Delete object in bucket '".$rep->getBucket()->getBucketName()."' with id '$id'");
+            if($this->debug)
+                $this->logger->debug("Delete object in bucket '".$rep->getBucket()->getBucketName()."' with id '$id'");
             $rep->getBucket()->delete($id);
         } else {
             $res = $rep->getCollection()->deleteOne(["_id" => $id]);
 
             if ($res->isAcknowledged()) {
-                $this->logger->debug("Delete object in collection '".$rep->getCollection()->getCollectionName()."' with id '".(string) $id."'");
+                if($this->debug)
+                    $this->logger->debug("Delete object in collection '".$rep->getCollection()->getCollectionName()."' with id '".(string) $id."'");
                 $this->objectManager->removeObject($object);
             } else {
-                $this->logger->error("Can't delete document in '".$rep->getCollection()->getCollectionName()."' with id '".(string) $id."'");
+                if($this->debug)
+                    $this->logger->error("Can't delete document in '".$rep->getCollection()->getCollectionName()."' with id '".(string) $id."'");
                 throw new \Exception("Error on removing the document with _id : " . (string) $id . "in collection " . $collection);
             }
         }
