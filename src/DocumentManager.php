@@ -106,7 +106,7 @@ class DocumentManager {
 
         $this->mongoclient = new MongoClient($mongouri);
         $this->mongodatabase = $this->mongoclient->selectDatabase($db);
-        $this->classMetadataFactory = Tools\ClassMetadataFactory::getInstance();
+        $this->classMetadataFactory = Tools\ClassMetata\ClassMetadataFactory::getInstance();
         $this->objectManager = new ObjectManager();
     }
 
