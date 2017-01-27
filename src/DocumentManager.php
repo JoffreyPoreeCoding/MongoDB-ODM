@@ -455,7 +455,7 @@ class DocumentManager {
 
         if (!empty($update)) {
             if($this->debug)
-                $this->logger->debug("Update object with id '$id', see metadata for update query", ["update_query" => $update]);
+                $this->logger->debug("Update object with id '$id'");
             $res = $collection->updateOne(["_id" => $id], $update);
             if ($res->isAcknowledged()) {
                 $this->refresh($object);
