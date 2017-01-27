@@ -131,7 +131,7 @@ class Hydrator {
      * @return  Hydrator            Hydrator corresponding to specified class
      */
     private function getHydrator($class) {
-        $metadata = Tools\ClassMetadata\ClassMetadataFactory::getInstance()->getMetadataForClass($class);
+        $metadata = $this->documentManager->getClassMetadataFactory()->getMetadataForClass($class);
         return Hydrator::getInstance($class, $this->documentManager, $metadata);
     }
 

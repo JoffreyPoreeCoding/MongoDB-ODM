@@ -55,7 +55,7 @@ class Repository {
      * 
      * @param   Tools\ClassMetadata     $classMetadata      Metadata of managed class
      */
-    public function __construct(DocumentManager $documentManager, ObjectManager $objectManager, ClassMetadata $classMetadata, $collection) {
+    public function __construct(DocumentManager $documentManager, ObjectManager $objectManager, ClassMetadata $classMetadata, Collection $collection) {
         $this->documentManager = $documentManager;
         $this->classMetadata = $classMetadata;
         $this->modelName = $classMetadata->getName();

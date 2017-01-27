@@ -4,6 +4,7 @@ namespace JPC\MongoDB\ODM;
 
 use JPC\MongoDB\ODM\Exception\ModelNotFoundException;
 use JPC\MongoDB\ODM\ObjectManager;
+use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadataFactory;
 use JPC\MongoDB\ODM\Tools\Logger\LoggerInterface;
 use JPC\MongoDB\ODM\Tools\Logger\MemoryLogger;
 use MongoDB\Client as MongoClient;
@@ -85,15 +86,24 @@ class DocumentManager {
     /* ================================== */
 
     /**
-     * Create new Document manager
-     * 
-     * @param string        $mongouri   MongoDB URI
-     * @param string        $db         MongoDB Database Name
-     * @param boolean       $debug      Debug (Disable caching)
+     * Create new DocumentManager
+     * @param MongoClient               $mongoClient          MongoClient for connection
+     * @param MongoDatabase             $mongoDatabase        MongoDatabase object
+     * @param ClassMetadataFactory|null $classMetadataFactory ClassMetadataFactory object
+     * @param ObjectManager|null        $objectManager        Instance of object manager
+     * @param LoggerInterface           $logger               A logger that implement the LoggerInterface
+     * @param boolean                   $debug                Enable or not the debug mode
      */
-    public function __construct($mongouri, $db, $logger = null, $debug = false) {
+    public function __construct(
+            MongoClient $mongoClient, 
+            MongoDatabase $databaseName, 
+            ClassMetadataFactory $classMetadataFactory = null, 
+            ObjectManager $objectManager = null, 
+            LoggerInterface $logger = null, 
+            $debug = false
+        ) 
+    {
         $this->debug = $debug;
-
         if ($this->debug) {
             apcu_clear_cache();
         }
@@ -103,11 +113,10 @@ class DocumentManager {
             
         }
         $this->logger = !isset($logger) ? new MemoryLogger() : $logger;
-
-        $this->mongoclient = new MongoClient($mongouri);
-        $this->mongodatabase = $this->mongoclient->selectDatabase($db);
-        $this->classMetadataFactory = Tools\ClassMetadataFactory::getInstance();
-        $this->objectManager = new ObjectManager();
+        $this->mongoclient = $mongoClient;
+        $this->mongodatabase = $mongoDatabase;
+        $this->classMetadataFactory = isset($classMetadataFactory) ? $classMetadataFactory : new ClassMetadataFactory();
+        $this->objectManager = isset($objectManager) ? $objectManager : new ObjectManager();
     }
 
     public function setLogger(LoggerInterface $logger){
@@ -124,6 +133,10 @@ class DocumentManager {
 
     public function setDebug($debug){
         $this->debug = $debug;
+    }
+
+    public function getClassMetadataFactory(){
+        return $this->classMetadataFactory;
     }
 
     /**

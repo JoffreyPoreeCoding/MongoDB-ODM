@@ -12,8 +12,6 @@ use Doctrine\Common\Annotations\AnnotationReader;
  */
 class ClassMetadataFactory {
     
-    use \JPC\DesignPattern\Singleton;
-    
     /* ================================== */
     /*             PROPERTIES             */
     /* ================================== */
