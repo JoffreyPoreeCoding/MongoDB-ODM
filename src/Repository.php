@@ -136,9 +136,12 @@ class Repository {
         $options = array_merge($options, [
             "projection" => $this->castQuery($projections)
             ]);
-        if($this->documentManager->getDebug())
-            $this->documentManager->getLogger()->debug("Find object in collection '".$this->collection->getCollectionName()."' with id : '".(string) $id."'");
+
         $result = $this->collection->findOne(["_id" => $id], $options);
+        
+        if($this->documentManager->getDebug()){
+            $this->documentManager->getLogger()->debug("Find object in collection '".$this->collection->getCollectionName()."' with id : '".(string) $id."'");
+        }
 
         if ($result !== null) {
             $object = new $this->modelName();
@@ -165,10 +168,12 @@ class Repository {
             "projection" => $this->castQuery($projections),
             "sort" => $this->castQuery($sorts)
             ]);
-        if($this->documentManager->getDebug())
-            $this->documentManager->getLogger()->debug("Find all document in collection '".$this->collection->getCollectionName()."'");
 
         $result = $this->collection->find([], $options);
+        
+        if($this->documentManager->getDebug()){
+            $this->documentManager->getLogger()->debug("Find all document in collection '".$this->collection->getCollectionName()."'");
+        }
 
         $objects = [];
 
@@ -200,10 +205,14 @@ class Repository {
             ]);
 
         $filters = $this->castQuery($filters);
-        if($this->documentManager->getDebug())
-            $this->documentManager->getLogger()->debug("Find documents in collection '".$this->collection->getCollectionName()."'");
+
 
         $result = $this->collection->find($filters, $options);
+        
+        if($this->documentManager->getDebug()){
+            $this->documentManager->getLogger()->debug("Find documents in collection '".$this->collection->getCollectionName()."'");
+        }
+        
         $objects = [];
 
         foreach ($result as $datas) {
@@ -235,10 +244,13 @@ class Repository {
             ]);
 
         $filters = $this->castQuery($filters);
-        if($this->documentManager->getDebug())
-            $this->documentManager->getLogger()->debug("Find one document in collection '".$this->collection->getCollectionName()."'");
+
 
         $result = $this->collection->findOne($filters, $options);
+
+        if($this->documentManager->getDebug()){
+            $this->documentManager->getLogger()->debug("Find one document in collection '".$this->collection->getCollectionName()."'");
+        }
 
         if ($result != null) {
             $object = new $this->modelName();
@@ -271,10 +283,13 @@ class Repository {
 
         $filters = $this->castQuery($filters);
         $update = $this->castQuery($update);
-        if($this->documentManager->getDebug())
-            $this->documentManager->getLogger()->debug("Find and update one document in collection '".$this->collection->getCollectionName()."'");
+        
 
         $result = (array) $this->collection->findOneAndUpdate($filters, $update, $options);
+
+        if($this->documentManager->getDebug()){
+            $this->documentManager->getLogger()->debug("Find and update one document in collection '".$this->collection->getCollectionName()."'");
+        }
 
         if ($result != null) {
             $object = new $this->modelName();
@@ -303,10 +318,13 @@ class Repository {
         $field = $propInfos->getField();
 
         $filters = $this->castQuery($filters);
-        if($this->documentManager->getDebug())
-            $this->documentManager->getLogger()->debug("Get distinct value of field '$field' in '".$this->collection->getCollectionName()."'");
 
         $result = $this->collection->distinct($field, $filters, $options);
+        
+        if($this->documentManager->getDebug()){
+            $this->documentManager->getLogger()->debug("Get distinct value of field '$field' in '".$this->collection->getCollectionName()."'");
+        }
+        
         return $result;
     }
 
