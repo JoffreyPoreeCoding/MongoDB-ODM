@@ -42,7 +42,7 @@ For this, MongoDB-ODM use annotations. There is basics annotations to make a map
 
 namespace ACME\Model;
 
-use JPC\MongoDB\ODM\Mapping as ODM;
+use JPC\MongoDB\ODM\Annotations\Mapping as ODM;
 
 /**
  * @ODM\Document("my_collection")
@@ -55,12 +55,12 @@ class MyDoc {
 	private $id;
 
 	/**
-	 * @ODM\Field('my_first_field')
+	 * @ODM\Field("my_first_field")
 	 */
 	private $field1
 
 	/**
-	 * @ODM\Field('my_second_field')
+	 * @ODM\Field("my_second_field")
 	 */
 	private $field2;
 
@@ -80,17 +80,17 @@ Create your embedded class like the previous one :
 
 namespace ACME\Model;
 
-use JPC\MongoDB\ODM\Mapping as ODM;
+use JPC\MongoDB\ODM\Annotations\Mapping as ODM;
 
 class MyEmbedded {
 
 	/**
-	 * @ODM\Field('one_field_emb')
+	 * @ODM\Field("one_field_emb")
 	 */
 	private $oneFieldEmb
 
 	/**
-	 * @ODM\Field('two_field_emb')
+	 * @ODM\Field("two_field_emb")
 	 */
 	private $twoFieldEmb;
 
@@ -109,7 +109,7 @@ Modify the class `MyDoc` like this :
 
 namespace ACME\Model;
 
-use JPC\MongoDB\ODM\Mapping as ODM;
+use JPC\MongoDB\ODM\Annotations\Mapping as ODM;
 
 /**
  * @ODM\Document("my_collection")
@@ -122,18 +122,18 @@ class MyDoc {
 	private $id;
 
 	/**
-	 * @ODM\Field('my_first_field')
+	 * @ODM\Field("my_first_field")
 	 */
 	private $field1
 
 	/**
-	 * @ODM\Field('my_second_field')
+	 * @ODM\Field("my_second_field")
 	 */
 	private $field2;
 
 	/**
-	 * @ODM\Field('my_embedded_document')
-	 * @ODM\EmbeddedDocument('ACME\Model\MyEmbedded')
+	 * @ODM\Field("my_embedded_document")
+	 * @ODM\EmbeddedDocument("ACME\Model\MyEmbedded")
 	 */
 	private $myEmbedded;
 
