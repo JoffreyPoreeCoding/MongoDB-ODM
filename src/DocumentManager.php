@@ -46,7 +46,7 @@ class DocumentManager {
 
     /**
      * Loaded repositories
-     * @var array<Repository> 
+     * @var array<Repository>
      */
     private $repositories = [];
 
@@ -58,7 +58,7 @@ class DocumentManager {
 
     /**
      * Store coolection associated with object (for flush on special collection)
-     * @var array 
+     * @var array
      */
     private $objectCollection = [];
 
@@ -70,7 +70,7 @@ class DocumentManager {
 
     /**
      * Modifiers
-     * @var array of callable 
+     * @var array of callable
      */
     private $modifiers = [];
 
@@ -86,7 +86,7 @@ class DocumentManager {
 
     /**
      * Create new Document manager
-     * 
+     *
      * @param string        $mongouri   MongoDB URI
      * @param string        $db         MongoDB Database Name
      * @param boolean       $debug      Debug (Disable caching)
@@ -100,7 +100,7 @@ class DocumentManager {
 
         if(isset($logger) && !$logger instanceof LoggerInterface){
             throw new \Exception("Logger must implements '" . LoggerInterface::class . "'");
-            
+
         }
         $this->logger = !isset($logger) ? new MemoryLogger() : $logger;
 
@@ -128,7 +128,7 @@ class DocumentManager {
 
     /**
      * Allow to get MongoDB client
-     * 
+     *
      * @return  MongoClient MongoDB Client
      */
     public function getMongoDBClient() {
@@ -137,7 +137,7 @@ class DocumentManager {
 
     /**
      * Allow to get MongoDB database
-     * 
+     *
      * @return  MongoDatabase MongoDB database
      */
     public function getMongoDBDatabase() {
@@ -145,13 +145,20 @@ class DocumentManager {
     }
 
     /**
+     * Set mongodatabase
+     */
+    public function setMongoDBDatabase($database) {
+        $this->mongodatabase = $database;
+    }
+
+    /**
      * Allow to get repository for specified model
-     * 
+     *
      * @param   string      $modelName  Name of the model
      * @param   string      $collection Name of the collection (null for get collection from document annotation)
-     * 
+     *
      * @return  Repository  Repository for model
-     *     
+     *
      * @throws  Exception\AnnotationException
      * @throws  ModelNotFoundException
      */
@@ -181,7 +188,7 @@ class DocumentManager {
 
     /**
      * Add a modifier
-     * 
+     *
      * @param   integer     $type       Type of modifier (See constants)
      * @param   callback    $callback   Functions will be called when modifiers call
      * @param   mixed       $id         ID to tag the modifier
@@ -195,9 +202,9 @@ class DocumentManager {
 
     /**
      * Allow to get modifiers for the specified type
-     * 
+     *
      * @param   integer     $type       Type of modifier (See constants)
-     * 
+     *
      * @return  mixed       All modifiers or false if there arn't modifiers for specified type
      */
     public function getModifier($type) {
@@ -210,10 +217,10 @@ class DocumentManager {
 
     /**
      * Remove modifier with specidfied type and id
-     * 
+     *
      * @param   integer     $type       Type of modifier (See constants)
      * @param   mixed       $id         Id of modifier (See constants)
-     * 
+     *
      * @return  bool        true if removed, else false
      */
     public function removeModifier($type, $id) {
@@ -234,7 +241,7 @@ class DocumentManager {
 
     /**
      * Persist an object in object manager
-     * 
+     *
      * @param   mixed       $object     Object to persist
      */
     public function persist($object, $collection = null) {
@@ -246,7 +253,7 @@ class DocumentManager {
 
     /**
      * Unpersist an object in object Manager
-     * 
+     *
      * @param   mixed       $object     Object to unpersist
      */
     public function unpersist($object) {
@@ -255,7 +262,7 @@ class DocumentManager {
 
     /**
      * Set object to be deleted at next flush
-     * 
+     *
      * @param   mixed       $object     Object to delete
      */
     public function delete($object) {
@@ -264,7 +271,7 @@ class DocumentManager {
 
     /**
      * Set object to be deleted at next flush
-     * 
+     *
      * @param   mixed       $object     Object to delete
      */
     public function remove($object) {
@@ -273,7 +280,7 @@ class DocumentManager {
 
     /**
      * Refresh an object to last MongoDB values
-     * 
+     *
      * @param   mixed       $object     Object to refresh
      */
     public function refresh(&$object) {
@@ -351,7 +358,7 @@ class DocumentManager {
 
     /**
      * Insert object into mongoDB
-     * 
+     *
      * @param   mixed       $object     Object to insert
      */
     private function insert($collection, $objects) {
@@ -431,7 +438,7 @@ class DocumentManager {
 
     /**
      * Update object into mongoDB
-     * 
+     *
      * @param   mixed       $object     Object to update
      */
     private function update($collection, $object) {
@@ -466,7 +473,7 @@ class DocumentManager {
 
     /**
      * Remove object from MongoDB
-     * 
+     *
      * @param   mixed       $object     Object to insert
      */
     private function doRemove($collection, $object) {
