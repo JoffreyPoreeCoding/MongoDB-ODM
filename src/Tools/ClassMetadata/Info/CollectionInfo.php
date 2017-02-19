@@ -20,6 +20,12 @@ class CollectionInfo {
      * @var string
      */
     private $repository;
+
+    /**
+     * Hydrator class name
+     * @var string
+     */
+    private $hydrator;
     
     /**
      * Options for collection creation
@@ -52,10 +58,16 @@ class CollectionInfo {
     function getRepository() {
         return $this->repository;
     }
+
+    function getHydrator()
+    {
+        return $this->hydrator;
+    }
     
     function getCreationOptions(){
         return $this->creationOptions;
     }
+
     function getOptions() {
         return $this->options;
     }
@@ -85,6 +97,13 @@ class CollectionInfo {
         $this->repository = $repository;
         return $this;
     }
+
+    public function setHydrator($hydrator)
+    {
+        $this->hydrator = $hydrator;
+
+        return $this;
+    }
     
     function setCreationOptions($options){
         $this->creationOptions = $options;
@@ -93,6 +112,4 @@ class CollectionInfo {
     function setOptions($options) {
         $this->options = $options;
     }
-
-
 }

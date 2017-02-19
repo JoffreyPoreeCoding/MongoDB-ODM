@@ -2,18 +2,16 @@
 
 namespace JPC\MongoDB\ODM;
 
-use JPC\MongoDB\ODM\DocumentManager;
+use JPC\MongoDB\ODM\Factory\ClassMetadataFactory;
 use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
 
 class Hydrator {
-
-    use \JPC\DesignPattern\Multiton;
 
     /**
      * Document Manager
      * @var DocumentManager
      */
-    protected $documentManager;
+    protected $classMetadataFactory;
 
     /**
      * Class metadatas
@@ -23,11 +21,11 @@ class Hydrator {
 
     /**
      * Create new Hydrator
-     * @param   DocumentManager     $documentManager    Document manager of the repository
+     * @param   DocumentManager     $classMetadataFactory    Document manager of the repository
      * @param   ClassMetadata       $classMetadata      Class metadata corresponding to class
      */
-    function __construct(DocumentManager $documentManager, ClassMetadata $classMetadata) {
-        $this->documentManager = $documentManager;
+    function __construct(ClassMetadataFactory $classMetadataFactory, ClassMetadata $classMetadata) {
+        $this->classMetadataFactory = $classMetadataFactory;
         $this->classMetadata = $classMetadata;
     }
 
@@ -44,6 +42,7 @@ class Hydrator {
 
         foreach ($properties as $name => $infos) {
             if (null !== ($field = $infos->getField()) && is_array($datas) && array_key_exists($field, $datas) && $datas[$field] !== null) {
+                
                 $prop = new \ReflectionProperty($this->classMetadata->getName(), $name);
                 $prop->setAccessible(true);
 
@@ -90,6 +89,10 @@ class Hydrator {
 
             $value = $prop->getValue($object);
 
+            if(null === $value){
+                continue;
+            }
+
             if (is_object($value) && $infos->getEmbedded()) {
                 $class = $infos->getEmbeddedClass();
                 if(!class_exists($class)){
@@ -131,8 +134,8 @@ class Hydrator {
      * @return  Hydrator            Hydrator corresponding to specified class
      */
     private function getHydrator($class) {
-        $metadata = $this->documentManager->getClassMetadataFactory()->getMetadataForClass($class);
-        return Hydrator::getInstance($class, $this->documentManager, $metadata);
+        $metadata = $this->classMetadataFactory->getMetadataForClass($class);
+        return new Hydrator($this->classMetadataFactory, $metadata);
     }
 
 }

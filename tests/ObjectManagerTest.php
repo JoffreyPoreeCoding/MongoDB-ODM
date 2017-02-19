@@ -1,9 +1,8 @@
 <?php
 
-namespace JPC\Test\MongoDB\ODM\ObjectManager;
+namespace JPC\Test\MongoDB\ODM;
 
 use JPC\MongoDB\ODM\ObjectManager;
-use JPC\Test\MongoDB\ODM\Model\ObjectMapping;
 use PHPUnit\Framework\TestCase;
 
 class ObjectManagerTest extends TestCase {
@@ -15,7 +14,7 @@ class ObjectManagerTest extends TestCase {
 	}
 
 	public function test_addObject(){
-		$object = new ObjectMapping();
+		$object = new \stdClass();
 		$this->objectManager->addObject($object);
 
 		$oid = spl_object_hash($object);
@@ -30,14 +29,14 @@ class ObjectManagerTest extends TestCase {
 	}
 
 	public function test_removeObject_inexisting(){
-		$object = new ObjectMapping();
+		$object = new \stdClass();
 
 		$this->expectException("JPC\MongoDB\ODM\Exception\StateException");
 		$this->objectManager->removeObject($object);
 	}
 
 	public function test_removeObject(){
-		$object = new ObjectMapping();
+		$object = new \stdClass();
 		$this->objectManager->addObject($object);
 
 		$oid = spl_object_hash($object);
@@ -51,7 +50,7 @@ class ObjectManagerTest extends TestCase {
 	}
 
 	public function test_setObjectState_Ok(){
-		$object = new ObjectMapping();
+		$object = new \stdClass();
 		$this->objectManager->addObject($object);
 
 		$oid = spl_object_hash($object);
@@ -66,7 +65,7 @@ class ObjectManagerTest extends TestCase {
 	}
 
 	public function test_setObjectState_Nok(){
-		$object = new ObjectMapping();
+		$object = new \stdClass();
 		$this->objectManager->addObject($object);
 
 		$oid = spl_object_hash($object);
@@ -77,26 +76,26 @@ class ObjectManagerTest extends TestCase {
 	}
 
 	public function test_getObjectState(){
-		$object = new ObjectMapping();
+		$object = new \stdClass();
 		$this->assertNull($this->objectManager->getObjectState($object));
 		$this->objectManager->addObject($object);
 		$this->assertEquals(ObjectManager::OBJ_NEW, $this->objectManager->getObjectState($object));
 	}
 
 	public function test_getObject(){
-		$object1 = new ObjectMapping();
+		$object1 = new \stdClass();
 		$this->objectManager->addObject($object1);
 
-		$object2 = new ObjectMapping();
+		$object2 = new \stdClass();
 		$this->objectManager->addObject($object2, ObjectManager::OBJ_MANAGED);
-		$object3 = new ObjectMapping();
+		$object3 = new \stdClass();
 		$this->objectManager->addObject($object3, ObjectManager::OBJ_MANAGED);
 
-		$object4 = new ObjectMapping();
+		$object4 = new \stdClass();
 		$this->objectManager->addObject($object4, ObjectManager::OBJ_REMOVED);
-		$object5 = new ObjectMapping();
+		$object5 = new \stdClass();
 		$this->objectManager->addObject($object5, ObjectManager::OBJ_REMOVED);
-		$object6 = new ObjectMapping();
+		$object6 = new \stdClass();
 		$this->objectManager->addObject($object6, ObjectManager::OBJ_REMOVED);
 
 		$this->assertCount(6, $this->objectManager->getObject());
@@ -106,17 +105,17 @@ class ObjectManagerTest extends TestCase {
 	}
 
 	public function test_clear(){
-		$object1 = new ObjectMapping();
+		$object1 = new \stdClass();
 		$this->objectManager->addObject($object1);
-		$object2 = new ObjectMapping();
+		$object2 = new \stdClass();
 		$this->objectManager->addObject($object2, ObjectManager::OBJ_MANAGED);
-		$object3 = new ObjectMapping();
+		$object3 = new \stdClass();
 		$this->objectManager->addObject($object3, ObjectManager::OBJ_MANAGED);
-		$object4 = new ObjectMapping();
+		$object4 = new \stdClass();
 		$this->objectManager->addObject($object4, ObjectManager::OBJ_REMOVED);
-		$object5 = new ObjectMapping();
+		$object5 = new \stdClass();
 		$this->objectManager->addObject($object5, ObjectManager::OBJ_REMOVED);
-		$object6 = new ObjectMapping();
+		$object6 = new \stdClass();
 		$this->objectManager->addObject($object6, ObjectManager::OBJ_REMOVED);
 
 		$this->assertCount(6, $this->getPrivatePropValue($this->objectManager, "objects"));

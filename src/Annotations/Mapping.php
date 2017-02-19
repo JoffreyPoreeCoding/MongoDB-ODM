@@ -25,6 +25,11 @@ class Document {
     public $repositoryClass = null;
 
     /**
+     * @var string
+     */
+    public $hydratorClass = null;
+
+    /**
      * @var bool 
      */
     public $capped = false;

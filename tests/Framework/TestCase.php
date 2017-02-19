@@ -1,6 +1,6 @@
 <?php
 
-namespace JPC\Test\MongoDB\ODM;
+namespace JPC\Test\MongoDB\ODM\Framework;
 
 use PHPUNit\Framework\TestCase as BaseTestCase;
 

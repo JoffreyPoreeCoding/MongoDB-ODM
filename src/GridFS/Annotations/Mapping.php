@@ -13,6 +13,7 @@ class Document {
      */
     public $bucketName;
     public $repositoryClass;
+    public $hydratorClass = "JPC\MongoDB\ODM\GridFS\Hydrator";
 }
 
 /**

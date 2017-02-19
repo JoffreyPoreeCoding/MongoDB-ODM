@@ -3,9 +3,9 @@
 namespace JPC\Test\MongoDB\ODM;
 
 use JPC\MongoDB\ODM\DocumentManager;
+use JPC\MongoDB\ODM\Factory\ClassMetadataFactory;
 use JPC\MongoDB\ODM\Hydrator;
 use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
-use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadataFactory;
 use JPC\Test\MongoDB\ODM\Model\ObjectMapping;
 use PHPUnit\Framework\TestCase;
 
@@ -15,10 +15,9 @@ class HydratorTest extends TestCase {
 
 	public function setUp(){
 		$classMetadata = new ClassMetadata("JPC\Test\MongoDB\ODM\Model\ObjectMapping");
-		$documentManager = $this->createMock(DocumentManager::class);
-		$documentManager->method('getClassMetadataFactory')->willReturn(new ClassMetadataFactory);
+		$classMetadataFactory = new ClassMetadataFactory();
 		
-		$this->hydrator = new Hydrator($documentManager, $classMetadata);
+		$this->hydrator = new Hydrator($classMetadataFactory, $classMetadata);
 	}
 
 	public function test_hydrate(){
@@ -70,32 +69,19 @@ class HydratorTest extends TestCase {
 		$unhydrated = $this->hydrator->unhydrate($object);
 
 		$expected = [
-		"_id" => null,
 		"simple_field"         => "value 1",
 		"embedded_field"       => [
-		"_id" => null,
 		"simple_field"         => "value 2",
-		"embedded_field" => null,
-		"multi_embedded_field" => null
 		],
 		"multi_embedded_field" => [
 		0                      => [
-		"_id" => null,
 		"simple_field"         => "value 3",
-		"embedded_field" => null,
-		"multi_embedded_field" => null
 		],
 		1                      => [
-		"_id" => null,
 		"simple_field"         => "value 4",
-		"embedded_field" => null,
-		"multi_embedded_field" => null
 		],
 		2                      => [
-		"_id" => null,
 		"simple_field"         => "value 5",
-		"embedded_field" => null,
-		"multi_embedded_field" => null
 		]
 		]
 		];
@@ -103,4 +89,3 @@ class HydratorTest extends TestCase {
 		$this->assertEquals($expected, $unhydrated);
 	}
 }
-

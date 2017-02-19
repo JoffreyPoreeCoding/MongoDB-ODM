@@ -2,10 +2,14 @@
 
 namespace JPC\MongoDB\ODM;
 
+use Doctrine\Common\Cache\ArrayCache;
+use Doctrine\Common\Cache\CacheProvider;
 use JPC\MongoDB\ODM\DocumentManager;
 use JPC\MongoDB\ODM\ObjectManager;
 use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
-use Doctrine\Common\Cache\ArrayCache;
+use JPC\MongoDB\ODM\Tools\QueryCaster;
+use JPC\MongoDB\ODM\Tools\UpdateQueryCreator;
+use MongoDB\Collection;
 
 /**
  * Allow to find, delete, document in MongoDB
@@ -39,78 +43,45 @@ class Repository {
     protected $collection;
 
     /**
-     * Object Manager
-     * @var ObjectManager
-     */
-    protected $objectManager;
-
-    /**
      * Cache for object changes
      * @var ApcuCache 
      */
     protected $objectCache;
 
     /**
+     * Model class name
+     * @var string
+     */
+    protected $modelName;
+
+    /**
+     * Query caster
+     * @var QueryCaster
+     */
+    protected $queryCaster;
+
+    /**
+     * Update query creator
+     * @var UpdateQueryCreator
+     */
+    protected $updateQueryCreator;
+
+    /**
      * Create new Repository
      * 
      * @param   Tools\ClassMetadata     $classMetadata      Metadata of managed class
      */
-    public function __construct(DocumentManager $documentManager, ObjectManager $objectManager, ClassMetadata $classMetadata, Collection $collection) {
+    public function __construct(DocumentManager $documentManager, Collection $collection, ClassMetadata $classMetadata, Hydrator $hydrator, QueryCaster $queryCaster = null, UpdateQueryCreator $uqc = null) {
         $this->documentManager = $documentManager;
+        $this->collection = $collection;
         $this->classMetadata = $classMetadata;
+        $this->hydrator = $hydrator;
+
         $this->modelName = $classMetadata->getName();
-        $this->hydrator = Hydrator::getInstance($this->modelName . spl_object_hash($documentManager), $documentManager, $classMetadata);
-
-        if(is_string($collection)){
-            $this->createCollection($collection, $classMetadata);
-            $this->collection = $this->documentManager->getMongoDBDatabase()->selectCollection($collection, $classMetadata->getCollectionOptions());
-        } else {
-            $this->collection = $collection;
-        }
-
-        $this->objectManager = $objectManager;
         $this->objectCache = new ArrayCache();
-    }
-    
-    /**
-     * Create the collection
-     * 
-     * @param   string                  $collectionName     Name of the collection
-     * @param   ClassMetadata           $classMetadata      Metadatas of the model
-     */
-    private function createcollection($collectionName, ClassMetadata $classMetadata) {
-        $db = $this->documentManager->getMongoDBDatabase();
-        foreach ($db->listCollections()as $collection) {
-            if ($collection->getName() == $collectionName) {
-                return;
-            }
-        }
 
-        $options = $classMetadata->getCollectionCreationOptions();
-
-        if (!empty($options)) {
-            $db->createCollection($collectionName, $options);
-            if($this->documentManager->getDebug())
-                $this->documentManager->getLogger()->debug("Create collection '$collectionName', see metadata for options", ["options" => $options]);
-        }
-    }
-
-    /**
-     * Get the collection
-     * 
-     * @return \MongoDB\Collection A mongoDb collection
-     */
-    public function getCollection() {
-        return $this->collection;
-    }
-
-    /**
-     * Get Hydrator used by the repository
-     * 
-     * @return Hydrator
-     */
-    public function getHydrator() {
-        return $this->hydrator;
+        $this->queryCaster = isset($queryCaster) ? $queryCaster : new QueryCaster();
+        $this->updateQueryCreator = isset($uqc) ? $uqc : new UpdateQueryCreator();
     }
 
     /**
@@ -125,6 +96,37 @@ class Repository {
     }
 
     /**
+     * Get distinct value for a field
+     * 
+     * @param  string $fieldName Name of the field
+     * @param  array  $filters   Filters of query
+     * @param  array  $options   Options of query
+     * @return array             List of distinct values
+     */
+    public function distinct($fieldName, $filters = [], $options = []) {
+        $field = $fieldName;
+
+        $propInfos = $this->classMetadata->getPropertyInfoForField($fieldName);
+        if(!$propInfos){
+            $propInfos = $this->classMetadata->getPropertyInfo($fieldName);
+        }
+
+        if(isset($propInfos)){
+            $field = $propInfos->getField();
+        }
+
+        $filters = $this->castQuery($filters);
+
+        $this->log("debug", "Get distinct value of field '$field' in '".$this->collection->getCollectionName()."', see metadata for more details", [
+            "filters" => $filters,
+            "options" => $options
+            ]);
+
+        $result = $this->collection->distinct($field, $filters, $options);
+        return $result;
+    }
+
+    /**
      * Find document by ID
      * 
      * @param   mixed                   $id                 Id of the document
@@ -133,23 +135,13 @@ class Repository {
      * @return  object                                      Object corresponding to MongoDB Document (false if not found)
      */
     public function find($id, $projections = [], $options = []) {
-        $options = array_merge($options, [
-            "projection" => $this->castQuery($projections)
-            ]);
-        if($this->documentManager->getDebug())
-            $this->documentManager->getLogger()->debug("Find object in collection '".$this->collection->getCollectionName()."' with id : '".(string) $id."'");
+        $options = $this->createOption($projections, null, $options);
+
+        $this->log("debug", "Find object in collection '".$this->collection->getCollectionName()."' with id : '".(string) $id."'");
+
         $result = $this->collection->findOne(["_id" => $id], $options);
 
-        if ($result !== null) {
-            $object = new $this->modelName();
-            $this->hydrator->hydrate($object, $result);
-            $this->cacheObject($object);
-            $this->documentManager->persist($object, $this->getCollection()->getCollectionName());
-            $this->objectManager->setObjectState($object, ObjectManager::OBJ_MANAGED);
-            return $object;
-        }
-
-        return null;
+        return $this->createObject($result);
     }
 
     /**
@@ -161,24 +153,18 @@ class Repository {
      * @return  array                                       Array containing all the document of the collection
      */
     public function findAll($projections = [], $sorts = [], $options = []) {
-        $options = array_merge($options, [
-            "projection" => $this->castQuery($projections),
-            "sort" => $this->castQuery($sorts)
-            ]);
-        if($this->documentManager->getDebug())
-            $this->documentManager->getLogger()->debug("Find all document in collection '".$this->collection->getCollectionName()."'");
+        $options = $this->createOption($projections, $sorts, $options);
+
+        $this->log("debug", "Find all document in collection '".$this->collection->getCollectionName()."'");
 
         $result = $this->collection->find([], $options);
 
         $objects = [];
 
         foreach ($result as $datas) {
-            $object = new $this->modelName();
-            $this->hydrator->hydrate($object, $datas);
-            $this->cacheObject($object);
-            $this->documentManager->persist($object, $this->getCollection()->getCollectionName());
-            $this->objectManager->setObjectState($object, ObjectManager::OBJ_MANAGED);
-            $objects[] = $object;
+            if(null != ($object = $this->createObject($datas))){
+                $objects[] = $object;
+            }
         }
 
         return $objects;
@@ -194,28 +180,22 @@ class Repository {
      * @return  array                                       Array containing all the document of the collection
      */
     public function findBy($filters, $projections = [], $sorts = [], $options = []) {
-        $options = array_merge($options, [
-            "projection" => $this->castQuery($projections),
-            "sort" => $this->castQuery($sorts)
-            ]);
+        $options = $this->createOption($projections, $sorts, $options);
 
         $filters = $this->castQuery($filters);
-        if($this->documentManager->getDebug())
-            $this->documentManager->getLogger()->debug("Find documents in collection '".$this->collection->getCollectionName()."', see metadata for more details", [
-                "filters" => $filters,
-                "options" => $options
-                ]);
+
+        $this->log("debug", "Find documents in collection '".$this->collection->getCollectionName()."', see metadata for more details", [
+            "filters" => $filters,
+            "options" => $options
+            ]);
 
         $result = $this->collection->find($filters, $options);
         $objects = [];
 
         foreach ($result as $datas) {
-            $object = new $this->modelName();
-            $this->hydrator->hydrate($object, $datas);
-            $this->cacheObject($object);
-            $this->documentManager->persist($object, $this->getCollection()->getCollectionName());
-            $this->objectManager->setObjectState($object, ObjectManager::OBJ_MANAGED);
-            $objects[] = $object;
+            if(null != ($object = $this->createObject($datas))){
+                $objects[] = $object;
+            }
         }
 
         return $objects;
@@ -231,31 +211,17 @@ class Repository {
      * @return  array                                       Array containing all the document of the collection
      */
     public function findOneBy($filters = [], $projections = [], $sorts = [], $options = []) {
-
-        $options = array_merge($options, [
-            "projection" => $this->castQuery($projections),
-            "sort" => $this->castQuery($sorts)
-            ]);
+        $options = $this->createOption($projections, $sorts, $options);
 
         $filters = $this->castQuery($filters);
-        if($this->documentManager->getDebug())
-            $this->documentManager->getLogger()->debug("Find one document in collection '".$this->collection->getCollectionName()."', see metadata for more details", [
-                "filters" => $filters,
-                "options" => $options
-                ]);
+        $this->log("debug", "Find one document in collection '".$this->collection->getCollectionName()."', see metadata for more details", [
+            "filters" => $filters,
+            "options" => $options
+            ]);
 
         $result = $this->collection->findOne($filters, $options);
 
-        if ($result != null) {
-            $object = new $this->modelName();
-            $this->hydrator->hydrate($object, $result);
-            $this->documentManager->persist($object, $this->getCollection()->getCollectionName());
-            $this->objectManager->setObjectState($object, ObjectManager::OBJ_MANAGED);
-            $this->cacheObject($object);
-            return $object;
-        }
-
-        return null;
+        return $this->createObject($result);
     }
 
     /**
@@ -270,57 +236,151 @@ class Repository {
      */
     public function findAndModifyOneBy($filters = [], $update = [], $projections = [], $sorts = [], $options = []) {
 
-        $options = array_merge($options, [
-            "projection" => $this->castQuery($projections),
-            "sort" => $this->castQuery($sorts)
-            ]);
+        $options = $this->createOption($projections, $sorts, $options);
 
         $filters = $this->castQuery($filters);
         $update = $this->castQuery($update);
-        if($this->documentManager->getDebug())
-            $this->documentManager->getLogger()->debug("Find and update one document in collection '".$this->collection->getCollectionName()."', see metadata for more details", [
-                "filters" => $filters,
-                "update" => $update,
-                "options" => $options
-                ]);
+
+        $this->log("debug", "Find and update one document in collection '".$this->collection->getCollectionName()."', see metadata for more details", [
+            "filters" => $filters,
+            "update" => $update,
+            "options" => $options
+            ]);
 
         $result = (array) $this->collection->findOneAndUpdate($filters, $update, $options);
 
-        if ($result != null) {
-            $object = new $this->modelName();
-            $this->hydrator->hydrate($object, $result);
-            $this->documentManager->persist($object, $this->getCollection()->getCollectionName());
-            $this->objectManager->setObjectState($object, ObjectManager::OBJ_MANAGED);
-            $this->cacheObject($object);
-            return $object;
-        }
-
-        return null;
+        return $this->createObject($result);;
     }
 
+    /**
+     * Get tailable cursor for query
+     * 
+     * @param  array  $filters Filters of query
+     * @param  array  $options Option (Tailable setted as default)
+     * @return \MongoDB\Driver\TailableCursor          A tailable cursor
+     */
     public function getTailableCursor($filters = [], $options = []) {
         $options['cursorType'] = \MongoDB\Operation\Find::TAILABLE_AWAIT;
 
         return $this->collection->find($this->castQuery($filters), $options);
     }
 
-    public function distinct($fieldName, $filters = [], $options = []) {
-        $propInfos = $this->classMetadata->getPropertyInfoForField($fieldName);
-        if(!$propInfos){
-            $propInfos = $this->classMetadata->getPropertyInfo($fieldName);
+    public function insertOne($document, $options = []){
+        $insertQuery = $this->hydrator->unhydrate($document);
+
+        $result = $this->collection->insertOne($insertQuery, $options);
+
+        if($result->isAcknowledged()){
+            $insertQuery["_id"] = $result->getInsertedId();
+            $this->hydrator->hydrate($document, $insertQuery);
+
+            $this->cacheObject($document);
+
+            $this->documentManager->hasObject($document) ? 
+                $this->documentManager->setObjectState($document, DocumentManager::OBJ_MANAGED) : 
+                $this->documentManager->addObject($document, DocumentManager::OBJ_MANAGED, $this);
+
+            return true;
+        } else {
+            return false;
         }
-        
-        $field = $propInfos->getField();
+    }
 
-        $filters = $this->castQuery($filters);
-        if($this->documentManager->getDebug())
-            $this->documentManager->getLogger()->debug("Get distinct value of field '$field' in '".$this->collection->getCollectionName()."', see metadata for more details", [
-                "filters" => $filters,
-                "options" => $options
-                ]);
+    public function insertMany($documents, $options = []){
+        $insertQuery = [];
+        foreach ($documents as $document) {
+            $insertQuery[] = $this->hydrator->unhydrate($document);
+        }
 
-        $result = $this->collection->distinct($field, $filters, $options);
-        return $result;
+        $result = $this->collection->insertMany($insertQuery, $options);
+
+        if($result->isAcknowledged()){
+            foreach ($result->getInsertedIds() as $key => $id) {
+                $insertQuery[$key]["_id"] = $id;
+                $this->hydrator->hydrate($documents[$key], $insertQuery[$key]);
+
+                $this->cacheObject($documents[$key]);
+
+                $this->documentManager->hasObject($documents[$key]) ? 
+                    $this->documentManager->setObjectState($documents[$key], DocumentManager::OBJ_MANAGED) : 
+                    $this->documentManager->addObject($documents[$key], DocumentManager::OBJ_MANAGED, $this);
+            }
+
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public function updateOne($document, $update = [], $options = []){
+        $unhydratedObject = $this->hydrator->unhydrate($document);
+
+        $id = $unhydratedObject["_id"];
+
+        if(empty($update)){
+            $update = $this->getUpdateQuery($document);
+        }
+
+        $this->collection->updateOne(["_id" => $id], $update, $options);
+    }
+
+    public function updateMany($filters, $update, $options = []){
+
+    }
+
+    public function deleteOne($document, $options = []){
+        $unhydratedObject = $this->hydrator->unhydrate($document);
+
+        $id = $unhydratedObject["_id"];
+
+        $result = $this->collection->deleteOne(["_id" => $id], $options);
+
+        if($result->isAcknowledged()){
+            $this->documentManager->removeObject($document);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public function deleteMany($filter, $options = []){
+        $filter = $this->castQuery($filter);
+        $result = $this->collection->deleteMany($filter, $options);
+
+        if($result->isAcknowledged()){
+            return $result->getDeletedCount();
+        } else {
+            return false;
+        }
+    }
+
+    protected function log($level, $message, $metadata = []){
+        if($this->documentManager->getDebug()){
+            $this->documentManager->getLogger()->$level($message, $metadata);
+        }
+    }
+
+    protected function createObject($data){
+        $object = null;
+        if($data != null){
+            $model = $this->getModelName();
+            $object = new $this->modelName();
+            $this->hydrator->hydrate($object, $data);
+            $this->cacheObject($object);
+            $this->documentManager->addObject($object, DocumentManager::OBJ_MANAGED, $this);
+            return $object;
+        }
+        return $object;
+    }
+
+    protected function createOption($projection, $sort, $otherOptions = []){
+        $options = [];
+        isset($projections) ? $options["projection"] = $this->castQuery($projections) : null ;
+        isset($sort) ? $options["sort"] = $this->castQuery($sort) : null ;
+
+        $options = array_merge($otherOptions, $options);
+
+        return $options;
     }
 
     public function drop() {
@@ -336,8 +396,8 @@ class Repository {
     }
 
     protected function castQuery($query) {
-        $qc = new Tools\QueryCaster($query, $this->classMetadata);
-        return $qc->getCastedQuery();
+        $this->queryCaster->init($query, $this->classMetadata);
+        return $this->queryCaster->getCastedQuery();
     }
 
     public function cacheObject($object) {
@@ -350,72 +410,203 @@ class Repository {
         return $this->objectCache->fetch(spl_object_hash($object));
     }
 
-    public function getObjectChanges($object) {
-        $new_datas = $this->hydrator->unhydrate($object);
-        $old_datas = $this->uncacheObject($object);
-        $changes = $this->compareDatas($new_datas, $old_datas);
+    protected function getUpdateQuery($document){
+        $updateQuery = [];
+        $old = $this->uncacheObject($document);
+        $new = $this->hydrator->unhydrate($document);
 
-        return $changes;
+        return $this->updateQueryCreator->createUpdateQuery($old, $new);
     }
 
-    protected function compareDatas($new, $old) {
-        $changes = [];
-        foreach ($new as $key => $value) {
-            if (is_array($old) && array_key_exists($key, $old) && $old[$key] !== null) {
-                if (is_array($value) && is_array($old[$key])) {
-                    $compare = true;
-                    if (is_int(key($value))) {
-                        $diff = array_diff_key($value, $old[$key]);
-                        if (!empty($diff)) {
-                            foreach ($diff as $diffKey => $diffValue) {
-                                $changes[$key]['$push'][$diffKey] = $diffValue;
-                            }
-                            $compare = false;
-                        }
-
-                        $diff = array_diff_key($old[$key], $value);
-                        if ($compare && !empty($diff)) {
-                            foreach ($diff as $diffKey => $diffValue) {
-                                $value[$diffKey] = null;
-                            }
-                        }
-                    }
-
-                    if ($compare) {
-                        $array_changes = $this->compareDatas($value, $old[$key]);
-                        if (!empty($array_changes)) {
-                            $changes[$key] = $array_changes;
-                        }
-                    }
-                } else if ($value != $old[$key] || $value !== $old[$key]) {
-                    $changes[$key]['$set'] = $value;
-                }
-            } else if (is_array($old) && array_key_exists($key, $old) && $old[$key] === null) {
-                if ($old[$key] != $value) {
-                    if (is_array($value) && is_int(key($value))) {
-                        $changes[$key]['$push'] = $value;
-                    } else if ($value === null && isset($old[$key])) {
-                        $changes['$unset'][$key] = $value;
-                    } else if (!isset($old[$key]) && is_array($value)) {
-                        $changes[$key]['$set'] = Tools\ArrayModifier::clearNullValues($value);
-                    } else if (!isset($old[$key])) {
-                        $changes[$key]['$set'] = $value;
-                    }
-                }
-            } else {
-                if (is_array($value) && is_int(key($value)) && !isset($old)) {
-                    $changes[$key]['$push'] = $value;
-                } else if ($old != $value) {
-                    if ($value === null) {
-                        $changes['$unset'][$key] = $value;
-                    } else if (!isset($old)) {
-                        $changes[$key]['$set'] = $value;
-                    }
-                }
-            }
-        }
-
-        return $changes;
+    /**
+     * Gets the Document manager.
+     *
+     * @return DocumentManager
+     */
+    public function getDocumentManager()
+    {
+        return $this->documentManager;
     }
 
+    /**
+     * Sets the Document manager.
+     *
+     * @param DocumentManager $documentManager the document manager
+     *
+     * @return self
+     */
+    public function setDocumentManager(DocumentManager $documentManager)
+    {
+        $this->documentManager = $documentManager;
+
+        return $this;
+    }
+
+    /**
+     * Gets the Class metadatas.
+     *
+     * @return ClassMetadata
+     */
+    public function getClassMetadata()
+    {
+        return $this->classMetadata;
+    }
+
+    /**
+     * Sets the Class metadatas.
+     *
+     * @param ClassMetadata $classMetadata the class metadata
+     *
+     * @return self
+     */
+    public function setClassMetadata(ClassMetadata $classMetadata)
+    {
+        $this->classMetadata = $classMetadata;
+
+        return $this;
+    }
+
+    /**
+     * Gets the Hydrator of model.
+     *
+     * @return Hydrator
+     */
+    public function getHydrator()
+    {
+        return $this->hydrator;
+    }
+
+    /**
+     * Sets the Hydrator of model.
+     *
+     * @param Hydrator $hydrator the hydrator
+     *
+     * @return self
+     */
+    public function setHydrator(Hydrator $hydrator)
+    {
+        $this->hydrator = $hydrator;
+
+        return $this;
+    }
+
+    /**
+     * Gets the MongoDB collection.
+     *
+     * @return \MongoDB\Collection
+     */
+    public function getCollection()
+    {
+        return $this->collection;
+    }
+
+    /**
+     * Sets the MongoDB collection.
+     *
+     * @param \MongoDB\Collection $collection the collection
+     *
+     * @return self
+     */
+    public function setCollection(\MongoDB\Collection $collection)
+    {
+        $this->collection = $collection;
+
+        return $this;
+    }
+
+    /**
+     * Gets the Cache for object changes.
+     *
+     * @return ApcuCache
+     */
+    public function getObjectCache()
+    {
+        return $this->objectCache;
+    }
+
+    /**
+     * Sets the Cache for object changes.
+     *
+     * @param ApcuCache $objectCache the object cache
+     *
+     * @return self
+     */
+    public function setObjectCache(CacheProvider $objectCache)
+    {
+        $this->objectCache = $objectCache;
+
+        return $this;
+    }
+
+    /**
+     * Gets the Model class name.
+     *
+     * @return string
+     */
+    public function getModelName()
+    {
+        return $this->modelName;
+    }
+
+    /**
+     * Sets the Model class name.
+     *
+     * @param string $modelName the model name
+     *
+     * @return self
+     */
+    public function setModelName($modelName)
+    {
+        $this->modelName = $modelName;
+
+        return $this;
+    }
+
+    /**
+     * Gets the Query caster.
+     *
+     * @return QueryCaster
+     */
+    public function getQueryCaster()
+    {
+        return $this->queryCaster;
+    }
+
+    /**
+     * Sets the Query caster.
+     *
+     * @param QueryCaster $queryCaster the query caster
+     *
+     * @return self
+     */
+    public function setQueryCaster(QueryCaster $queryCaster)
+    {
+        $this->queryCaster = $queryCaster;
+
+        return $this;
+    }
+
+    /**
+     * Gets the Update query creator.
+     *
+     * @return UpdateQueryCreator
+     */
+    public function getUpdateQueryCreator()
+    {
+        return $this->updateQueryCreator;
+    }
+
+    /**
+     * Sets the Update query creator.
+     *
+     * @param UpdateQueryCreator $updateQueryCreator the update query creator
+     *
+     * @return self
+     */
+    public function setUpdateQueryCreator(UpdateQueryCreator $updateQueryCreator)
+    {
+        $this->updateQueryCreator = $updateQueryCreator;
+
+        return $this;
+    }
 }

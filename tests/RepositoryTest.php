@@ -4,138 +4,437 @@ namespace JPC\Test\MongoDB\ODM;
 
 use JPC\MongoDB\ODM\DocumentManager;
 use JPC\MongoDB\ODM\Hydrator;
-use JPC\MongoDB\ODM\ObjectManager;
 use JPC\MongoDB\ODM\Repository;
 use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
-use JPC\MongoDB\ODM\Tools\Logger\MemoryLogger;
+use JPC\MongoDB\ODM\Tools\ClassMetadata\Info\PropertyInfo;
+use JPC\MongoDB\ODM\Tools\QueryCaster;
+use JPC\MongoDB\ODM\Tools\UpdateQueryCreator;
+use JPC\Test\MongoDB\ODM\Framework\TestCase;
 use MongoDB\Collection;
-use PHPUnit\Framework\TestCase;
+use MongoDB\DeleteResult;
+use MongoDB\InsertManyResult;
+use MongoDB\InsertOneResult;
 
 class RepositoryTest extends TestCase {
 
-	private $repository;
+	private $documentManagerMock;
 
-	private $documentManager;
+	private $collectionMock;
 
-	private $objectManager;
+	private $classMetadataMock;
 
-	private $classMetadata;
+	private $hydratorMock;
 
-	private $collection;
+	private $queryCasterMock;
 
-	private $hydrator;
+	private $updateQueryCreatorMock;
+
+	private $repositoryMockBuilder;
 
 	public function setUp(){
-		$this->documentManager = $this->createMock(DocumentManager::class);
-		$this->documentManager->method("getLogger")->willReturn(new MemoryLogger());
-		$this->objectManager = $this->createMock(ObjectManager::class);
-		$this->classMetadata = $this->createMock(ClassMetadata::class);
-		$this->classMetadata->method("getName")->willReturn("JPC\\Test\\MongoDB\\ODM\\Model\\ObjectMapping");
-		$this->collection = $this->createMock(Collection::class);
+		$this->documentManagerMock = $this->createMock(DocumentManager::class);
+		$this->collectionMock = $this->createMock(Collection::class);
+		$this->classMetadataMock = $this->createMock(ClassMetadata::class);
+		$this->hydratorMock = $this->createMock(Hydrator::class);
+		$this->queryCasterMock = $this->createMock(QueryCaster::class);
+		$this->updateQueryCreatorMock = $this->createMock(UpdateQueryCreator::class);
 
-		
-
-		$this->repository = new Repository(
-			$this->documentManager,
-			$this->objectManager,
-			$this->classMetadata,
-			$this->collection
-			);
-
-		$this->hydrator = $this->createMock(Hydrator::class);
-		$this->setPrivatePropertyValue($this->repository, "hydrator", $this->hydrator);
-	}
-
-	public function test_getCollection(){
-		$this->assertInstanceOf("MongoDB\Collection", $this->repository->getCollection());
-		$this->assertEquals($this->collection, $this->repository->getCollection());
-	}
-
-	public function test_getHydrator(){
-		$this->assertInstanceOf("JPC\MongoDB\ODM\Hydrator", $this->repository->getHydrator());
-		$this->assertEquals($this->hydrator, $this->repository->getHydrator());
+		$this->repositoryMockBuilder = $this->getMockBuilder(Repository::class)
+		->setConstructorArgs([$this->documentManagerMock, $this->collectionMock, $this->classMetadataMock, $this->hydratorMock, $this->queryCasterMock, $this->updateQueryCreatorMock])
+		->disableOriginalClone()
+		->disableArgumentCloning()
+		->disallowMockingUnknownTypes();
 	}
 
 	public function test_count(){
-		$this->collection->method("count")->willReturn(10);
-		$this->assertEquals(10, $this->repository->count());
+		$repository = $this->repositoryMockBuilder
+		->setMethods(["castQuery"])->getMock();
+
+		$repository->expects($this->once())->method("castQuery")->with(["filter" => "value"])->willReturn(["f"=>"v"]);
+
+		$this->collectionMock->expects($this->once())->method("count")->with(["f"=>"v"], ["option" => "value"])->willReturn(10);
+
+		$count = $repository->count(["filter" => "value"], ["option" => "value"]);
+		$this->assertEquals(10, $count);
+	}
+
+	public function test_distinct_noField(){
+		$repository = $this->repositoryMockBuilder
+		->setMethods(["castQuery", "log"])
+		->getMock();
+
+		$propInfo = $this->createMock(PropertyInfo::class);
+		$propInfo->method("getField")->willReturn("f");
+
+		$this->classMetadataMock->expects($this->once())->method("getPropertyInfoForField")->with("inexisting")->willReturn(null);
+		$this->classMetadataMock->expects($this->once())->method("getPropertyInfo")->with("inexisting")->willReturn(null);
+
+		$repository->expects($this->once())->method("castQuery")->with(["filter" => "value"])->willReturn(["f" => "value"]);
+
+		$this->collectionMock->expects($this->once())->method("distinct")->with("inexisting", ["f" => "value"], ["option" => "value"]);
+
+		$repository->distinct("inexisting", ["filter" => "value"], ["option" => "value"]);
+	}
+
+	public function test_distinct_property(){
+		$repository = $this->repositoryMockBuilder
+		->setMethods(["castQuery", "log"])
+		->getMock();
+
+		$propInfo = $this->createMock(PropertyInfo::class);
+		$propInfo->method("getField")->willReturn("f");
+
+		$this->classMetadataMock->expects($this->once())->method("getPropertyInfoForField")->with("property")->willReturn(null);
+		$this->classMetadataMock->expects($this->once())->method("getPropertyInfo")->with("property")->willReturn($propInfo);
+
+		$repository->expects($this->once())->method("castQuery")->with(["filter" => "value"])->willReturn(["f" => "value"]);
+
+		$this->collectionMock->expects($this->once())->method("distinct")->with("f", ["f" => "value"], ["option" => "value"]);
+
+		$repository->distinct("property", ["filter" => "value"], ["option" => "value"]);
+	}
+
+	public function test_distinct_field(){
+		$repository = $this->repositoryMockBuilder
+		->setMethods(["castQuery", "log"])
+		->getMock();
+
+		$propInfo = $this->createMock(PropertyInfo::class);
+		$propInfo->method("getField")->willReturn("f");
+
+		$this->classMetadataMock->expects($this->once())->method("getPropertyInfoForField")->with("field")->willReturn($propInfo);
+		$this->classMetadataMock->expects($this->exactly(0))->method("getPropertyInfo");
+
+		$repository->expects($this->once())->method("castQuery")->with(["filter" => "value"])->willReturn(["f" => "value"]);
+
+		$this->collectionMock->expects($this->once())->method("distinct")->with("f", ["f" => "value"], ["option" => "value"]);
+
+		$repository->distinct("field", ["filter" => "value"], ["option" => "value"]);
+	}
+
+	public function test_find_noResult(){
+		$repository = $this->repositoryMockBuilder
+		->setMethods(["createOption", "log"])->getMock();
+
+		$repository->method("log")->willReturn(null);
+
+		$repository->expects($this->once())->method("createOption")->with(["projection" => "value"], null, ["option" => "value"])->willReturn(["option1" => "value1", "option2" => "value2"]);
+
+		$this->collectionMock->expects($this->once())->method("findOne")->with(["_id"=>"id"], ["option1" => "value1", "option2" => "value2"])->willReturn(null);
+
+		$result = $repository->find("id", ["projection" => "value"], ["option" => "value"]);
+
+		$this->assertNull($result);
 	}
 
 	public function test_find(){
-		$this->collection->method("findOne")->willReturn(null);
-		$this->assertNull($this->repository->find("id"));
+		$repository = $this->repositoryMockBuilder
+		->setMethods(["createOption", "log", "createObject"])->getMock();
 
-		$this->setUp();
+		$repository->method("log")->willReturn(null);
 
-		$this->collection->method("findOne")->willReturn(1);
-		$this->hydrator->expects($this->once())->method("hydrate");
-		$this->documentManager->expects($this->once())->method("persist");
-		$this->objectManager->expects($this->once())->method("setObjectState");
-		$this->assertInstanceOf("JPC\Test\MongoDB\ODM\Model\ObjectMapping", $this->repository->find("id"));
+		$repository->expects($this->once())->method("createOption")->with(["projection" => "value"], null, ["option" => "value"])->willReturn(["option1" => "value1", "option2" => "value2"]);
+
+		$this->collectionMock->expects($this->once())->method("findOne")->with(["_id"=>"id"], ["option1" => "value1", "option2" => "value2"])->willReturn(["data" => "value"]);
+
+		$repository->expects($this->once())->method("createObject")->with(["data" => "value"])->willReturn(true);
+
+		$result = $repository->find("id", ["projection" => "value"], ["option" => "value"]);
+
+		$this->assertTrue($result);
+	}
+
+	public function test_findAll_noResult(){
+		$repository = $this->repositoryMockBuilder
+		->setMethods(["createOption", "log"])->getMock();
+
+		$repository->method("log")->willReturn(null);
+
+		$repository->expects($this->once())->method("createOption")->with(["projection" => "value"], ["sort" => "value"], ["option" => "value"])->willReturn(["option1" => "value1", "option2" => "value2"]);
+
+		$this->collectionMock->expects($this->once())->method("find")->with([], ["option1" => "value1", "option2" => "value2"])->willReturn([]);
+
+		$result = $repository->findAll(["projection" => "value"], ["sort" => "value"], ["option" => "value"]);
+
+		$this->assertEquals([], $result);
 	}
 
 	public function test_findAll(){
-		$this->collection->method("find")->willReturn([]);
-		$this->assertEmpty($this->repository->findAll());
+		$repository = $this->repositoryMockBuilder
+		->setMethods(["createOption", "log", "createObject"])->getMock();
 
-		$this->setUp();
+		$repository->method("log")->willReturn(null);
 
-		$this->collection->method("find")->willReturn([1, 2]);
-		$this->hydrator->expects($this->exactly(2))->method("hydrate");
-		$this->documentManager->expects($this->exactly(2))->method("persist");
-		$this->objectManager->expects($this->exactly(2))->method("setObjectState");
-		$result = $this->repository->findAll();
-		$this->assertCount(2, $result);
-		$this->assertContainsOnlyInstancesOf("JPC\Test\MongoDB\ODM\Model\ObjectMapping", $result);
+		$repository->expects($this->once())->method("createOption")->with(["projection" => "value"], ["sort" => "value"], ["option" => "value"])->willReturn(["option1" => "value1", "option2" => "value2"]);
+
+		$this->collectionMock->expects($this->once())->method("find")->with([], ["option1" => "value1", "option2" => "value2"])->willReturn([1,2,3]);
+
+		$repository->expects($this->exactly(3))->method("createObject")->with($this->logicalOr(
+			1,
+			2,
+			3
+			))->will($this->onConsecutiveCalls(4,5,6));
+
+		$result = $repository->findAll(["projection" => "value"], ["sort" => "value"], ["option" => "value"]);
+
+		$this->assertEquals([4,5,6], $result);
+	}
+
+	public function test_findBy_noResult(){
+		$repository = $this->repositoryMockBuilder
+		->setMethods(["createOption", "log", "castQuery"])->getMock();
+
+		$repository->expects($this->once())->method("castQuery")->with(["filter" => "value"])->willReturn(["f"=>"value"]);
+
+		$repository->method("log")->willReturn(null);
+
+		$repository->expects($this->once())->method("createOption")->with(["projection" => "value"], ["sort" => "value"], ["option" => "value"])->willReturn(["option1" => "value1", "option2" => "value2"]);
+
+		$this->collectionMock->expects($this->once())->method("find")->with(["f"=>"value"], ["option1" => "value1", "option2" => "value2"])->willReturn([]);
+
+		$result = $repository->findBy(["filter" => "value"], ["projection" => "value"], ["sort" => "value"], ["option" => "value"]);
+
+		$this->assertEquals([], $result);
 	}
 
 	public function test_findBy(){
-		$this->collection->method("find")->willReturn([]);
-		$this->assertEmpty($this->repository->findBy([]));
+		$repository = $this->repositoryMockBuilder
+		->setMethods(["createOption", "log", "castQuery", "createObject"])->getMock();
 
-		$this->setUp();
+		$repository->expects($this->once())->method("castQuery")->with(["filter" => "value"])->willReturn(["f"=>"value"]);
 
-		$this->collection->method("find")->willReturn([1, 2]);
-		$this->hydrator->expects($this->exactly(2))->method("hydrate");
-		$this->documentManager->expects($this->exactly(2))->method("persist");
-		$this->objectManager->expects($this->exactly(2))->method("setObjectState");
-		$result = $this->repository->findBy([]);
-		$this->assertCount(2, $result);
-		$this->assertContainsOnlyInstancesOf("JPC\Test\MongoDB\ODM\Model\ObjectMapping", $result);
+		$repository->method("log")->willReturn(null);
+
+		$repository->expects($this->once())->method("createOption")->with(["projection" => "value"], ["sort" => "value"], ["option" => "value"])->willReturn(["option1" => "value1", "option2" => "value2"]);
+
+		$this->collectionMock->expects($this->once())->method("find")->with(["f"=>"value"], ["option1" => "value1", "option2" => "value2"])->willReturn([1,2,3]);
+
+
+		$repository->expects($this->exactly(3))->method("createObject")->with($this->logicalOr(
+			1,
+			2,
+			3
+			))->will($this->onConsecutiveCalls(4,5,6));
+
+		$result = $repository->findBy(["filter" => "value"], ["projection" => "value"], ["sort" => "value"], ["option" => "value"]);
+
+		$this->assertEquals([4,5,6], $result);
+	}
+
+	public function test_findOneBy_noResult(){
+		$repository = $this->repositoryMockBuilder
+		->setMethods(["createOption", "log", "castQuery"])->getMock();
+
+		$repository->expects($this->once())->method("castQuery")->with(["filter" => "value"])->willReturn(["f"=>"value"]);
+
+		$repository->method("log")->willReturn(null);
+
+		$repository->expects($this->once())->method("createOption")->with(["projection" => "value"], ["sort" => "value"], ["option" => "value"])->willReturn(["option1" => "value1", "option2" => "value2"]);
+
+		$this->collectionMock->expects($this->once())->method("findOne")->with(["f"=>"value"], ["option1" => "value1", "option2" => "value2"])->willReturn(null);
+
+		$result = $repository->findOneBy(["filter" => "value"], ["projection" => "value"], ["sort" => "value"], ["option" => "value"]);
+
+		$this->assertNull($result);
 	}
 
 	public function test_findOneBy(){
-		$this->collection->method("findOne")->willReturn(null);
-		$this->assertNull($this->repository->findOneBy([]));
+		$repository = $this->repositoryMockBuilder
+		->setMethods(["createOption", "log", "createObject", "castQuery"])->getMock();
 
-		$this->setUp();
+		$repository->expects($this->once())->method("castQuery")->with(["filter" => "value"])->willReturn(["f"=>"value"]);
 
-		$this->collection->method("findOne")->willReturn(1);
-		$this->hydrator->expects($this->once())->method("hydrate");
-		$this->documentManager->expects($this->once())->method("persist");
-		$this->objectManager->expects($this->once())->method("setObjectState");
-		$this->assertInstanceOf("JPC\Test\MongoDB\ODM\Model\ObjectMapping", $this->repository->findOneBy([]));
+		$repository->method("log")->willReturn(null);
+
+		$repository->expects($this->once())->method("createOption")->with(["projection" => "value"], ["sort" => "value"], ["option" => "value"])->willReturn(["option1" => "value1", "option2" => "value2"]);
+
+		$this->collectionMock->expects($this->once())->method("findOne")->with(["f"=>"value"], ["option1" => "value1", "option2" => "value2"])->willReturn(["data" => "value"]);
+
+		$repository->expects($this->once())->method("createObject")->with(["data" => "value"])->willReturn(true);
+
+		$result = $repository->findOneBy(["filter" => "value"], ["projection" => "value"], ["sort" => "value"], ["option" => "value"]);
+
+		$this->assertTrue($result);
+	}
+
+	public function test_findAndModifyOneBy_noResult(){
+		$repository = $this->repositoryMockBuilder
+		->setMethods(["createOption", "log", "castQuery"])->getMock();
+
+		$repository->expects($this->exactly(2))->method("castQuery")->with($this->logicalOr(
+			["filter" => "value"],
+			["update" => "value"]
+			))->will($this->onConsecutiveCalls(["f"=>"value"], ["u" => "value"]));
+
+		$repository->method("log")->willReturn(null);
+
+		$repository->expects($this->once())->method("createOption")->with(["projection" => "value"], ["sort" => "value"], ["option" => "value"])->willReturn(["option1" => "value1", "option2" => "value2"]);
+
+		$this->collectionMock->expects($this->once())->method("findOneAndUpdate")->with(["f"=>"value"], ["u" => "value"], ["option1" => "value1", "option2" => "value2"])->willReturn(null);
+
+		$result = $repository->findAndModifyOneBy(["filter" => "value"], ["update" => "value"], ["projection" => "value"], ["sort" => "value"], ["option" => "value"]);
+
+		$this->assertNull($result);
 	}
 
 	public function test_findAndModifyOneBy(){
-		$this->collection->method("findOneAndUpdate")->willReturn(null);
-		$this->assertNull($this->repository->findAndModifyOneBy([]));
+		$repository = $this->repositoryMockBuilder
+		->setMethods(["createOption", "log", "castQuery", "createObject"])->getMock();
 
-		$this->setUp();
+		$repository->expects($this->exactly(2))->method("castQuery")->with($this->logicalOr(
+			["filter" => "value"],
+			["update" => "value"]
+			))->will($this->onConsecutiveCalls(["f"=>"value"], ["u" => "value"]));
 
-		$this->collection->method("findOneAndUpdate")->willReturn(1);
-		$this->hydrator->expects($this->once())->method("hydrate");
-		$this->documentManager->expects($this->once())->method("persist");
-		$this->objectManager->expects($this->once())->method("setObjectState");
-		$this->assertInstanceOf("JPC\Test\MongoDB\ODM\Model\ObjectMapping", $this->repository->findAndModifyOneBy([]));
+		$repository->method("log")->willReturn(null);
+
+		$repository->expects($this->once())->method("createOption")->with(["projection" => "value"], ["sort" => "value"], ["option" => "value"])->willReturn(["option1" => "value1", "option2" => "value2"]);
+
+		$this->collectionMock->expects($this->once())->method("findOneAndUpdate")->with(["f"=>"value"], ["u" => "value"], ["option1" => "value1", "option2" => "value2"])->willReturn(["data" => "value"]);
+
+		$repository->expects($this->once())->method("createObject")->with(["data" => "value"])->willReturn(true);
+
+		$result = $repository->findAndModifyOneBy(["filter" => "value"], ["update" => "value"], ["projection" => "value"], ["sort" => "value"], ["option" => "value"]);
+
+		$this->assertTrue($result);
 	}
 
-	private function setPrivatePropertyValue($object, $propName, $value){
-		$prop = new \ReflectionProperty($object, $propName);
-		$prop->setAccessible(true);
-		$prop->setValue($object, $value);
+	public function test_getTailableCursor(){
+		$repository = $this->repositoryMockBuilder->setMethods(["castQuery"])->getMock();
+
+		$repository->expects($this->once())->method("castQuery")->with(["filter" => "value"])->willReturn(["f" => "value"]);
+
+		$this->collectionMock->expects($this->once())->method("find")->with(["f" => "value"], ['cursorType' => \MongoDB\Operation\Find::TAILABLE_AWAIT, "option" => "value"])->willReturn(true);
+
+		$result = $repository->getTailableCursor(["filter" => "value"], ["option" => "value"]);
+
+		$this->assertTrue($result);
 	}
 
+	/** 
+	 * @TODO("VERIFIER SI DOCUMENT MANAGER addObject et setOBjectState are called")
+	 */
+	public function test_insertOne(){
+		$repository = $this->repositoryMockBuilder->setMethods(["cacheObject"])->getMock();
 
+		$document = new \stdClass();
+
+		$this->hydratorMock->expects($this->once())->method("unhydrate")->with($document)->willReturn(["field" => "value"]);
+		$this->hydratorMock->expects($this->once())->method("hydrate")->with($document, ["_id" => 1, "field" => "value"])->will($this->returnCallback(function($document, $data) use ($document){
+			$document->id = $data["_id"];
+			$document->field = $data["field"];
+		}));
+
+		$insertOneResult = $this->createMock(InsertOneResult::class);
+		$insertOneResult->method("isAcknowledged")->willReturn(true);
+		$insertOneResult->method("getInsertedId")->willReturn(1);
+
+		$this->collectionMock->expects($this->once())->method("insertOne")->with(["field" => "value"], ["option" => "value"])->willReturn($insertOneResult);
+
+		$this->documentManagerMock->method("hasObject")->willReturn(true);
+		$this->documentManagerMock->expects($this->once())->method("setObjectState");
+
+		$repository->insertOne($document, ["option" => "value"]);
+
+		$this->assertEquals(1, $document->id);
+		$this->assertEquals("value", $document->field);
+	}
+
+	/** 
+	 * @TODO("VERIFIER SI DOCUMENT MANAGER addObject et setOBjectState are called")
+	 */
+	public function test_insertMany(){
+		$repository = $this->repositoryMockBuilder->setMethods(["cacheObject"])->getMock();
+
+		$documentOne = new \stdClass();
+		$documentTwo = new \stdClass();
+		$documentThree = new \stdClass();
+
+		$documents = [$documentOne, $documentTwo, $documentThree];
+
+		$this->hydratorMock->expects($this->exactly(3))->method("unhydrate")->willReturn(["field" => "value"]);
+		$this->hydratorMock->expects($this->exactly(3))->method("hydrate")->will($this->returnCallback(function($document, $data){
+			$document->id = $data["_id"];
+			$document->field = $data["field"];
+		}));
+
+		$insertManyResult = $this->createMock(InsertManyResult::class);
+		$insertManyResult->method("isAcknowledged")->willReturn(true);
+		$insertManyResult->method("getInsertedIds")->willReturn([1,2,3]);
+
+		$this->collectionMock->expects($this->once())->method("insertMany")->with([["field" => "value"],["field" => "value"],["field" => "value"]], ["option" => "value"])->willReturn($insertManyResult);
+
+		$this->documentManagerMock->method("hasObject")->will($this->onConsecutiveCalls(true, false));
+		$this->documentManagerMock->expects($this->once())->method("setObjectState");
+		$this->documentManagerMock->expects($this->exactly(2))->method("addObject");
+
+		$repository->insertMany($documents, ["option" => "value"]);
+
+		$this->assertEquals(1, $documentOne->id);
+		$this->assertEquals("value", $documentOne->field);
+
+		$this->assertEquals(2, $documentTwo->id);
+		$this->assertEquals("value", $documentTwo->field);
+
+		$this->assertEquals(3, $documentThree->id);
+		$this->assertEquals("value", $documentThree->field);
+	}
+
+	public function test_updateOne(){
+
+	}
+
+	public function test_updateMany(){
+
+	}
+
+	public function test_deleteOne(){
+		$repository = $this->repositoryMockBuilder->setMethods(null)->getMock();
+
+		$this->hydratorMock->method("unhydrate")->willReturn(["_id" => 1]);
+
+		$deleteResult = $this->createMock(DeleteResult::class);
+		$deleteResult->method("isAcknowledged")->willReturn(true);
+
+		$this->collectionMock->expects($this->once())->method("deleteOne")->with(["_id" => 1], ["option" => "value"])->willReturn($deleteResult);
+
+		$document = new \stdClass();
+
+		$result = $repository->deleteOne($document, ["option" => "value"]);
+
+		$this->assertTrue($result);
+	}
+
+	public function test_deleteMany(){
+		$repository = $this->repositoryMockBuilder->setMethods(["castQuery"])->getMock();
+
+		$repository->expects($this->once())->method("castQuery")->with(["filter" => "value"])->willReturn(["f" => "v"]);
+
+		$deleteResult = $this->createMock(DeleteResult::class);
+		$deleteResult->method("isAcknowledged")->willReturn(true);
+		$deleteResult->method("getDeletedCount")->willReturn(3);
+
+		$this->collectionMock->expects($this->once())->method("deleteMany")->with(["f" => "v"], ["option" => "value"])->willReturn($deleteResult);
+
+		$document = new \stdClass();
+
+		$result = $repository->deleteMany(["filter" => "value"], ["option" => "value"]);
+
+		$this->assertEquals(3, $result);
+	}
+
+	public function test_getUpdateQuery(){
+		$repository = $this->repositoryMockBuilder->setMethods(["uncacheObject"])->getMock();
+
+		$repository->method("uncacheObject")->willReturn("old");
+		$this->hydratorMock->method("unhydrate")->willReturn("new");
+
+		$this->updateQueryCreatorMock->expects($this->once())->method("createUpdateQuery")->with("old", "new")->willReturn("updateQuery");
+
+		$method = new \ReflectionMethod(get_class($repository), "getUpdateQuery");
+		$method->setAccessible(true);
+		$query = $method->invokeArgs($repository, [new \stdClass()]);
+
+		$this->assertEquals("updateQuery", $query);
+	}
 }
-

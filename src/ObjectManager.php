@@ -20,10 +20,10 @@ class ObjectManager {
      * Contains object states with object id as key
      * @var array 
      */
-    private $objectStates = [];
+    protected $objectStates = [];
     
-    private $objects = [];
-    
+    protected $objects = [];
+
     public function addObject($object, $state = self::OBJ_NEW){
         $oid = spl_object_hash($object);
         
@@ -80,11 +80,15 @@ class ObjectManager {
         $objectList = [];
         foreach ($this->objects as $oid => $object) {
             if($this->objectStates[$oid] == $state){
-                $objectList[] = $object;
+                $objectList[$oid] = $object;
             }
         }
         
         return $objectList;
+    }
+
+    public function hasObject($object){
+        return isset($this->objects[spl_object_hash($object)]);
     }
     
     public function clear(){

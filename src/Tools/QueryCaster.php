@@ -29,7 +29,7 @@ class QueryCaster {
      */
     private $lastUsedMetadata;
 
-    function __construct($query, $classMetadata) {
+    public function init($query, $classMetadata) {
         $this->query = $query;
         $this->initialMetadata = $classMetadata;
         if (!isset(self::$mongoDbQueryOperators)) {

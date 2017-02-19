@@ -1,9 +1,9 @@
 <?php
 
-namespace JPC\Test\MongoDB\ODM\Tools;
+namespace JPC\Test\MongoDB\ODM\Factory;
 
-use JPC\Test\MongoDB\ODM\TestCase;
-use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadataFactory;
+use JPC\Test\MongoDB\ODM\Framework\TestCase;
+use JPC\MongoDB\ODM\Factory\ClassMetadataFactory;
 
 class ClassMetadataFactoryTest extends TestCase {
     
@@ -23,7 +23,7 @@ class ClassMetadataFactoryTest extends TestCase {
     }
     
     public function test_getMetadataForClass(){
-        $classMeta = $this->classMetadataFactory->getMetadataForClass("JPC\Test\MongoDB\ODM\Model\ObjectMapping");
+        $classMeta = $this->classMetadataFactory->getMetadataForClass("stdClass");
         
         $this->assertInstanceOf(\JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata::class, $classMeta);
         

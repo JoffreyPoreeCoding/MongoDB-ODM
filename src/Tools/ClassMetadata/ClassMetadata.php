@@ -161,6 +161,14 @@ class ClassMetadata {
         return $this->collectionInfo->getRepository();
     }
 
+    public function getHydratorClass(){
+        if (!$this->loaded) {
+            $this->load();
+        }
+
+        return $this->collectionInfo->getHydrator();
+    }
+
     private function load() {
         $reflectionClass = new \ReflectionClass($this->name);
         $this->collectionInfo = new CollectionInfo();
@@ -192,6 +200,13 @@ class ClassMetadata {
                 } else {
                     $this->collectionInfo->setRepository("JPC\MongoDB\ODM\Repository");
                 }
+
+                if (null !== ($rep = $annotation->hydratorClass)) {
+                    $this->collectionInfo->setHydrator($annotation->hydratorClass);
+                } else {
+                    $this->collectionInfo->setHydrator("JPC\MongoDB\ODM\Hydrator");
+                }
+
                 $this->checkCollectionCreationOptions($annotation);
                 break;
             case "JPC\MongoDB\ODM\GridFS\Annotations\Mapping\Document" :
@@ -201,6 +216,12 @@ class ClassMetadata {
                     $this->collectionInfo->setRepository($annotation->repositoryClass);
                 } else {
                     $this->collectionInfo->setRepository("JPC\MongoDB\ODM\GridFS\Repository");
+                }
+
+                if (null !== ($rep = $annotation->hydratorClass)) {
+                    $this->collectionInfo->setHydrator($annotation->hydratorClass);
+                } else {
+                    $this->collectionInfo->setHydrator("JPC\MongoDB\ODM\GridFS\Hydrator");
                 }
                 break;
             case "JPC\MongoDB\ODM\Annotations\Mapping\Option":
