@@ -1,44 +1,39 @@
 <?php
 
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
 namespace JPC\MongoDB\ODM\GridFS;
 
-use JPC\MongoDB\ODM\Repository as BaseRep;
 use JPC\MongoDB\ODM\DocumentManager;
-use JPC\MongoDB\ODM\ObjectManager;
-use Doctrine\Common\Cache\ArrayCache;
+use JPC\MongoDB\ODM\GridFS\Hydrator;
+use JPC\MongoDB\ODM\Repository as BaseRep;
+use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
+use JPC\MongoDB\ODM\Tools\QueryCaster;
+use JPC\MongoDB\ODM\Tools\UpdateQueryCreator;
+use MongoDB\Collection;
+use MongoDB\GridFS\Bucket;
 
 /**
- * Description of GridFSRepository
- *
  * @author poree
  */
 class Repository extends BaseRep {
 
     /**
-     * 
+     * GridFS Bucket
      * @var \MongoDB\GridFS\Bucket 
      */
     protected $bucket;
 
-    public function __construct(DocumentManager $documentManager, ObjectManager $objectManager, $classMetadata, $collection) {
-        $this->bucket = $documentManager->getMongoDBDatabase()->selectGridFSBucket(['bucketName' => $collection]);
-		
-		$this->classMetadata = $classMetadata;
+    public function __construct(DocumentManager $documentManager, Collection $collection, ClassMetadata $classMetadata, Hydrator $hydrator, QueryCaster $queryCaster = null, UpdateQueryCreator $uqc = null, Bucket $bucket = null) {
 
-        $this->documentManager = $documentManager;
-        $this->modelName = $classMetadata->getName();
-        $this->hydrator = Hydrator::getInstance($this->modelName . spl_object_hash($documentManager), $documentManager, $classMetadata);
+        parent::__construct($documentManager, $collection, $classMetadata, $hydrator, $queryCaster, $uqc);
 
-        $this->collection = $this->documentManager->getMongoDBDatabase()->selectCollection($collection . ".files");
+        if(!is_subclass_of($this->modelName, Document::class)){
+            throw new MappingException("Model must extends '" . Document::class . "'.");
+        }
 
-        $this->objectManager = $objectManager;
-        $this->objectCache = new ArrayCache();
+        $this->bucket = $bucket;
+        if(!isset($this->bucket)){
+            $this->bucket = $documentManager->getDatabase()->selectGridFSBucket(["bucketName" => $this->classMetadata->getBucketName()]);
+        }
     }
 
     public function getBucket() {
@@ -46,29 +41,11 @@ class Repository extends BaseRep {
     }
 
     public function find($id, $projections = array(), $options = array()) {
-        if (!empty($projections) && isset($projections["_id"]) && !$projections["_id"]) {
-            $projections["_id"] = true;
-        }
-
-        $options = array_merge($options, [
-            "projection" => $this->castQuery($projections)
-        ]);
-
-        $result = (array) $this->collection->findOne(["_id" => $id], $options);
-
-
-        if (!empty($result)) {
-            $result = $this->createHytratableResult($result);
-            $object = new $this->modelName();
-            $this->hydrator->hydrate($object, $result);
-
-            $this->cacheObject($object);
-            $this->documentManager->persist($object, $this->getCollection()->getCollectionName());
-            $this->objectManager->setObjectState($object, ObjectManager::OBJ_MANAGED);
+        if(null !== ($object = parent::find($id, $projections, $options))){
+            $stream = $this->bucket->openDownloadStream($object->getId());
+            $object->setStream($stream);
             return $object;
         }
-
-        return false;
     }
 
     public function findAll($projections = array(), $sorts = array(), $options = array()) {

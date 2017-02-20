@@ -14,6 +14,7 @@ use MongoDB\Collection;
 use MongoDB\DeleteResult;
 use MongoDB\InsertManyResult;
 use MongoDB\InsertOneResult;
+use MongoDB\UpdateResult;
 
 class RepositoryTest extends TestCase {
 
@@ -381,11 +382,87 @@ class RepositoryTest extends TestCase {
 	}
 
 	public function test_updateOne(){
+		$this->classMetadataMock->method("getName")->willReturn("stdClass");
+		$repository = $this->repositoryMockBuilder->setMethods(["castQuery", "getUpdateQuery"])->getMock();
 
+		$this->hydratorMock->expects($this->once())->method("unhydrate")->willReturn(["_id" => 1]);
+
+		$repository->expects($this->once())->method("getUpdateQuery")->willReturn(["update" => "value"]);
+		$repository->expects($this->any())->method("castQuery");
+
+		$result = $this->createMock(UpdateResult::class);
+		$result->method("isAcknowledged")->willReturn(true);
+
+		$this->collectionMock->expects($this->once())->method("updateOne")->with(["_id" => 1], ["update" => "value"], ["option" => "value"])->willReturn($result);
+
+		$document = new \stdClass();
+
+		$result = $repository->updateOne($document, [], ["option" => "value"]);
+
+		$this->assertTrue($result);
+	}
+
+	public function test_updateOne_badObject(){
+		$this->classMetadataMock->method("getName")->willReturn("anotherObject");
+		$repository = $this->repositoryMockBuilder->setMethods(null)->getMock();
+
+		$this->classMetadataMock->method("getName")->willReturn("anotherObject");
+		$document = new \stdClass();
+
+		$this->expectException(\JPC\MongoDB\ODM\Exception\MappingException::class);
+		$repository->updateOne($document, [], ["option" => "value"]);
+	}
+
+	public function test_updateOne_emptyUpdateQuery(){
+		$this->classMetadataMock->method("getName")->willReturn("stdClass");
+		$repository = $this->repositoryMockBuilder->setMethods(["castQuery", "getUpdateQuery"])->getMock();
+
+		$this->hydratorMock->expects($this->once())->method("unhydrate")->willReturn(["_id" => 1]);
+
+		$repository->expects($this->once())->method("getUpdateQuery")->willReturn([]);
+		$repository->expects($this->any())->method("castQuery");
+
+		$result = $this->createMock(UpdateResult::class);
+		$result->method("isAcknowledged")->willReturn(true);
+
+		$this->collectionMock->expects($this->any())->method("updateOne");
+
+		$document = new \stdClass();
+		$result = $repository->updateOne($document, [], ["option" => "value"]);
+
+		$this->assertTrue($result);
+	}
+
+	public function test_updateOne_withFilter(){
+		$this->classMetadataMock->method("getName")->willReturn("stdClass");
+		$repository = $this->repositoryMockBuilder->setMethods(["castQuery", "getUpdateQuery"])->getMock();
+
+		$this->hydratorMock->expects($this->any())->method("unhydrate");
+
+		$repository->expects($this->any())->method("getUpdateQuery");
+		$repository->expects($this->exactly(2))->method("castQuery")->will($this->onConsecutiveCalls(["query" => "value"], ["update" => "value"]));
+
+		$result = $this->createMock(UpdateResult::class);
+		$result->method("isAcknowledged")->willReturn(true);
+
+		$this->collectionMock->expects($this->once())->method("updateOne")->with(["query" => "value"], ["update" => "value"], ["option" => "value"])->willReturn($result);
+
+		$result = $repository->updateOne(["query" => "value"], ["update" => "value"], ["option" => "value"]);
+
+		$this->assertTrue($result);
 	}
 
 	public function test_updateMany(){
+		$repository = $this->repositoryMockBuilder->setMethods(["castQuery"])->getMock();
 
+		$repository->expects($this->once())->method("castQuery")->willReturn(["filter" => "value"]);
+
+		$result = $this->createMock(UpdateResult::class);
+		$result->method("isAcknowledged")->willReturn(true);
+
+		$this->collectionMock->expects($this->once())->method("updateMany")->with(["filter" => "value"], ["update" => "value"], ["option" => "value"])->willReturn($result);
+
+		$this->assertTrue($repository->updateMany(["filter" => "value"], ["update" => "value"], ["option" => "value"]));
 	}
 
 	public function test_deleteOne(){

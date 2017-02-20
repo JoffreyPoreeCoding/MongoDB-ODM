@@ -15,13 +15,15 @@ class UpdateQueryCreatorTest extends TestCase {
 			"array_with_new" => [1,2],
 			"array_same" => [1,2,3],
 			"array_with_suppression" => [1,2,3],
+			"set_key" => 1,
 			"embedded" => [
 				"same" => "value",
 				"different" => "value",
 				"array_with_new" => [1,2],
 				"array_same" => [1,2,3],
 				"array_with_suppression" => [1,2,3],
-				"suppressed" => "value"
+				"suppressed" => "value",
+				"set_key" => 1
 			]
 		];
 
@@ -32,12 +34,14 @@ class UpdateQueryCreatorTest extends TestCase {
 			"array_with_new" => [1,2,3],
 			"array_same" => [1,2,3],
 			"array_with_suppression" => [1,2],
+			"set_key" => ['$inc' => 1],
 			"embedded" => [
 				"same" => "value",
 				"different" => "new_value",
 				"array_with_new" => [1,2,3],
 				"array_same" => [1,2,3],
-				"array_with_suppression" => [1,2]
+				"array_with_suppression" => [1,2],
+				"set_key" => ['$inc' => 1]
 			]
 		];
 
@@ -58,6 +62,10 @@ class UpdateQueryCreatorTest extends TestCase {
 				"array_with_suppression.2" => 1,
 				"embedded.suppressed" => 1,
 				"embedded.array_with_suppression.2" => 1
+			],
+			'$inc' => [
+				"set_key" => 1,
+				"embedded.set_key" => 1
 			]
 		];
 

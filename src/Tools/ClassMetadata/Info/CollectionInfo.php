@@ -14,6 +14,12 @@ class CollectionInfo {
      * @var string 
      */
     private $collectionName;
+
+    /**
+     * Bucket name
+     * @var string
+     */
+    private $bucketName;
     
     /**
      * Repository class name
@@ -41,6 +47,10 @@ class CollectionInfo {
     
     function getCollection() {
         return $this->collectionName;
+    }
+
+    function getBucketName() {
+        return $this->bucketName;
     }
 
     function getWriteConcern() {
@@ -71,11 +81,14 @@ class CollectionInfo {
     function getOptions() {
         return $this->options;
     }
-
     
     function setCollection($collection) {
         $this->collectionName = $collection;
         return $this;
+    }
+
+    function setBucketName($bucketName){
+        $this->bucketName = $bucketName;
     }
 
     function setWriteConcern($writeConcern) {
@@ -98,18 +111,19 @@ class CollectionInfo {
         return $this;
     }
 
-    public function setHydrator($hydrator)
+    function setHydrator($hydrator)
     {
         $this->hydrator = $hydrator;
-
         return $this;
     }
     
     function setCreationOptions($options){
         $this->creationOptions = $options;
+        return $this;
     }
     
     function setOptions($options) {
         $this->options = $options;
+        return $this;
     }
 }

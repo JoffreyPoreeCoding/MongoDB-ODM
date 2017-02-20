@@ -79,6 +79,14 @@ class ClassMetadata {
 
         return $this->collectionInfo->getCollection();
     }
+
+    public function getBucketName(){
+        if(!$this->loaded){
+            $this->load();
+        }
+
+        return $this->collectionInfo->getBucketName();
+    }
     
     public function getPropertyInfo($prop){
          if (!$this->loaded) {
@@ -210,7 +218,8 @@ class ClassMetadata {
                 $this->checkCollectionCreationOptions($annotation);
                 break;
             case "JPC\MongoDB\ODM\GridFS\Annotations\Mapping\Document" :
-                $this->collectionInfo->setCollection($annotation->bucketName);
+                $this->collectionInfo->setBucketName($annotation->bucketName);
+                $this->collectionInfo->setCollection($annotation->bucketName . ".files");
 
                 if (null !== ($rep = $annotation->repositoryClass)) {
                     $this->collectionInfo->setRepository($annotation->repositoryClass);

@@ -9,7 +9,10 @@ class UpdateQueryCreator {
 
 		foreach ($new as $key => $value) {
 			if(array_key_exists($key, $old)){
-				if(is_array($value) && is_array($old[$key])){
+				if(is_array($value) && strstr(key($value), '$') !== false){
+					$update[key($value)][$prefix . $key] = $value[key($value)];
+				}
+				else if(is_array($value) && is_array($old[$key])){
 					$embeddedUpdate = array_merge($update, $this->createUpdateQuery($old[$key], $value, $prefix . $key . "."));
 
 					foreach($embeddedUpdate as $updateOperator => $value){

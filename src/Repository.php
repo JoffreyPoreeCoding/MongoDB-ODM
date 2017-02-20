@@ -5,6 +5,7 @@ namespace JPC\MongoDB\ODM;
 use Doctrine\Common\Cache\ArrayCache;
 use Doctrine\Common\Cache\CacheProvider;
 use JPC\MongoDB\ODM\DocumentManager;
+use JPC\MongoDB\ODM\Exception\MappingException;
 use JPC\MongoDB\ODM\ObjectManager;
 use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
 use JPC\MongoDB\ODM\Tools\QueryCaster;
@@ -277,8 +278,8 @@ class Repository {
             $this->cacheObject($document);
 
             $this->documentManager->hasObject($document) ? 
-                $this->documentManager->setObjectState($document, DocumentManager::OBJ_MANAGED) : 
-                $this->documentManager->addObject($document, DocumentManager::OBJ_MANAGED, $this);
+            $this->documentManager->setObjectState($document, DocumentManager::OBJ_MANAGED) : 
+            $this->documentManager->addObject($document, DocumentManager::OBJ_MANAGED, $this);
 
             return true;
         } else {
@@ -302,8 +303,8 @@ class Repository {
                 $this->cacheObject($documents[$key]);
 
                 $this->documentManager->hasObject($documents[$key]) ? 
-                    $this->documentManager->setObjectState($documents[$key], DocumentManager::OBJ_MANAGED) : 
-                    $this->documentManager->addObject($documents[$key], DocumentManager::OBJ_MANAGED, $this);
+                $this->documentManager->setObjectState($documents[$key], DocumentManager::OBJ_MANAGED) : 
+                $this->documentManager->addObject($documents[$key], DocumentManager::OBJ_MANAGED, $this);
             }
 
             return true;
@@ -312,20 +313,55 @@ class Repository {
         }
     }
 
+    /**
+     * [updateOne description]
+     * @param  [type] $document [description]
+     * @param  array  $update   [description]
+     * @param  array  $options  [description]
+     * @return [type]           [description]
+     *
+     * @todo Delete refresh to make it from PHP (Don't make find query)
+     */
     public function updateOne($document, $update = [], $options = []){
-        $unhydratedObject = $this->hydrator->unhydrate($document);
-
-        $id = $unhydratedObject["_id"];
+        if(is_object($document) && $document instanceof $this->modelName){
+            $unhydratedObject = $this->hydrator->unhydrate($document);
+            $id = $unhydratedObject["_id"];
+            $filters = ["_id" => $id];
+        } else if (is_object($document)){
+            throw new MappingException('Document sended to update function must be of type "' . $this->modelName . '"');
+        } else {
+            $filters = $this->castQuery($document);
+        }
 
         if(empty($update)){
             $update = $this->getUpdateQuery($document);
+        } else {
+            $update = $this->castQuery($update);
         }
 
-        $this->collection->updateOne(["_id" => $id], $update, $options);
+        if(!empty($update)){
+            $result = $this->collection->updateOne($filters, $update, $options);
+
+            if($result->isAcknowledged()){
+                if($document instanceof $this->modelName){
+                    $this->documentManager->refresh($document);
+                }
+            } else {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     public function updateMany($filters, $update, $options = []){
+        $result = $this->collection->updateMany($this->castQuery($filters), $update, $options);
 
+        if($result->isAcknowledged()){
+            return true;
+        } else {
+            return false;
+        }
     }
 
     public function deleteOne($document, $options = []){
