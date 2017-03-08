@@ -89,7 +89,7 @@ class QueryCaster {
         $propInfo = ($classMetadata->getPropertyForField($realField)) ? $classMetadata->getPropertyInfoForField($realField) : $classMetadata->getPropertyInfo($realField);
 
         if ($propInfo != false && ($propInfo->getEmbedded() || $propInfo->getMultiEmbedded())) {
-            $this->lastUsedMetadata = $classMetadata = ClassMetadataFactory::getInstance()->getMetadataForClass($propInfo->getEmbeddedClass());
+            $this->lastUsedMetadata = $classMetadata = ClassMetadata\ClassMetadataFactory::getInstance()->getMetadataForClass($propInfo->getEmbeddedClass());
             if (isset($remainingField)) {
                 return $propInfo->getField() . "." . $this->castDottedString($remainingField, $classMetadata);
             }
