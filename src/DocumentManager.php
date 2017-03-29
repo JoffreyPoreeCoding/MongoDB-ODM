@@ -168,6 +168,9 @@ class DocumentManager extends ObjectManager {
      * @param   mixed       $object     Object to refresh
      */
     public function refresh(&$object) {
+        if(!isset($this->objectsRepository[spl_object_hash($object)])){
+            return;
+        }
         $repository = $this->objectsRepository[spl_object_hash($object)];
 
         $mongoCollection = $repository->getCollection();
