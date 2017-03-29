@@ -2,10 +2,11 @@
 
 namespace JPC\Test\MongoDB\ODM\Tools;
 
-use JPC\Test\MongoDB\ODM\Framework\TestCase;
-use JPC\MongoDB\ODM\Tools\QueryCaster;
+use JPC\MongoDB\ODM\Factory\ClassMetadataFactory;
 use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
 use JPC\MongoDB\ODM\Tools\ClassMetadata\Info\PropertyInfo;
+use JPC\MongoDB\ODM\Tools\QueryCaster;
+use JPC\Test\MongoDB\ODM\Framework\TestCase;
 
 class QueryCasterTest extends TestCase {
     
@@ -26,7 +27,7 @@ class QueryCasterTest extends TestCase {
             "special" => ['$gt' => 10]
         ];
                 
-        $this->queryCaster = new QueryCaster();
+        $this->queryCaster = new QueryCaster($metadata, new ClassMetadataFactory());
         $this->queryCaster->init($query, $this->createMetadataMock());
         
         $expected = [

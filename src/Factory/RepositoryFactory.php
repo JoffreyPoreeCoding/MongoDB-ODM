@@ -5,9 +5,10 @@ namespace JPC\MongoDB\ODM\Factory;
 use Doctrine\Common\Cache\ArrayCache;
 use Doctrine\Common\Cache\Cache;
 use JPC\MongoDB\ODM\DocumentManager;
+use JPC\MongoDB\ODM\Factory\ClassMetadataFactory;
 use JPC\MongoDB\ODM\Hydrator;
 use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
-use JPC\MongoDB\ODM\Factory\ClassMetadataFactory;
+use JPC\MongoDB\ODM\Tools\QueryCaster;
 use MongoDB\Collection;
 
 class RepositoryFactory {
@@ -51,8 +52,10 @@ class RepositoryFactory {
         $hydratorClass = $classMetadata->getHydratorClass();
         $hydrator = new $hydratorClass($this->classMetadataFactory, $classMetadata);
 
+        $queryCaster = new QueryCaster($classMetadata, $this->classMetadataFactory);
 
-        $repository = new $repositoryClass($documentManager, $collection, $classMetadata, $hydrator);
+
+        $repository = new $repositoryClass($documentManager, $collection, $classMetadata, $hydrator, $queryCaster);
         $this->cache->save($repIndex, $repository);
 
         return $repository;

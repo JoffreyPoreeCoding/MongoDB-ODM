@@ -40,6 +40,8 @@ class Hydrator {
         }
         $properties = $this->classMetadata->getPropertiesInfos();
 
+        
+
         foreach ($properties as $name => $infos) {
             if (null !== ($field = $infos->getField()) && is_array($datas) && array_key_exists($field, $datas) && $datas[$field] !== null) {
                 

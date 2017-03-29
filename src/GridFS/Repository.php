@@ -49,77 +49,29 @@ class Repository extends BaseRep {
     }
 
     public function findAll($projections = array(), $sorts = array(), $options = array()) {
-        if (!empty($projections) && isset($projections["_id"]) && !$projections["_id"]) {
-            $projections["_id"] = true;
+        $objects = parent::findAll($projections, $sorts, $options);
+        foreach($objects as $object){
+            $stream = $this->bucket->openDownloadStream($object->getId());
+            $object->setStream($stream);
         }
-        $options = array_merge($options, [
-            "projection" => $this->castQuery($projections),
-            "sort" => $this->castQuery($sorts)
-        ]);
-
-        $result = $this->collection->find([], $options);
-
-        $objects = [];
-
-        foreach ($result as $datas) {
-            $datas = $this->createHytratableResult($datas);
-            $object = new $this->modelName();
-            $this->hydrator->hydrate($object, $datas);
-            $this->cacheObject($object);
-            $this->documentManager->persist($object, $this->getCollection()->getCollectionName());
-            $this->objectManager->setObjectState($object, ObjectManager::OBJ_MANAGED);
-            $objects[] = $object;
-        }
-
         return $objects;
     }
 
     public function findBy($filters, $projections = array(), $sorts = array(), $options = array()) {
-        if (!empty($projections) && isset($projections["_id"]) && !$projections["_id"]) {
-            $projections["_id"] = true;
+        $objects = parent::findBy($filters, $projections, $sorts, $options);
+        foreach($objects as $object){
+            $stream = $this->bucket->openDownloadStream($object->getId());
+            $object->setStream($stream);
         }
-        $options = array_merge($options, [
-            "projection" => $this->castQuery($projections),
-            "sort" => $this->castQuery($sorts)
-        ]);
-
-        $result = $this->collection->find($this->castQuery($filters), $options);
-
-        $objects = [];
-
-        foreach ($result as $datas) {
-            $datas = $this->createHytratableResult($datas);
-            $object = new $this->modelName();
-            $this->hydrator->hydrate($object, $datas);
-            $this->cacheObject($object);
-            $this->documentManager->persist($object, $this->getCollection()->getCollectionName());
-            $this->objectManager->setObjectState($object, ObjectManager::OBJ_MANAGED);
-            $objects[] = $object;
-        }
-
         return $objects;
     }
 
     public function findOneBy($filters = array(), $projections = array(), $sorts = array(), $options = array()) {
-        if (!empty($projections) && isset($projections["_id"]) && !$projections["_id"]) {
-            $projections["_id"] = true;
-        }
-
-        $options = array_merge($options, [
-            "projection" => $this->castQuery($projections),
-            "sort" => $this->castQuery($sorts)
-        ]);
-
-        $result = (array) $this->collection->findOne($this->castQuery($filters), $options);
+        $object = parent::findOneBy($filters, $projections, $sorts, $options);
         
-        if (!empty($result)) {
-            $result = $this->createHytratableResult($result);
-            $object = new $this->modelName();
-            $this->hydrator->hydrate($object, $result);
-
-            $this->cacheObject($object);
-            $this->documentManager->persist($object, $this->getCollection()->getCollectionName());
-            $this->objectManager->setObjectState($object, ObjectManager::OBJ_MANAGED);
+        if (isset($object)) {
+            $stream = $this->bucket->openDownloadStream($object->getId());
+            $object->setStream($stream);
             return $object;
         }
     }
@@ -134,27 +86,14 @@ class Repository extends BaseRep {
      * @param   array                   $options            Options for the query
      * @return  array                                       Array containing all the document of the collection
      */
-    public function findAndModifyOne($filters = [], $update = [], $projections = [], $sorts = [], $options = []) {
+    public function findAndModifyOneBy($filters = [], $update = [], $projections = [], $sorts = [], $options = []) {
+        $object = parent::findAndModifyOneBy($filters, $update, $projections, $sorts, $options);
 
-        $options = array_merge($options, [
-            "projection" => $this->castQuery($projections),
-            "sort" => $this->castQuery($sorts)
-        ]);
-
-        $result = (array) $this->collection->findOneAndUpdate($this->castQuery($filters), $this->castQuery($update), $options);
-
-        if ($result != null) {
-            $result = $this->createHytratableResult($result);
-            $object = new $this->modelName();
-            $this->hydrator->hydrate($object, $result);
-            
-            $this->documentManager->persist($object, $this->getCollection()->getCollectionName());
-            $this->objectManager->setObjectState($object, ObjectManager::OBJ_MANAGED);
-            $this->cacheObject($object);
+        if (isset($object)) {
+            $stream = $this->bucket->openDownloadStream($object->getId());
+            $object->setStream($stream);
             return $object;
         }
-
-        return null;
     }
 	
 	public function drop() {
@@ -169,21 +108,51 @@ class Repository extends BaseRep {
         }
     }
 
-    public function createHytratableResult($result) {
-        $newResult = $result;
-        
-        if (isset($result["metadata"])) {
-            foreach ($result["metadata"] as $key => $value) {
-                $newResult[$key] = $value;
-            }
-            
-            unset($newResult["metadata"]);
+    public function insertOne($document, $options = []){
+        $objectDatas = $this->hydrator->unhydrate($document);
+
+        $stream = $objectDatas["stream"];
+        unset($objectDatas["stream"]);
+
+        if(!isset($objectDatas["filename"])){
+            $filename = stream_get_meta_data($stream)["uri"];
+        } else {
+            $filename = $objectDatas["filename"];
         }
 
-        $stream = $this->bucket->openDownloadStream($result["_id"]);
-        $newResult["stream"] = $stream;
+        unset($objectDatas["filename"]);
 
-        return $newResult;
+        $this->bucket->uploadFromStream($filename, $stream, $objectDatas);
     }
 
+    public function insertMany($documents, $options = []){
+        foreach($documents as $document){
+            if(!$this->insertOne($document)){
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public function deleteOne($document, $options = []){
+        $unhydratedObject = $this->hydrator->unhydrate($document);
+
+        $id = $unhydratedObject["_id"];
+
+        $this->bucket->delete($id);
+    }
+
+    public function deleteMany($filter, $options = []){
+        throw new \Exception("You can't remove multiple GridFS document at same time...");
+    }
+
+    protected function getUpdateQuery($document){
+        $updateQuery = [];
+        $old = $this->uncacheObject($document);
+        $new = $this->hydrator->unhydrate($document);
+        unset($new["stream"]);
+
+        return $this->updateQueryCreator->createUpdateQuery($old, $new);
+    }
 }

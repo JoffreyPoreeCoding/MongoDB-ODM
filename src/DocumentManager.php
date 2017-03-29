@@ -179,9 +179,6 @@ class DocumentManager extends ObjectManager {
         }
 
         $datas = (array) $mongoCollection->findOne(["_id" => $id]);
-        if ($repository instanceof GridFS\Repository) {
-            $datas = $repository->createHytratableResult($datas);
-        }
 
         if ($datas != null) {
             $repository->getHydrator()->hydrate($object, $datas);

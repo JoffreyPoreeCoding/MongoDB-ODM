@@ -72,7 +72,7 @@ class Repository {
      * 
      * @param   Tools\ClassMetadata     $classMetadata      Metadata of managed class
      */
-    public function __construct(DocumentManager $documentManager, Collection $collection, ClassMetadata $classMetadata, Hydrator $hydrator, QueryCaster $queryCaster = null, UpdateQueryCreator $uqc = null) {
+    public function __construct(DocumentManager $documentManager, Collection $collection, ClassMetadata $classMetadata, Hydrator $hydrator, QueryCaster $queryCaster, UpdateQueryCreator $uqc = null) {
         $this->documentManager = $documentManager;
         $this->collection = $collection;
         $this->classMetadata = $classMetadata;
@@ -81,7 +81,7 @@ class Repository {
         $this->modelName = $classMetadata->getName();
         $this->objectCache = new ArrayCache();
 
-        $this->queryCaster = isset($queryCaster) ? $queryCaster : new QueryCaster();
+        $this->queryCaster = $queryCaster;
         $this->updateQueryCreator = isset($uqc) ? $uqc : new UpdateQueryCreator();
     }
 
@@ -432,7 +432,7 @@ class Repository {
     }
 
     protected function castQuery($query) {
-        $this->queryCaster->init($query, $this->classMetadata);
+        $this->queryCaster->init($query);
         return $this->queryCaster->getCastedQuery();
     }
 

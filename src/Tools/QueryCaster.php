@@ -3,6 +3,8 @@
 
 namespace JPC\MongoDB\ODM\Tools;
 
+use JPC\MongoDB\ODM\Factory\ClassMetadataFactory;
+
 class QueryCaster {
 
     /**
@@ -29,8 +31,13 @@ class QueryCaster {
      */
     private $lastUsedMetadata;
 
-    public function init($query, $classMetadata) {
-        $this->query = $query;
+    /**
+     * Class metadata factory
+     * @var ClassMetadataFactory
+     */
+    private $classMetadataFactory;
+
+    public function __construct($classMetadata, $classMetadataFactory){
         $this->initialMetadata = $classMetadata;
         if (!isset(self::$mongoDbQueryOperators)) {
             $callBack = [$this, 'aggregOnMongoDbOperators'];
@@ -38,6 +45,11 @@ class QueryCaster {
                 '$gt' => $callBack, '$lt' => $callBack, '$gte' => $callBack, '$lte' => $callBack, '$eq' => $callBack, '$ne' => $callBack, '$in' => $callBack, '$nin' => $callBack
             ];
         }
+        $this->classMetadataFactory = $classMetadataFactory;
+    }
+
+    public function init($query) {
+        $this->query = $query;
     }
 
     public function getCastedQuery() {
@@ -89,18 +101,27 @@ class QueryCaster {
         $propInfo = ($classMetadata->getPropertyForField($realField)) ? $classMetadata->getPropertyInfoForField($realField) : $classMetadata->getPropertyInfo($realField);
 
         if ($propInfo != false && ($propInfo->getEmbedded() || $propInfo->getMultiEmbedded())) {
-            $this->lastUsedMetadata = $classMetadata = ClassMetadataFactory::getInstance()->getMetadataForClass($propInfo->getEmbeddedClass());
+            $this->lastUsedMetadata = $classMetadata = $this->classMetadataFactory->getMetadataForClass($propInfo->getEmbeddedClass());
             if (isset($remainingField)) {
                 return $propInfo->getField() . "." . $this->castDottedString($remainingField, $classMetadata);
             }
-            return $propInfo->getField();
+            $result = $propInfo->getField();
+            if($propInfo->getMetadata()){
+                $result = "metadata." . $result;
+            }
+            return $result;
         } else if ($propInfo != false) {
             if(!empty($remainingField)){
                 $remainingField = "." . $remainingField;
             } else {
 				$remainingField = "";
 			}
-            return $propInfo->getField() . $remainingField;
+
+            $result = $propInfo->getField() . $remainingField;
+            if($propInfo->getMetadata()){
+                $result = "metadata." . $result;
+            }
+            return $result;
         } else {
             return $string;
         }

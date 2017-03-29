@@ -17,6 +17,14 @@ use JPC\MongoDB\ODM\Hydrator as BaseHydrator;
  */
 class Hydrator extends BaseHydrator {
 
+    public function hydrate(&$object, $datas){
+        if(isset($datas["metadata"])){
+            parent::hydrate($object, $datas["metadata"]);
+            unset($datas["metadata"]);
+        }
+        parent::hydrate($object, $datas);
+    }
+
     public function unhydrate($object) {
         $datas = parent::unhydrate($object);
         
