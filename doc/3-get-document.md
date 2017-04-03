@@ -22,7 +22,7 @@ Now, create a document manager :
 use JPC\MongoDB\ODM\Factory\DocumentManagerFactory;
 
 $factory = new DocumentManagerFactory();
-$documentManager = new DocumentManager("mongodb://user:password@myserver.com:27017/authdb", "my_db");
+$factory->createDocumentManager("mongodb://user:password@myserver.com:27017/authdb", "my_db");
 
 ```
 
@@ -44,9 +44,7 @@ In our case (With model configured in `2-create-mapping-class`) :
 ```php 
 <?php
 
-use JPC\MongoDB\ODM\DocumentManager;
-
-$documentManager = new DocumentManager("mongodb://user:password@myserver.com:27017/authdb", "my_db");
+[...]
 
 $repository = $documentManager->getRepository("ACME\Model\MyDoc");
 
@@ -67,9 +65,7 @@ Example :
 ```php 
 <?php
 
-use JPC\MongoDB\ODM\DocumentManager;
-
-$documentManager = new DocumentManager("mongodb://user:password@myserver.com:27017/authdb", "my_db");
+[...]
 
 $repository = $documentManager->getRepository("ACME\Model\MyDoc");
 
