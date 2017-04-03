@@ -4,7 +4,7 @@ namespace JPC\MongoDB\ODM\GridFS;
 
 use JPC\MongoDB\ODM\DocumentManager;
 use JPC\MongoDB\ODM\GridFS\Hydrator;
-use JPC\MongoDB\ODM\Repository as BaseRep;
+use JPC\MongoDB\ODM\Repository as BaseRepository;
 use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
 use JPC\MongoDB\ODM\Tools\QueryCaster;
 use JPC\MongoDB\ODM\Tools\UpdateQueryCreator;
@@ -14,7 +14,7 @@ use MongoDB\GridFS\Bucket;
 /**
  * @author poree
  */
-class Repository extends BaseRep {
+class Repository extends BaseRepository {
 
     /**
      * GridFS Bucket
@@ -123,6 +123,8 @@ class Repository extends BaseRep {
         unset($objectDatas["filename"]);
 
         $this->bucket->uploadFromStream($filename, $stream, $objectDatas);
+
+        return true;
     }
 
     public function insertMany($documents, $options = []){
@@ -144,7 +146,7 @@ class Repository extends BaseRep {
     }
 
     public function deleteMany($filter, $options = []){
-        throw new \Exception("You can't remove multiple GridFS document at same time...");
+        throw new \JPC\MongoDB\ODM\GridFS\Exception\DeleteManyException();
     }
 
     protected function getUpdateQuery($document){

@@ -31,8 +31,6 @@ class ObjectMapping {
      */
     private $multiEmbeddedField;
 
-
-
     /**
      * Gets the value of id.
      *

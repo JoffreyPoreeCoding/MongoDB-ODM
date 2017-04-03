@@ -114,6 +114,10 @@ class Repository {
 
         if(isset($propInfos)){
             $field = $propInfos->getField();
+
+            if($propInfos->getMetadata()){
+                $field = "metadata." . $field;
+            }
         }
 
         $filters = $this->castQuery($filters);
@@ -157,7 +161,6 @@ class Repository {
         $options = $this->createOption($projections, $sorts, $options);
 
         $this->log("debug", "Find all document in collection '".$this->collection->getCollectionName()."'");
-
         $result = $this->collection->find([], $options);
 
         $objects = [];
