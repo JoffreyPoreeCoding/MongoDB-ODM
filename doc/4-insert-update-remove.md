@@ -47,7 +47,7 @@ $docs = $repo->findBy(["field_1" => "value"])
 
 > Note : If you have inserted a document with `persist` and `flush`, it is ready for update, you don't need to get it from repository again
 
-Now make some modification and them :
+Now make some modification on them :
 
 ```php
 foreach($docs as $index => $doc){

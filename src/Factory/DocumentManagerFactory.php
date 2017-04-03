@@ -11,6 +11,10 @@ use MongoDB\Database;
 
 class DocumentManagerFactory {
 
+	private $connexions = [];
+
+	private $managers = [];
+
 	/**
 	 * Create new DocumentManager from mongouri and DB name
 	 * 
@@ -21,19 +25,27 @@ class DocumentManagerFactory {
 	 * 
 	 * @return DocumentManager      A DocumentManager connected to mongouri specified
 	 */
-	public function createDocumentManager($mongouri, $dbName, $logger = null, $debug = false){
-		$client = new Client($mongouri);
-		$database = new Database($client->getManager(), $dbName);
-		$repositoryFactory = new RepositoryFactory();
+	public function createDocumentManager($mongouri, $dbName, $logger = null, $debug = false, $managerId = "", $newConnection = false){
 
-		$logger = isset($logger) ?: new MemoryLogger();
+		if(!isset($this->connexions[$mongouri])){
+			$client = new Client($mongouri);
+		}
 
-		return new DocumentManager(
-			$client, 
-			$database, 
-			$repositoryFactory,
-			$logger, 
-			$debug
-		);
+		if(!isset($this->managers[$managerId])){
+			$database = new Database($client->getManager(), $dbName);
+			$repositoryFactory = new RepositoryFactory();
+
+			$logger = isset($logger) ?: new MemoryLogger();
+
+			$this->managers[$managerId] = new DocumentManager(
+				$client, 
+				$database, 
+				$repositoryFactory,
+				$logger, 
+				$debug
+				);
+		}
+		
+		return $this->managers[$managerId];
 	}
 }

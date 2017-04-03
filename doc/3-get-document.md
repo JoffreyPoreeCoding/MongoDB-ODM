@@ -19,8 +19,9 @@ Now, create a document manager :
 ```php
 <?php
 
-use JPC\MongoDB\ODM\DocumentManager;
+use JPC\MongoDB\ODM\Factory\DocumentManagerFactory;
 
+$factory = new DocumentManagerFactory();
 $documentManager = new DocumentManager("mongodb://user:password@myserver.com:27017/authdb", "my_db");
 
 ```
