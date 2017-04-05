@@ -135,7 +135,7 @@ class Hydrator {
      * @param   string              $class              Class which you will get hydrator
      * @return  Hydrator            Hydrator corresponding to specified class
      */
-    private function getHydrator($class) {
+    public function getHydrator($class) {
         $metadata = $this->classMetadataFactory->getMetadataForClass($class);
         return new Hydrator($this->classMetadataFactory, $metadata);
     }
