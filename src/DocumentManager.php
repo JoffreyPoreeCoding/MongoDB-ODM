@@ -200,8 +200,6 @@ class DocumentManager extends ObjectManager {
             $countUpdate = count($this->getObject(ObjectManager::OBJ_MANAGED));
             $countInsert = count($this->getObject(ObjectManager::OBJ_NEW));
             $this->logger->debug("Flushing datas to database, $countInsert to insert, $countUpdate to update, $countRemove to remove.");
-
-            dump("Flushing datas to database, $countInsert to insert, $countUpdate to update, $countRemove to remove.");
         }
 
         $removeObjs = $this->getObject(ObjectManager::OBJ_REMOVED);
