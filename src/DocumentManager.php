@@ -502,12 +502,22 @@ class DocumentManager {
                 if($this->debug)
                     $this->logger->debug("Delete object in collection '".$rep->getCollection()->getCollectionName()."' with id '".(string) $id."'");
                 $this->objectManager->removeObject($object);
-            } else {
+            } else if ($this->isCapped($collection)) {
                 if($this->debug)
                     $this->logger->error("Can't delete document in '".$rep->getCollection()->getCollectionName()."' with id '".(string) $id."'");
                 throw new \Exception("Error on removing the document with _id : " . (string) $id . "in collection " . $collection);
             }
         }
+    }
+    
+    private function isCapped($collection){
+        foreach($this->mongodatabase->listCollections() as $collectionInfo){
+            if($collection == $collectionInfo->getName()){
+                return $collectionInfo->isCapped();
+            }
+        }
+
+        return false;
     }
 
     /* ================================== */
