@@ -139,5 +139,9 @@ class RepositoryTest extends TestCase {
 	public function fakeHydration($object, $data){
 		$object
 			->setFilename("filename");
+
+		if(isset($data["stream"])){
+			$object->setStream("filecontent");
+		}
 	}
 } 

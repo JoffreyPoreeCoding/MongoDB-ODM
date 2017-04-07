@@ -11,9 +11,19 @@ use MongoDB\Database;
 
 class DocumentManagerFactory {
 
+	private $repositoryFactoryClass;
+
 	private $connexions = [];
 
 	private $managers = [];
+
+	private $classMetadataFactory;
+
+	public function __construct($repositoryFactoryClass = null){
+		$this->repositoryFactoryClass = isset($repositoryFactoryClass) ? $repositoryFactoryClass : "JPC\MongoDB\ODM\Factory\RepositoryFactory";
+
+		$this->classMetadataFactory = new ClassMetadataFactory();
+	}
 
 	/**
 	 * Create new DocumentManager from mongouri and DB name
@@ -33,7 +43,10 @@ class DocumentManagerFactory {
 
 		if(!isset($this->managers[$managerId])){
 			$database = new Database($client->getManager(), $dbName);
-			$repositoryFactory = new RepositoryFactory();
+
+			$class = $this->repositoryFactoryClass;
+
+			$repositoryFactory = new $class(null, $this->classMetadataFactory);
 
 			$logger = isset($logger) ?: new MemoryLogger();
 

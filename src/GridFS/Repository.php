@@ -42,8 +42,8 @@ class Repository extends BaseRepository {
 
     public function find($id, $projections = array(), $options = array()) {
         if(null !== ($object = parent::find($id, $projections, $options))){
-            $stream = $this->bucket->openDownloadStream($object->getId());
-            $object->setStream($stream);
+            $data["stream"] = $this->bucket->openDownloadStream($object->getId());
+            $this->hydrator->hydrate($object, $data);
             return $object;
         }
     }
@@ -51,8 +51,8 @@ class Repository extends BaseRepository {
     public function findAll($projections = array(), $sorts = array(), $options = array()) {
         $objects = parent::findAll($projections, $sorts, $options);
         foreach($objects as $object){
-            $stream = $this->bucket->openDownloadStream($object->getId());
-            $object->setStream($stream);
+            $data["stream"] = $this->bucket->openDownloadStream($object->getId());
+            $this->hydrator->hydrate($object, $data);
         }
         return $objects;
     }
@@ -60,8 +60,8 @@ class Repository extends BaseRepository {
     public function findBy($filters, $projections = array(), $sorts = array(), $options = array()) {
         $objects = parent::findBy($filters, $projections, $sorts, $options);
         foreach($objects as $object){
-            $stream = $this->bucket->openDownloadStream($object->getId());
-            $object->setStream($stream);
+            $data["stream"] = $this->bucket->openDownloadStream($object->getId());
+            $this->hydrator->hydrate($object, $data);
         }
         return $objects;
     }
@@ -70,8 +70,8 @@ class Repository extends BaseRepository {
         $object = parent::findOneBy($filters, $projections, $sorts, $options);
         
         if (isset($object)) {
-            $stream = $this->bucket->openDownloadStream($object->getId());
-            $object->setStream($stream);
+            $data["stream"] = $this->bucket->openDownloadStream($object->getId());
+            $this->hydrator->hydrate($object, $data);
             return $object;
         }
     }
@@ -90,22 +90,26 @@ class Repository extends BaseRepository {
         $object = parent::findAndModifyOneBy($filters, $update, $projections, $sorts, $options);
 
         if (isset($object)) {
-            $stream = $this->bucket->openDownloadStream($object->getId());
-            $object->setStream($stream);
+            $data["stream"] = $this->bucket->openDownloadStream($object->getId());
+            $this->hydrator->hydrate($object, $data);
             return $object;
         }
     }
-	
-	public function drop() {
+
+    public function drop() {
         $this->bucket->drop();
     }
-	
-	public function cacheObject($object) {
+
+    public function cacheObject($object) {
         if (is_object($object)) {
             $unhyd = $this->hydrator->unhydrate($object);
             unset($unhyd["stream"]);
             $this->objectCache->save(spl_object_hash($object), $unhyd);
         }
+    }
+
+    protected function uncacheObject($object) {
+        return $this->objectCache->fetch(spl_object_hash($object));
     }
 
     public function insertOne($document, $options = []){
@@ -123,6 +127,11 @@ class Repository extends BaseRepository {
         unset($objectDatas["filename"]);
 
         $this->bucket->uploadFromStream($filename, $stream, $objectDatas);
+
+        $data["stream"] = $this->bucket->openDownloadStream($document->getId());
+        $this->hydrator->hydrate($document, $data);
+
+        $this->cacheObject($document);
 
         return true;
     }

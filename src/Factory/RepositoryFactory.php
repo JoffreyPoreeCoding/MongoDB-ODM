@@ -13,9 +13,9 @@ use MongoDB\Collection;
 
 class RepositoryFactory {
 
-	private $cache;
+ protected $cache;
 
-	private $classMetadataFactory;
+ protected $classMetadataFactory;
 
     /**
      * Create new repository factory
@@ -23,42 +23,55 @@ class RepositoryFactory {
      * @param Cache|null                $cache                Cache used to store repositories
      * @param ClassMetadataFactory|null $classMetadataFactory Factory that will create class Metadata
      */
-	public function __construct(Cache $cache = null, ClassMetadataFactory $classMetadataFactory = null){
-		$this->cache = isset($cache) ? $cache : new ArrayCache();
-		$this->classMetadataFactory = isset($classMetadataFactory) ? $classMetadataFactory : new ClassMetadataFactory();
-	}
+    public function __construct(Cache $cache = null, ClassMetadataFactory $classMetadataFactory = null){
+      $this->cache = isset($cache) ? $cache : new ArrayCache();
+      $this->classMetadataFactory = isset($classMetadataFactory) ? $classMetadataFactory : new ClassMetadataFactory();
+    }
 
-	public function getRepository(DocumentManager $documentManager, $modelName, $collectionName){
-		$repIndex = $modelName . $collectionName;
-        if (false != ($repository = $this->cache->fetch($repIndex))) {
-            return $repository;
-        }
-
-        $classMetadata = $this->classMetadataFactory->getMetadataForClass($modelName);
-
-        if (!isset($collectionName)) {
-            $collectionName = $classMetadata->getCollection();
-        }
-
-        $repositoryClass = $classMetadata->getRepositoryClass();
-
-        $repIndex = $modelName . $collectionName;
-        if (false != ($repository = $this->cache->fetch($repIndex))) {
-            return $repository;
-        }
-
-        $collection = $this->createCollection($documentManager, $classMetadata, $collectionName);
-
-        $hydratorClass = $classMetadata->getHydratorClass();
-        $hydrator = new $hydratorClass($this->classMetadataFactory, $classMetadata);
-
-        $queryCaster = new QueryCaster($classMetadata, $this->classMetadataFactory);
-
-
-        $repository = new $repositoryClass($documentManager, $collection, $classMetadata, $hydrator, $queryCaster);
-        $this->cache->save($repIndex, $repository);
-
+    public function getRepository(DocumentManager $documentManager, $modelName, $collectionName){
+      $repIndex = $modelName . $collectionName;
+      if (false != ($repository = $this->cache->fetch($repIndex))) {
         return $repository;
+      }
+
+      $classMetadata = $this->classMetadataFactory->getMetadataForClass($modelName);
+
+
+      if (!isset($collectionName)) {
+        $collectionName = $classMetadata->getCollection();
+      } 
+
+      $repositoryClass = $classMetadata->getRepositoryClass();
+
+      if(is_a($repositoryClass, "JPC\MongoDB\ODM\GridFS\Repository", true) && false === strstr($collectionName, ".files")){
+        $bucketName = $collectionName;
+        $collectionName .= ".files";
+      } else if (is_a($repositoryClass, "JPC\MongoDB\ODM\GridFS\Repository", true) && false !== strstr($collectionName, ".files")){
+        $bucketName = $classMetadata->getBucketName();
+      }
+
+      $repIndex = $modelName . $collectionName;
+      if (false != ($repository = $this->cache->fetch($repIndex))) {
+        return $repository;
+      }
+
+      $collection = $this->createCollection($documentManager, $classMetadata, $collectionName);
+
+      $hydratorClass = $classMetadata->getHydratorClass();
+      $hydrator = new $hydratorClass($this->classMetadataFactory, $classMetadata);
+
+      $queryCaster = new QueryCaster($classMetadata, $this->classMetadataFactory);
+
+      if(isset($bucketName)){
+        $bucket = $documentManager->getDatabase()->selectGridFSBucket(["bucketName" => $bucketName]);
+
+        $repository = new $repositoryClass($documentManager, $collection, $classMetadata, $hydrator, $queryCaster, null, $bucket);
+      } else {
+        $repository = new $repositoryClass($documentManager, $collection, $classMetadata, $hydrator, $queryCaster);
+      }
+      $this->cache->save($repIndex, $repository);
+
+      return $repository;
     }
 
     /**
@@ -70,25 +83,25 @@ class RepositoryFactory {
      */
     private function createCollection(DocumentManager $documentManager, ClassMetadata $classMetadata, $collectionName){
 
-        $database = $documentManager->getDatabase();
+      $database = $documentManager->getDatabase();
 
-        $exists = false;
-        foreach ($database->listCollections()as $collection) {
-            if ($collection->getName() == $collectionName) {
-                $exists = true;
-            }
+      $exists = false;
+      foreach ($database->listCollections()as $collection) {
+        if ($collection->getName() == $collectionName) {
+          $exists = true;
         }
+      }
 
-        $creationOptions = $classMetadata->getCollectionCreationOptions();
-        if (!empty($creationOptions)) {
-            $database->createCollection($collectionName, $creationOptions);
-            if($documentManager->getDebug())
-                $documentManager->getLogger()->debug("Create collection '$collectionName', see metadata for options", ["options" => $options]);
-        }
+      $creationOptions = $classMetadata->getCollectionCreationOptions();
+      if (!empty($creationOptions) && !$exists) {
+        $database->createCollection($collectionName, $creationOptions);
+        if($documentManager->getDebug())
+          $documentManager->getLogger()->debug("Create collection '$collectionName', see metadata for options", ["options" => $options]);
+      }
 
-        $collectionOptions = $classMetadata->getCollectionOptions();
+      $collectionOptions = $classMetadata->getCollectionOptions();
 
-        return $database->selectCollection($collectionName, $collectionOptions);
+      return $database->selectCollection($collectionName, $collectionOptions);
     }
 
-}
+  }

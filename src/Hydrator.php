@@ -40,8 +40,6 @@ class Hydrator {
         }
         $properties = $this->classMetadata->getPropertiesInfos();
 
-        
-
         foreach ($properties as $name => $infos) {
             if (null !== ($field = $infos->getField()) && is_array($datas) && array_key_exists($field, $datas) && $datas[$field] !== null) {
                 
@@ -119,14 +117,31 @@ class Hydrator {
                 $value = new \MongoDB\BSON\UTCDateTime($value->getTimestamp() * 1000);
             }
             
-            if($value instanceof \MongoDB\Model\BSONDocument){
-                $value = (array) $value;
-            }
+            if(($value instanceof \MongoDB\Model\BSONDocument) || ($value instanceof \MongoDB\Model\BSONArray)){
+                $value = $this->recursiveConvertInArray((array) $value);
+            } 
 
             $datas[$infos->getField()] = $value;
         }
 
         return $datas;
+    }
+
+    public function recursiveConvertInArray($array){
+        $newArray = [];
+        foreach ($array as $key => $value) {
+            if($value instanceof \MongoDB\Model\BSONDocument || $value instanceof \MongoDB\Model\BSONArray){
+                $value = (array) $value;
+            }
+
+            if(is_array($value)){
+                $value = $this->recursiveConvertInArray($value);
+            }
+
+            $newArray[$key] = $value;
+        }
+
+        return $newArray;
     }
 
     /**

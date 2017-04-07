@@ -354,6 +354,8 @@ class Repository {
             }
         }
 
+        $this->cacheObject($document);
+
         return true;
     }
 

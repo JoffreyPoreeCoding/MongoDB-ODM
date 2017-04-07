@@ -29,7 +29,11 @@ class UpdateQueryCreator {
 					}
 				}
 			} else {
-				$update['$set'][$prefix . $key] = $value;
+				if(is_array($value) && strstr(key($value), '$') !== false){
+					$update[key($value)][$prefix . $key] = $value[key($value)];
+				} else {
+					$update['$set'][$prefix . $key] = $value;
+				}
 			}
 
 			unset($new[$key]);

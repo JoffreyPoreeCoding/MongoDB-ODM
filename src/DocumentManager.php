@@ -72,7 +72,7 @@ class DocumentManager extends ObjectManager {
         MongoDatabase           $database, 
         RepositoryFactory       $repositoryFactory = null,
         LoggerInterface         $logger = null, 
-                                $debug = false
+        $debug = false
         ) 
     {
         $this->debug = $debug;
@@ -228,6 +228,9 @@ class DocumentManager extends ObjectManager {
         foreach ($toInsert as $repository => $objects) {
             $repository = $repositories[$repository];
             $repository->insertMany($objects);
+            foreach($objects as $object){
+                $this->setObjectState($object, self::OBJ_MANAGED);
+            }
         }
     }
 

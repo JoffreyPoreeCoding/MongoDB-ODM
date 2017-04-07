@@ -312,9 +312,6 @@ class RepositoryTest extends TestCase {
 		$this->assertTrue($result);
 	}
 
-	/** 
-	 * @TODO("VERIFIER SI DOCUMENT MANAGER addObject et setOBjectState are called")
-	 */
 	public function test_insertOne(){
 		$repository = $this->repositoryMockBuilder->setMethods(["cacheObject"])->getMock();
 
@@ -385,7 +382,7 @@ class RepositoryTest extends TestCase {
 		$this->classMetadataMock->method("getName")->willReturn("stdClass");
 		$repository = $this->repositoryMockBuilder->setMethods(["castQuery", "getUpdateQuery"])->getMock();
 
-		$this->hydratorMock->expects($this->once())->method("unhydrate")->willReturn(["_id" => 1]);
+		$this->hydratorMock->expects($this->exactly(2))->method("unhydrate")->willReturn(["_id" => 1]);
 
 		$repository->expects($this->once())->method("getUpdateQuery")->willReturn(["update" => "value"]);
 		$repository->expects($this->any())->method("castQuery");
@@ -417,7 +414,7 @@ class RepositoryTest extends TestCase {
 		$this->classMetadataMock->method("getName")->willReturn("stdClass");
 		$repository = $this->repositoryMockBuilder->setMethods(["castQuery", "getUpdateQuery"])->getMock();
 
-		$this->hydratorMock->expects($this->once())->method("unhydrate")->willReturn(["_id" => 1]);
+		$this->hydratorMock->expects($this->exactly(2))->method("unhydrate")->willReturn(["_id" => 1]);
 
 		$repository->expects($this->once())->method("getUpdateQuery")->willReturn([]);
 		$repository->expects($this->any())->method("castQuery");
