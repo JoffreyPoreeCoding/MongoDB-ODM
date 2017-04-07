@@ -2,7 +2,7 @@
 
 namespace JPC\Test\MongoDB\ODM\Tools;
 
-use PHPUnit\Framework\TestCase;
+use JPC\Test\MongoDB\ODM\Framework\TestCase;
 use JPC\MongoDB\ODM\Tools\ArrayModifier;
 
 class ArrayModifierTest extends TestCase {

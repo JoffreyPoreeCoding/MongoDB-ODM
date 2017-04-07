@@ -11,7 +11,7 @@ use JPC\MongoDB\ODM\Tools\UpdateQueryCreator;
 use JPC\Test\MongoDB\ODM\GridFS\Model\GridFSObjectMapping;
 use MongoDB\Collection;
 use MongoDB\GridFS\Bucket;
-use PHPUnit\Framework\TestCase;
+use JPC\Test\MongoDB\ODM\Framework\TestCase;
 
 class RepositoryTest extends TestCase {
 

@@ -3,7 +3,7 @@
 namespace JPC\Test\MongoDB\ODM;
 
 use JPC\MongoDB\ODM\ObjectManager;
-use PHPUnit\Framework\TestCase;
+use JPC\Test\MongoDB\ODM\Framework\TestCase;
 
 class ObjectManagerTest extends TestCase {
 
