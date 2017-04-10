@@ -12,14 +12,14 @@
     "homepage" : "https://github.com/JoffreyPoreeCoding/MongoDB-ODM",
     "license": "GPL-3.0",
     "require": {
-        "php": ">=5.4",
+        "php": ">=5.5",
         "doctrine/annotations": "1.2.*",
-        "doctrine/cache": "1.6.0",
+        "doctrine/cache": "1.6.*",
         "mongodb/mongodb": "1.1.*"
     },
     "require-dev": {
         "symfony/var-dumper": "*",
-        "phpunit/phpunit": "^5.7"
+        "phpunit/phpunit": "5.4.*"
     },
     "authors": [
         {
