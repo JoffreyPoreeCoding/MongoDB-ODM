@@ -329,9 +329,6 @@ class RepositoryTest extends TestCase {
 
 		$this->collectionMock->expects($this->once())->method("insertOne")->with(["field" => "value"], ["option" => "value"])->willReturn($insertOneResult);
 
-		$this->documentManagerMock->method("hasObject")->willReturn(true);
-		$this->documentManagerMock->expects($this->once())->method("setObjectState");
-
 		$repository->insertOne($document, ["option" => "value"]);
 
 		$this->assertEquals(1, $document->id);
@@ -361,10 +358,6 @@ class RepositoryTest extends TestCase {
 		$insertManyResult->method("getInsertedIds")->willReturn([1,2,3]);
 
 		$this->collectionMock->expects($this->once())->method("insertMany")->with([["field" => "value"],["field" => "value"],["field" => "value"]], ["option" => "value"])->willReturn($insertManyResult);
-
-		$this->documentManagerMock->method("hasObject")->will($this->onConsecutiveCalls(true, false));
-		$this->documentManagerMock->expects($this->once())->method("setObjectState");
-		$this->documentManagerMock->expects($this->exactly(2))->method("addObject");
 
 		$repository->insertMany($documents, ["option" => "value"]);
 

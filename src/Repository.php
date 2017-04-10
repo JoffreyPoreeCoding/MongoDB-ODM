@@ -280,10 +280,6 @@ class Repository {
 
             $this->cacheObject($document);
 
-            $this->documentManager->hasObject($document) ? 
-            $this->documentManager->setObjectState($document, DocumentManager::OBJ_MANAGED) : 
-            $this->documentManager->addObject($document, DocumentManager::OBJ_MANAGED, $this);
-
             return true;
         } else {
             return false;
@@ -304,10 +300,6 @@ class Repository {
                 $this->hydrator->hydrate($documents[$key], $insertQuery[$key]);
 
                 $this->cacheObject($documents[$key]);
-
-                $this->documentManager->hasObject($documents[$key]) ? 
-                $this->documentManager->setObjectState($documents[$key], DocumentManager::OBJ_MANAGED) : 
-                $this->documentManager->addObject($documents[$key], DocumentManager::OBJ_MANAGED, $this);
             }
 
             return true;
@@ -377,7 +369,6 @@ class Repository {
         $result = $this->collection->deleteOne(["_id" => $id], $options);
 
         if($result->isAcknowledged()){
-            $this->documentManager->removeObject($document);
             return true;
         } else {
             return false;
@@ -389,7 +380,7 @@ class Repository {
         $result = $this->collection->deleteMany($filter, $options);
 
         if($result->isAcknowledged()){
-            return $result->getDeletedCount();
+            return true;
         } else {
             return false;
         }

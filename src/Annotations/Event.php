@@ -2,74 +2,132 @@
 
 namespace JPC\MongoDB\ODM\Annotations\Event;
 
+interface Event {
+	public function getName();
+}
+
 /**
  * @Annotation
- * @Target("METHOD")
+ * @Target("CLASS")
  */
-class PreLoad {}
+class HasLifecycleCallbacks {}
 
 /**
  * @Annotation
  * @Target("METHOD")
  */
-class PostLoad {}
+class PreLoad implements Event {
+	public function getName(){
+		return "pre_load";
+	}
+}
 
 /**
  * @Annotation
  * @Target("METHOD")
  */
-class PrePersist {}
+class PostLoad implements Event {
+	public function getName(){
+		return "post_load";
+	}
+}
 
 /**
  * @Annotation
  * @Target("METHOD")
  */
-class PostPersist {}
+class PrePersist implements Event {
+	public function getName(){
+		return "pre_persist";
+	}
+}
 
 /**
  * @Annotation
  * @Target("METHOD")
  */
-class PreFlush {}
+class PostPersist implements Event {
+	public function getName(){
+		return "post_persist";
+	}
+}
 
 /**
  * @Annotation
  * @Target("METHOD")
  */
-class PostFlush {}
+class PreFlush implements Event {
+	public function getName(){
+		return "pre_flush";
+	}
+}
 
 /**
  * @Annotation
  * @Target("METHOD")
  */
-class PreInsert {}
+class PostFlush implements Event {
+	public function getName(){
+		return "post_flush";
+	}
+}
 
 /**
  * @Annotation
  * @Target("METHOD")
  */
-class PostInsert {}
+class PreInsert implements Event {
+	public function getName(){
+		return "pre_insert";
+	}
+}
 
 /**
  * @Annotation
  * @Target("METHOD")
  */
-class PreUpdate {}
+class PostInsert implements Event {
+	public function getName(){
+		return "post_insert";
+	}
+}
 
 /**
  * @Annotation
  * @Target("METHOD")
  */
-class PostUpdate {}
+class PreUpdate implements Event {
+	public function getName(){
+		return "pre_update";
+	}
+}
 
 /**
  * @Annotation
  * @Target("METHOD")
  */
-class PreRemove {}
+class PostUpdate implements Event {
+	public function getName(){
+		return "post_update";
+	}
+}
 
 /**
  * @Annotation
  * @Target("METHOD")
  */
-class PostRemove {}
+class PreRemove implements Event {
+	public function getName(){
+		return "pre_remove";
+	}
+}
+
+/**
+ * @Annotation
+ * @Target("METHOD")
+ */
+class PostRemove implements Event {
+	public function getName(){
+		return "post_remove";
+	}
+}

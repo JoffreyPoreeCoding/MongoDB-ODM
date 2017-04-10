@@ -206,6 +206,7 @@ class DocumentManager extends ObjectManager {
         foreach ($removeObjs as $object) {
             $repository = $this->objectsRepository[spl_object_hash($object)];
             $repository->deleteOne($object);
+            $this->removeObject($object);
         }
 
         $updateObjs = $this->getObject(ObjectManager::OBJ_MANAGED);

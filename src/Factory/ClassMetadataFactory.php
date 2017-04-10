@@ -2,6 +2,9 @@
 
 namespace JPC\MongoDB\ODM\Factory;
 
+use Doctrine\Common\Annotations\AnnotationReader;
+use Doctrine\Common\Annotations\CachedReader;
+use Doctrine\Common\Cache\ApcuCache;
 use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
 
 /**
@@ -18,6 +21,25 @@ class ClassMetadataFactory {
      * @var array
      */
     private $loadedMetadatas = [];
+
+    /**
+     * Annotation Reader for class metadatas
+     * @var AnnotationReader
+     */
+    private $annotationReader;
+
+    /* ================================== */
+    /*             CONSTRUCTOR            */
+    /* ================================== */
+
+    /**
+     * Create new class metadata factory
+     * 
+     * @param AnnotationReader|null     $annotationReader   Annotation reader that will be used in class metadatas
+     */
+    public function __construct(AnnotationReader $annotationReader = null){
+        $this->annotationReader = isset($annotationReader) ? $annotationReader : new CachedReader(new AnnotationReader(), new ApcuCache(), false);
+    }
 
     /* ================================== */
     /*           PUBLICS FUNCTIONS        */
@@ -38,7 +60,7 @@ class ClassMetadataFactory {
             return $this->loadedMetadatas[$className];
         }
         
-        return $this->loadedMetadatas[$className] = $this->loadMetadataForClass($className);
+        return $this->loadedMetadatas[$className] = $this->loadMetadataForClass($className, $this->annotationReader);
     }
     
     /* ================================== */

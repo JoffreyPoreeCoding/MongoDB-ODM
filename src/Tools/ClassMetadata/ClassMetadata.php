@@ -6,6 +6,7 @@ use Doctrine\Common\Annotations\AnnotationReader;
 use Doctrine\Common\Annotations\CachedReader;
 use Doctrine\Common\Cache\ApcuCache;
 use JPC\MongoDB\ODM\Tools\ClassMetadata\Info\CollectionInfo;
+use JPC\MongoDB\ODM\Tools\ClassMetadata\Info\EventInfo;
 use JPC\MongoDB\ODM\Tools\ClassMetadata\Info\PropertyInfo;
 
 class ClassMetadata {
@@ -45,9 +46,21 @@ class ClassMetadata {
 
     /**
      * Infos about fields/propeties;
-     * @var type 
+     * @var PropertyInfo[] 
      */
     private $propertiesInfos = [];
+
+    /**
+     * Tell if class has event
+     * @var bool
+     */
+    private $hasEvent = false;
+
+    /**
+     * Event information
+     * @var EventInfo
+     */
+    private $eventInfo;
 
     /**
      * Create new ClassMetadata
@@ -55,8 +68,8 @@ class ClassMetadata {
      * @param   string              $className          Name of the class
      * @param   AnnotationReader    $reader             Annotation reader
      */
-    public function __construct($className) {
-        $this->reader = new CachedReader(new AnnotationReader(), new ApcuCache(), false);
+    public function __construct($className, $reader = null) {
+        $this->reader = isset($reader) ? $reader : new CachedReader(new AnnotationReader(), new ApcuCache(), false);
         $this->name = $className;
     }
     
@@ -177,6 +190,19 @@ class ClassMetadata {
         return $this->collectionInfo->getHydrator();
     }
 
+    public function getEvents(){
+        if (!$this->loaded) {
+            $this->load();
+        }
+
+        if($this->hasEvent){
+            return $this->eventInfo;
+        }
+
+        return [];
+    }
+        
+
     private function load() {
         $reflectionClass = new \ReflectionClass($this->name);
         $this->collectionInfo = new CollectionInfo();
@@ -192,6 +218,10 @@ class ClassMetadata {
             foreach ($this->reader->getPropertyAnnotations($property) as $annotation) {
                 $this->processPropertiesAnnotation($property->getName(), $annotation);
             }
+        }
+
+        if($this->hasEvent){
+            $this->processMethodAnnotation();
         }
         
         $this->loaded = true;
@@ -235,6 +265,9 @@ class ClassMetadata {
                 break;
             case "JPC\MongoDB\ODM\Annotations\Mapping\Option":
                 $this->processOptionAnnotation($annotation);
+                break;
+            case "JPC\MongoDB\ODM\Annotations\Event\HasLifecycleCallbacks":
+                $this->hasEvent = true;
                 break;
         }
     }
@@ -304,6 +337,10 @@ class ClassMetadata {
                 $this->propertiesInfos[$name]->setMetadata(true);
                 break;
         }
+    }
+
+    private function processMethodAnnotation(){
+        
     }
     
     private function checkCollectionCreationOptions(\JPC\MongoDB\ODM\Annotations\Mapping\Document $annotation){
