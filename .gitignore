@@ -48,8 +48,3 @@ Temporary Items
 /nbproject/
 /vendor/
 /composer.lock
-
-/models/
-/index.php
-/text.txt
-/tests.old/
