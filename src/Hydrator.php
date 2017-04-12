@@ -58,7 +58,6 @@ class Hydrator {
 
         foreach ($properties as $name => $infos) {
             if (null !== ($field = $infos->getField()) && is_array($datas) && array_key_exists($field, $datas) && $datas[$field] !== null) {
-
                 $prop = new \ReflectionProperty($this->classMetadata->getName(), $name);
                 $prop->setAccessible(true);
 
@@ -89,7 +88,6 @@ class Hydrator {
                     $repository = $this->repositoryFactory->getRepository($this->documentManager, $refInfos->getDocument(), $refInfos->getCollection());
 
                     $objectDatas = $repository->getCollection()->findOne(["_id" => $datas[$field]]);
-
                     $referedObject = null;
 
                     if(isset($objectDatas)){
@@ -101,7 +99,7 @@ class Hydrator {
 
                         $referedObject = new $class();
 
-                        $hydrator = $this->getHydrator($refInfos->getDocument());
+                        $hydrator = $repository->getHydrator();
                         $hydrator->hydrate($referedObject, $objectDatas, $maxReferenceDeep - 1);
 
                     }
@@ -131,7 +129,7 @@ class Hydrator {
 
                             $referedObject = new $class();
 
-                            $hydrator = $this->getHydrator($refInfos->getDocument());
+                            $hydrator = $repository->getHydrator();
                             $hydrator->hydrate($referedObject, $objectDatas, $maxReferenceDeep - 1);
 
                             $objectArray[] = $referedObject;

@@ -32,6 +32,18 @@ class ObjectMapping {
     private $multiEmbeddedField;
 
     /**
+     * @ODM\Field("refers_one_field")
+     * @ODM\RefersOne("ObjectMapping")
+     */
+    private $refersOneField;
+
+    /**
+     * @ODM\Field("refers_many_field")
+     * @ODM\RefersMany("ObjectMapping")
+     */
+    private $refersManyField;
+
+    /**
      * Gets the value of id.
      *
      * @return mixed
@@ -123,6 +135,54 @@ class ObjectMapping {
     public function setMultiEmbeddedField($multiEmbeddedField)
     {
         $this->multiEmbeddedField = $multiEmbeddedField;
+
+        return $this;
+    }
+
+    /**
+     * Gets the value of refersOneField.
+     *
+     * @return mixed
+     */
+    public function getRefersOneField()
+    {
+        return $this->refersOneField;
+    }
+
+    /**
+     * Sets the value of refersOneField.
+     *
+     * @param mixed $refersOneField the refers one field
+     *
+     * @return self
+     */
+    public function setRefersOneField($refersOneField)
+    {
+        $this->refersOneField = $refersOneField;
+
+        return $this;
+    }
+
+    /**
+     * Gets the value of refersManyField.
+     *
+     * @return mixed
+     */
+    public function getRefersManyField()
+    {
+        return $this->refersManyField;
+    }
+
+    /**
+     * Sets the value of refersManyField.
+     *
+     * @param mixed $refersManyField the refers many field
+     *
+     * @return self
+     */
+    public function setRefersManyField($refersManyField)
+    {
+        $this->refersManyField = $refersManyField;
 
         return $this;
     }
