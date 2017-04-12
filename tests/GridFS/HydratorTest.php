@@ -2,11 +2,13 @@
 
 namespace JPC\Test\MongoDB\ODM\GridFS;
 
+use JPC\MongoDB\ODM\DocumentManager;
 use JPC\MongoDB\ODM\Factory\ClassMetadataFactory;
+use JPC\MongoDB\ODM\Factory\RepositoryFactory;
 use JPC\MongoDB\ODM\GridFS\Hydrator;
 use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
-use JPC\Test\MongoDB\ODM\GridFS\Model\GridFSObjectMapping;
 use JPC\Test\MongoDB\ODM\Framework\TestCase;
+use JPC\Test\MongoDB\ODM\GridFS\Model\GridFSObjectMapping;
 
 class HydratorTest extends TestCase {
 
@@ -15,8 +17,10 @@ class HydratorTest extends TestCase {
 	public function setUp(){
 		$classMetadata = new ClassMetadata(GridFSObjectMapping::class);
 		$classMetadataFactory = new ClassMetadataFactory();
+		$documentManager = $this->createMock(DocumentManager::class);
+		$repositoryFactory = $this->createMock(RepositoryFactory::class);
 		
-		$this->hydrator = new Hydrator($classMetadataFactory, $classMetadata);
+		$this->hydrator = new Hydrator($classMetadataFactory, $classMetadata, $documentManager, $repositoryFactory);
 	}
 
 	public function test_hydrate(){

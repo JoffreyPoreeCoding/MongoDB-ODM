@@ -131,3 +131,36 @@ class MultiEmbeddedDocument {
      */
     public $document;
 }
+
+/**
+ * Refer another document
+ * 
+ * @param   string  $document           Class corresponding to refered document
+ * @param   string  $onField            Field that have to be equal
+ * @param   string  $collection         Collection where to find object
+ * @param   string  $fieldToValue       Field where value will be get to hydrate object 
+ * 
+ * @Annotation
+ * @Target("PROPERTY")
+ */
+class RefersOne {
+    public $document;
+    public $collection;
+}
+
+/**
+ * Refer another documents
+ * 
+ * @param   string  $document           Class corresponding to refered document
+ * @param   string  $onField            Field that have to be equal
+ * @param   string  $collection         Collection where to find object
+ * @param   string  $fieldToValue       Field where value will be get to hydrate object 
+ * 
+ * @Annotation
+ * @Target("PROPERTY")
+ */
+class RefersMany {
+    public $document;
+    public $collection;
+}
+

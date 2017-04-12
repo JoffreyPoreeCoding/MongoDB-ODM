@@ -4,10 +4,11 @@ namespace JPC\Test\MongoDB\ODM;
 
 use JPC\MongoDB\ODM\DocumentManager;
 use JPC\MongoDB\ODM\Factory\ClassMetadataFactory;
+use JPC\MongoDB\ODM\Factory\RepositoryFactory;
 use JPC\MongoDB\ODM\Hydrator;
 use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
-use JPC\Test\MongoDB\ODM\Model\ObjectMapping;
 use JPC\Test\MongoDB\ODM\Framework\TestCase;
+use JPC\Test\MongoDB\ODM\Model\ObjectMapping;
 
 class HydratorTest extends TestCase {
 
@@ -16,8 +17,10 @@ class HydratorTest extends TestCase {
 	public function setUp(){
 		$classMetadata = new ClassMetadata("JPC\Test\MongoDB\ODM\Model\ObjectMapping");
 		$classMetadataFactory = new ClassMetadataFactory();
-		
-		$this->hydrator = new Hydrator($classMetadataFactory, $classMetadata);
+		$documentManager = $this->createMock(DocumentManager::class);
+		$repositoryFactory = $this->createMock(RepositoryFactory::class);
+
+		$this->hydrator = new Hydrator($classMetadataFactory, $classMetadata, $documentManager, $repositoryFactory);
 	}
 
 	public function test_hydrate(){

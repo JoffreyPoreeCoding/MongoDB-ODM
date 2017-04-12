@@ -58,7 +58,7 @@ class RepositoryFactory {
       $collection = $this->createCollection($documentManager, $classMetadata, $collectionName);
 
       $hydratorClass = $classMetadata->getHydratorClass();
-      $hydrator = new $hydratorClass($this->classMetadataFactory, $classMetadata);
+      $hydrator = new $hydratorClass($this->classMetadataFactory, $classMetadata, $documentManager, $this);
 
       $queryCaster = new QueryCaster($classMetadata, $this->classMetadataFactory);
 

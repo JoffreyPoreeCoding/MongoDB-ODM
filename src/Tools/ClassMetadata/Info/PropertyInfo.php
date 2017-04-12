@@ -8,6 +8,7 @@ class PropertyInfo {
     private $multiEmbedded = false;
     private $embeddedClass;
     private $metadata = false;
+    private $referenceInfo;
     
     function getField() {
         return $this->field;
@@ -51,5 +52,29 @@ class PropertyInfo {
     
     function setMetadata($metadata) {
         $this->metadata = $metadata;
+    }
+
+    /**
+     * Gets the value of referenceInfo.
+     *
+     * @return mixed
+     */
+    public function getReferenceInfo()
+    {
+        return $this->referenceInfo;
+    }
+
+    /**
+     * Sets the value of referenceInfo.
+     *
+     * @param mixed $referenceInfo the reference info
+     *
+     * @return self
+     */
+    public function setReferenceInfo($referenceInfo)
+    {
+        $this->referenceInfo = $referenceInfo;
+
+        return $this;
     }
 }

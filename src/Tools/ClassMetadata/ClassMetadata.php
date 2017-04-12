@@ -8,6 +8,7 @@ use Doctrine\Common\Cache\ApcuCache;
 use JPC\MongoDB\ODM\Tools\ClassMetadata\Info\CollectionInfo;
 use JPC\MongoDB\ODM\Tools\ClassMetadata\Info\EventInfo;
 use JPC\MongoDB\ODM\Tools\ClassMetadata\Info\PropertyInfo;
+use JPC\MongoDB\ODM\Tools\ClassMetadata\Info\ReferenceInfo;
 
 class ClassMetadata {
     /* ================================== */
@@ -335,6 +336,16 @@ class ClassMetadata {
                 break;
             case "JPC\MongoDB\ODM\GridFS\Annotations\Mapping\Metadata" :
                 $this->propertiesInfos[$name]->setMetadata(true);
+                break;
+            case "JPC\MongoDB\ODM\Annotations\Mapping\RefersOne" :
+                $referenceInfo = new ReferenceInfo();
+                $referenceInfo->setDocument($annotation->document)->setCollection($annotation->collection);
+                $this->propertiesInfos[$name]->setReferenceInfo($referenceInfo);
+                break;
+            case "JPC\MongoDB\ODM\Annotations\Mapping\RefersMany" :
+                $referenceInfo = new ReferenceInfo();
+                $referenceInfo->setIsMultiple(true)->setDocument($annotation->document)->setCollection($annotation->collection);
+                $this->propertiesInfos[$name]->setReferenceInfo($referenceInfo);
                 break;
         }
     }
