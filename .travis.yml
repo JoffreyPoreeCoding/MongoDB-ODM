@@ -18,8 +18,8 @@ matrix:
 
 before_install:
   - pecl channel-update pecl.php.net
-  - pecl install mongodb
-  - pecl install apcu-${APCU_VERSION}
+  - pecl install -f mongodb
+  - yes '' | pecl install -f apcu-${APCU_VERSION}
 
 before_script:
   - composer install --dev --no-interaction --prefer-source
