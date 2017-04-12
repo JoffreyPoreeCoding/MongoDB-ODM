@@ -7,12 +7,19 @@ php:
 env:
   - APCU_VERSION=4.0.11
   - APCU_VERSION=5.1.8
-  
+
+matrix:
+  exclude:
+    - php : 5.6
+      env : APCU_VERSION=5.1.8
+    - php : 7.0
+      env : APCU_VERSION=4.0.11
+
 
 before_install:
   - pecl channel-update pecl.php.net
   - pecl install mongodb
-  - pecl install apcu
+  - pecl install apcu-${APCU_VERSION}
 
 before_script:
   - composer install --dev --no-interaction --prefer-source
