@@ -4,7 +4,13 @@ php:
   - 5.6
   - 7.0
 
+env:
+  - APCU_VERSION=4.0.11
+  - APCU_VERSION=5.1.8
+  
+
 before_install:
+  - pecl channel-update pecl.php.net
   - pecl install mongodb
   - pecl install apcu
 
