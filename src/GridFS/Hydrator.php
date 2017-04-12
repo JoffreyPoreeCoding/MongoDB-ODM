@@ -17,9 +17,9 @@ use JPC\MongoDB\ODM\Hydrator as BaseHydrator;
  */
 class Hydrator extends BaseHydrator {
 
-    public function hydrate(&$object, $datas){
+    public function hydrate(&$object, $datas, $maxReferenceDeep = 10){
         if(isset($datas["metadata"])){
-            parent::hydrate($object, $datas["metadata"]);
+            parent::hydrate($object, $datas["metadata"], $maxReferenceDeep);
             unset($datas["metadata"]);
         }
         parent::hydrate($object, $datas);
