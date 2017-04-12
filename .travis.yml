@@ -11,4 +11,4 @@ before_script:
   - composer install --dev --no-interaction --prefer-source
 
 script:
-  - ./vendor/bin/phpunit --debug || RESULT=$?
+  - ./vendor/bin/phpunit --debug
