@@ -6,6 +6,7 @@ php:
 
 before_install:
   - pecl install mongodb
+  - pecl install apcu
 
 before_script:
   - composer install --dev --no-interaction --prefer-source
