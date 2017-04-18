@@ -61,4 +61,10 @@ class DocumentManagerFactory {
 		
 		return $this->managers[$managerId];
 	}
+
+	public function clearAll(){
+		foreach($this->managers as $manager){
+			$manager->clear();
+		}
+	}
 }
