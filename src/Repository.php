@@ -452,7 +452,11 @@ class Repository {
         $old = $this->uncacheObject($document);
         $new = $this->hydrator->unhydrate($document);
 
-        return $this->updateQueryCreator->createUpdateQuery($old, $new);
+        $query = $this->updateQueryCreator->createUpdateQuery($old, $new);
+
+        unset($query['$set']["_id"]);
+
+        return 
     }
 
     /**
