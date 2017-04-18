@@ -3,9 +3,10 @@
 namespace JPC\MongoDB\ODM;
 
 use JPC\MongoDB\ODM\Exception\ModelNotFoundException;
+use JPC\MongoDB\ODM\Factory\ClassMetadataFactory;
 use JPC\MongoDB\ODM\Factory\RepositoryFactory;
 use JPC\MongoDB\ODM\ObjectManager;
-use JPC\MongoDB\ODM\Factory\ClassMetadataFactory;
+use JPC\MongoDB\ODM\Repository;
 use JPC\MongoDB\ODM\Tools\Logger\LoggerInterface;
 use JPC\MongoDB\ODM\Tools\Logger\MemoryLogger;
 use MongoDB\Client as MongoClient;
@@ -241,7 +242,9 @@ class DocumentManager extends ObjectManager {
     public function clear() {
         parent::clear();
         foreach($this->objectsRepository as $repository){
-            $repository->clear();
+            if($repository instanceof Repository){
+                $repository->clear();
+            }
         }
         $this->objectsRepository = [];
     }
