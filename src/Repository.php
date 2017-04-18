@@ -460,7 +460,7 @@ class Repository {
 
         unset($query['$set']["_id"]);
 
-        return 
+        return $query;
     }
 
     /**
