@@ -240,6 +240,9 @@ class DocumentManager extends ObjectManager {
      */
     public function clear() {
         parent::clear();
+        foreach($this->objectsRepository as $repository){
+            $repository->clear();
+        }
         $this->objectsRepository = [];
     }
     

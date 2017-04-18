@@ -86,6 +86,10 @@ class Repository {
         $this->updateQueryCreator = isset($uqc) ? $uqc : new UpdateQueryCreator();
     }
 
+    public function clear(){
+        $this->objectCache->flushAll();
+    }
+
     /**
      * Count corresponding documents for filters
      * 
