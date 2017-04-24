@@ -240,12 +240,12 @@ class DocumentManager extends ObjectManager {
      * Unmanaged (unpersist) all object
      */
     public function clear() {
-        parent::clear();
         foreach($this->objectsRepository as $repository){
             if($repository instanceof Repository){
                 $repository->clear();
             }
         }
+        parent::clear();
         $this->objectsRepository = [];
     }
     

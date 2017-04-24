@@ -458,7 +458,9 @@ class Repository {
             $query = $this->updateQueryCreator->createUpdateQuery($old, $new);
         }
 
-        unset($query['$set']["_id"]);
+        if(isset($query['$set']["_id"])){
+            unset($query['$set']["_id"]);
+        }
 
         return $query;
     }
