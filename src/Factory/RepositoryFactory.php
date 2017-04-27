@@ -47,7 +47,7 @@ class RepositoryFactory {
         $bucketName = $collectionName;
         $collectionName .= ".files";
       } else if (is_a($repositoryClass, "JPC\MongoDB\ODM\GridFS\Repository", true) && false !== strstr($collectionName, ".files")){
-        $bucketName = $classMetadata->getBucketName();
+        $bucketName = strstr($collectionName, ".files", true);
       }
 
       $repIndex = $modelName . $collectionName;

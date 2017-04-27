@@ -45,7 +45,11 @@ class ObjectManager {
     }
     
     public function setObjectState($object, $state){
-        $oid = spl_object_hash($object);
+        if(is_object($object)){
+        	$oid = spl_object_hash($object);
+	} else {
+		return false;
+	}
         
         if(!isset($this->objectStates[$oid])){
             throw new Exception\StateException();
@@ -60,6 +64,8 @@ class ObjectManager {
         }
         
         $this->objectStates[$oid] = $state;
+
+	return true;
     }
     
     public function getObjectState($object){
