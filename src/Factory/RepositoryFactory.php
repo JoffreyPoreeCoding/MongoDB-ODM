@@ -95,8 +95,6 @@ class RepositoryFactory {
       $creationOptions = $classMetadata->getCollectionCreationOptions();
       if (!empty($creationOptions) && !$exists) {
         $database->createCollection($collectionName, $creationOptions);
-        if($documentManager->getDebug())
-          $documentManager->getLogger()->debug("Create collection '$collectionName', see metadata for options", ["options" => $options]);
       }
 
       $collectionOptions = $classMetadata->getCollectionOptions();
