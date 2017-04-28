@@ -186,7 +186,7 @@ class Hydrator {
                 $value = $array;
             }
 
-            if(is_object($value) && null != ($refInfos = $infos->getReferenceInfo()) && !$refInfos->getIsMultiple()) {
+            if(is_object($value) && null != ($refInfos = $infos->getReferenceInfo()) && !$refInfos->getIsMultiple() && !$value instanceof \MongoDB\BSON\ObjectId) {
                 $class = $refInfos->getDocument();
                 if(!class_exists($class)){
                     $class = $this->classMetadata->getNamespace() . "\\" . $class;
@@ -202,7 +202,11 @@ class Hydrator {
                     if(!class_exists($class)){
                         $class = $this->classMetadata->getNamespace() . "\\" . $class;
                     }
-                    $array[] = $this->getHydrator($class)->unhydrate($referedValue)["_id"];
+                    if(!$value instanceof \MongoDB\BSON\ObjectId){
+                        $array[] = $this->getHydrator($class)->unhydrate($referedValue)["_id"];
+                    } else {
+                        $array[] = $value;
+                    }
                 }
                 $value = $array;
             }
