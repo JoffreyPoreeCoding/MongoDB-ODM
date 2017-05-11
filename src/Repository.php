@@ -439,7 +439,7 @@ class Repository {
 
     public function cacheObject($object) {
         if (is_object($object)) {
-            $this->objectCache->save(spl_object_hash($object), $this->hydrator->unhydrate($object));
+            $this->objectCache->save(spl_object_hash($object), $this->hydrator->unhydrate($object), 120);
         }
     }
 

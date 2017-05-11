@@ -69,7 +69,7 @@ class RepositoryFactory {
       } else {
         $repository = new $repositoryClass($documentManager, $collection, $classMetadata, $hydrator, $queryCaster);
       }
-      $this->cache->save($repIndex, $repository);
+      $this->cache->save($repIndex, $repository, 120);
 
       return $repository;
     }
