@@ -152,6 +152,10 @@ class Hydrator {
         $properties = $this->classMetadata->getPropertiesInfos();
         $datas = [];
 
+        if(!is_object($object)){
+            return $object;
+        }
+
         foreach ($properties as $name => $infos) {
             $prop = new \ReflectionProperty($this->classMetadata->getName(), $name);
             $prop->setAccessible(true);
