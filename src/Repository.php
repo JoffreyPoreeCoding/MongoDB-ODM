@@ -452,11 +452,8 @@ class Repository {
         $old = $this->uncacheObject($document);
         $new = $this->hydrator->unhydrate($document);
 
-        if(!$old){
-            $query = ['$set' => $new]; 
-        } else {
-            $query = $this->updateQueryCreator->createUpdateQuery($old, $new);
-        }
+        $old = !$old ? [] : $old;
+        $query = $this->updateQueryCreator->createUpdateQuery($old, $new);
 
         if(isset($query['$set']["_id"])){
             unset($query['$set']["_id"]);

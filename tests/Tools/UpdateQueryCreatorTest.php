@@ -95,4 +95,36 @@ class UpdateQueryCreatorTest extends TestCase {
 
 		$this->assertEquals($expected, $updateQuery);
 	}
+
+	public function test_createUpdateQuery_withoutOld(){
+		$new = [
+			"new" => "value",
+			"inc" => ['$inc' => 1],
+			"embedded" => [
+				"new" => "value",
+				"inc" => ['$inc' => 1],
+				"embedded" => [
+					"new" => "value",
+					"inc" => ['$inc' => 1]
+				]
+			]
+		];
+
+		$expected = [
+			'$set' => [
+				"new" => "value",
+				"embedded.new" => "value",
+				"embedded.embedded.new" => "value",
+			],
+			'$inc' => [
+				"inc" => 1,
+				"embedded.inc" => 1,
+				"embedded.embedded.inc" => 1
+			]
+		];
+
+		$updateQueryCreator = new UpdateQueryCreator();
+		$updateQuery = $updateQueryCreator->createUpdateQuery([], $new);
+		$this->assertEquals($expected, $updateQuery);
+	}
 }
