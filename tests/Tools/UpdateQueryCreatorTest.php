@@ -43,6 +43,7 @@ class UpdateQueryCreatorTest extends TestCase {
 			"array_with_new" => [1,2,3],
 			"array_same" => [1,2,3],
 			"array_with_suppression" => [1,2],
+			"new_array" => [1,2,3],
 			"set_key" => ['$inc' => 1],
 			"embedded" => [
 				"same" => "value",
@@ -75,7 +76,8 @@ class UpdateQueryCreatorTest extends TestCase {
 				"embedded.array_with_new.2" => 3,
 				"embedded.embedded.different" => "new_value",
 				"embedded.embedded.array_with_new.2" => 3,
-				"new" => "new_key"
+				"new" => "new_key",
+				"new_array" => [1,2,3]
 			],
 			'$unset' => [
 				"suppressed" => 1,

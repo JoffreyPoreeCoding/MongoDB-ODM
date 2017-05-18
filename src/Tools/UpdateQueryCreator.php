@@ -30,7 +30,12 @@ class UpdateQueryCreator {
 				}
 			} else {
 				if(is_array($value) && strstr(key($value), '$') === false){
-					$update = array_merge_recursive($update, $this->createUpdateQuery([], $value, $prefix . $key . "."));
+					$embeddedQuery = $this->createUpdateQuery([], $value, $prefix . $key . ".");
+					if(count($embeddedQuery)  == 1 && key($embeddedQuery) == '$set'){
+						$update['$set'][$prefix . $key] = $value;
+					} else {
+						$update = array_merge_recursive($update, $embeddedQuery);
+					}
 				}
 				else if(is_array($value) && strstr(key($value), '$') !== false){
 					$update[key($value)][$prefix . $key] = $value[key($value)];
