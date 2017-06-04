@@ -54,13 +54,19 @@ class ClassMetadataTest extends TestCase {
     public function test_getCollectionCreationOptions(){
         $this->assertEmpty($this->classMetadata->getCollectionCreationOptions());
     }
+
+    public function test_getEventManager(){
+        $this->assertEquals(["pre_persist" => ["event"]], $this->classMetadata->getEventManager()->getEvents());
+    }
     
 }
 
 use JPC\MongoDB\ODM\Annotations\Mapping as ODM;
+use JPC\MongoDB\ODM\Annotations\Event;
 
 /**
  * @ODM\Document("object_mapping")
+ * @Event\HasLifecycleCallbacks
  */
 class ObjectMapping {
     
@@ -85,8 +91,6 @@ class ObjectMapping {
      * @ODM\MultiEmbeddedDocument("ObjectMapping")
      */
     private $multiEmbeddedField;
-
-
 
     /**
      * Gets the value of id.
@@ -182,6 +186,13 @@ class ObjectMapping {
         $this->multiEmbeddedField = $multiEmbeddedField;
 
         return $this;
+    }
+
+    /**
+     * @Event\PrePersist
+     */
+    public function event(){
+        echo "HEYYY";
     }
 }
 
