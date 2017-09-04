@@ -13,7 +13,7 @@
     "license": "GPL-3.0",
     "require": {
         "php": ">=5.5",
-        "doctrine/annotations": "1.2.*",
+        "doctrine/annotations": "1.4.*",
         "doctrine/cache": "1.6.*",
         "mongodb/mongodb": "1.1.*"
     },
