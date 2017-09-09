@@ -7,6 +7,7 @@ use JPC\MongoDB\ODM\Exception\StateException;
 use JPC\MongoDB\ODM\Factory\RepositoryFactory;
 use JPC\MongoDB\ODM\Repository;
 use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
+use JPC\MongoDB\ODM\Tools\EventManager;
 use JPC\MongoDB\ODM\Tools\Logger\LoggerInterface;
 use JPC\Test\MongoDB\ODM\Framework\TestCase;
 use MongoDB\Client;
@@ -40,7 +41,13 @@ class DocumentManagerTest extends TestCase {
 	}
 
 	public function test_persist_unpersist(){
-		$this->repositoryFactory->method("getRepository")->willReturn("repository");
+		$repositoryMock = $this->createMock(Repository::class);
+		$classMetadataMock = $this->createMock(ClassMetadata::class);
+		$eventManagerMock = $this->createMock(EventManager::class);
+		$repositoryMock->method('getClassMetadata')->willReturn($classMetadataMock);
+		$classMetadataMock->method('getEventManager')->willReturn($eventManagerMock);
+
+		$this->repositoryFactory->method("getRepository")->willReturn($repositoryMock);
 		$object = new \stdClass();
 		$this->documentManager->persist($object);
 
@@ -50,7 +57,7 @@ class DocumentManagerTest extends TestCase {
 
 		$repositories = $this->getPropertyValue($this->documentManager, "objectsRepository");
 		$this->assertArrayHasKey($oid, $repositories);
-		$this->assertEquals("repository", $repositories[$oid]);
+		$this->assertEquals($repositoryMock, $repositories[$oid]);
 
 		$this->documentManager->unpersist($object);
 
@@ -109,6 +116,10 @@ class DocumentManagerTest extends TestCase {
 
 	public function test_flush(){
 		$rep = $this->createMock(Repository::class);
+		$classMetadataMock = $this->createMock(ClassMetadata::class);
+		$eventManagerMock = $this->createMock(EventManager::class);
+		$rep->method('getClassMetadata')->willReturn($classMetadataMock);
+		$classMetadataMock->method('getEventManager')->willReturn($eventManagerMock);
 
 		$obj1 = new \stdClass();
 		$this->documentManager->addObject($obj1, DocumentManager::OBJ_NEW, $rep);

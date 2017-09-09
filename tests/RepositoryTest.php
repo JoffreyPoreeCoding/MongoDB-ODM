@@ -7,6 +7,7 @@ use JPC\MongoDB\ODM\Hydrator;
 use JPC\MongoDB\ODM\Repository;
 use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
 use JPC\MongoDB\ODM\Tools\ClassMetadata\Info\PropertyInfo;
+use JPC\MongoDB\ODM\Tools\EventManager;
 use JPC\MongoDB\ODM\Tools\QueryCaster;
 use JPC\MongoDB\ODM\Tools\UpdateQueryCreator;
 use JPC\Test\MongoDB\ODM\Framework\TestCase;
@@ -39,6 +40,9 @@ class RepositoryTest extends TestCase {
 		$this->hydratorMock = $this->createMock(Hydrator::class);
 		$this->queryCasterMock = $this->createMock(QueryCaster::class);
 		$this->updateQueryCreatorMock = $this->createMock(UpdateQueryCreator::class);
+
+		$eventManagerMock = $this->createMock(EventManager::class);
+		$this->classMetadataMock->method('getEventManager')->willReturn($eventManagerMock);
 
 		$this->repositoryMockBuilder = $this->getMockBuilder(Repository::class)
 		->setConstructorArgs([$this->documentManagerMock, $this->collectionMock, $this->classMetadataMock, $this->hydratorMock, $this->queryCasterMock, $this->updateQueryCreatorMock])
@@ -375,7 +379,7 @@ class RepositoryTest extends TestCase {
 		$this->classMetadataMock->method("getName")->willReturn("stdClass");
 		$repository = $this->repositoryMockBuilder->setMethods(["castQuery", "getUpdateQuery"])->getMock();
 
-		$this->hydratorMock->expects($this->exactly(2))->method("unhydrate")->willReturn(["_id" => 1]);
+		$this->hydratorMock->expects($this->exactly(1))->method("unhydrate")->willReturn(["_id" => 1]);
 
 		$repository->expects($this->once())->method("getUpdateQuery")->willReturn(["update" => "value"]);
 		$repository->expects($this->any())->method("castQuery");

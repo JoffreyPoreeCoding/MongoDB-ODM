@@ -232,8 +232,6 @@ class ClassMetadata {
             }
         }
 
-        dump($this->eventManager);
-
         $this->loaded = true;
     }
 
