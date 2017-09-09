@@ -16,16 +16,6 @@ class HasLifecycleCallbacks {}
  * @Annotation
  * @Target("METHOD")
  */
-class PreLoad implements Event {
-	public function getName(){
-		return "pre_load";
-	}
-}
-
-/**
- * @Annotation
- * @Target("METHOD")
- */
 class PostLoad implements Event {
 	public function getName(){
 		return "post_load";
@@ -116,9 +106,9 @@ class PostUpdate implements Event {
  * @Annotation
  * @Target("METHOD")
  */
-class PreRemove implements Event {
+class PreDelete implements Event {
 	public function getName(){
-		return "pre_remove";
+		return "pre_delete";
 	}
 }
 
@@ -126,8 +116,8 @@ class PreRemove implements Event {
  * @Annotation
  * @Target("METHOD")
  */
-class PostRemove implements Event {
+class PostDelete implements Event {
 	public function getName(){
-		return "post_remove";
+		return "post_delete";
 	}
 }

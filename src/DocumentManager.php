@@ -7,6 +7,7 @@ use JPC\MongoDB\ODM\Factory\ClassMetadataFactory;
 use JPC\MongoDB\ODM\Factory\RepositoryFactory;
 use JPC\MongoDB\ODM\ObjectManager;
 use JPC\MongoDB\ODM\Repository;
+use JPC\MongoDB\ODM\Tools\EventManager;
 use JPC\MongoDB\ODM\Tools\Logger\LoggerInterface;
 use JPC\MongoDB\ODM\Tools\Logger\MemoryLogger;
 use MongoDB\Client as MongoClient;
@@ -111,7 +112,9 @@ class DocumentManager extends ObjectManager {
      */
     public function persist($object, $collection = null) {
         $repository = $this->getRepository(get_class($object), $collection);
+        $repository->getClassMetadata()->getEventManager()->execute(EventManager::EVENT_PRE_PERSIST, $object);
         $this->addObject($object, ObjectManager::OBJ_NEW, $repository);
+        $repository->getClassMetadata()->getEventManager()->execute(EventManager::EVENT_POST_PERSIST, $object);
     }
 
     /**
@@ -206,14 +209,18 @@ class DocumentManager extends ObjectManager {
         $removeObjs = $this->getObject(ObjectManager::OBJ_REMOVED);
         foreach ($removeObjs as $object) {
             $repository = $this->objectsRepository[spl_object_hash($object)];
+            $repository->getClassMetadata()->getEventManager()->execute(EventManager::EVENT_PRE_FLUSH, $object);
             $repository->deleteOne($object);
             $this->removeObject($object);
+            $repository->getClassMetadata()->getEventManager()->execute(EventManager::EVENT_POST_FLUSH, $object);
         }
 
         $updateObjs = $this->getObject(ObjectManager::OBJ_MANAGED);
         foreach ($updateObjs as $object) {
             $repository = $this->objectsRepository[spl_object_hash($object)];
+            $repository->getClassMetadata()->getEventManager()->execute(EventManager::EVENT_PRE_FLUSH, $object);
             $repository->updateOne($object);
+            $repository->getClassMetadata()->getEventManager()->execute(EventManager::EVENT_POST_FLUSH, $object);
         }
 
         $newObjs = $this->getObject(ObjectManager::OBJ_NEW);
@@ -222,6 +229,7 @@ class DocumentManager extends ObjectManager {
         $repositories = [];
         foreach ($newObjs as $object) {
             $repository = $this->objectsRepository[spl_object_hash($object)];
+            $repository->getClassMetadata()->getEventManager()->execute(EventManager::EVENT_PRE_FLUSH, $object);
             $rid = spl_object_hash($repository);
             $toInsert[$rid][] = $object;
             isset($repositories[$rid]) ?: $repositories[$rid] = $repository;
@@ -232,6 +240,7 @@ class DocumentManager extends ObjectManager {
             $repository->insertMany($objects);
             foreach($objects as $object){
                 $this->setObjectState($object, self::OBJ_MANAGED);
+                $repository->getClassMetadata()->getEventManager()->execute(EventManager::EVENT_POST_FLUSH, $object);
             }
         }
     }

@@ -9,6 +9,7 @@ use JPC\MongoDB\ODM\Exception\MappingException;
 use JPC\MongoDB\ODM\Factory\RepositoryFactory;
 use JPC\MongoDB\ODM\ObjectManager;
 use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
+use JPC\MongoDB\ODM\Tools\EventManager;
 use JPC\MongoDB\ODM\Tools\QueryCaster;
 use JPC\MongoDB\ODM\Tools\UpdateQueryCreator;
 use MongoDB\Collection;
@@ -258,7 +259,8 @@ class Repository {
 
         $result = (array) $this->collection->findOneAndUpdate($filters, $update, $options);
 
-        return $this->createObject($result);;
+        return $this->createObject($result);
+
     }
 
     /**
@@ -275,6 +277,7 @@ class Repository {
     }
 
     public function insertOne($document, $options = []){
+        $this->classMetadata->getEventManager()->execute(EventManager::EVENT_PRE_INSERT, $document);
         $insertQuery = $this->hydrator->unhydrate($document);
 
         $result = $this->collection->insertOne($insertQuery, $options);
@@ -282,7 +285,7 @@ class Repository {
         if($result->isAcknowledged()){
             $insertQuery["_id"] = $result->getInsertedId();
             $this->hydrator->hydrate($document, $insertQuery);
-
+            $this->classMetadata->getEventManager()->execute(EventManager::EVENT_POST_INSERT, $document);
             $this->cacheObject($document);
 
             return true;
@@ -294,6 +297,7 @@ class Repository {
     public function insertMany($documents, $options = []){
         $insertQuery = [];
         foreach ($documents as $document) {
+            $this->classMetadata->getEventManager()->execute(EventManager::EVENT_PRE_INSERT, $document);
             $insertQuery[] = $this->hydrator->unhydrate($document);
         }
 
@@ -303,6 +307,8 @@ class Repository {
             foreach ($result->getInsertedIds() as $key => $id) {
                 $insertQuery[$key]["_id"] = $id;
                 $this->hydrator->hydrate($documents[$key], $insertQuery[$key]);
+
+                $this->classMetadata->getEventManager()->execute(EventManager::EVENT_POST_INSERT, $documents[$key]);
 
                 $this->cacheObject($documents[$key]);
             }
@@ -324,6 +330,7 @@ class Repository {
      */
     public function updateOne($document, $update = [], $options = []){
         if(is_object($document) && $document instanceof $this->modelName){
+            $this->classMetadata->getEventManager()->execute(EventManager::EVENT_PRE_UPDATE, $document);
             $unhydratedObject = $this->hydrator->unhydrate($document);
             $id = $unhydratedObject["_id"];
             $filters = ["_id" => $id];
@@ -345,7 +352,9 @@ class Repository {
             if($result->isAcknowledged()){
                 if($document instanceof $this->modelName){
                     $this->documentManager->refresh($document);
+                    $this->classMetadata->getEventManager()->execute(EventManager::EVENT_POST_UPDATE, $document);
                 }
+                return true;
             } else {
                 return false;
             }
@@ -367,13 +376,15 @@ class Repository {
     }
 
     public function deleteOne($document, $options = []){
-        $unhydratedObject = $this->hydrator->unhydrate($document);
+        $this->classMetadata->getEventManager()->execute(EventManager::EVENT_PRE_DELETE, $document);
 
+        $unhydratedObject = $this->hydrator->unhydrate($document);
         $id = $unhydratedObject["_id"];
 
         $result = $this->collection->deleteOne(["_id" => $id], $options);
 
         if($result->isAcknowledged()){
+            $this->classMetadata->getEventManager()->execute(EventManager::EVENT_POST_DELETE, $document);
             return true;
         } else {
             return false;
@@ -403,6 +414,7 @@ class Repository {
             $model = $this->getModelName();
             $object = new $this->modelName();
             $this->hydrator->hydrate($object, $data);
+            $this->classMetadata->getEventManager()->execute(EventManager::EVENT_POST_LOAD, $object);
             $this->cacheObject($object);
             $this->documentManager->addObject($object, DocumentManager::OBJ_MANAGED, $this);
             return $object;
