@@ -211,8 +211,10 @@ class ClassMetadata {
         $properties = $reflectionClass->getProperties();
 
         foreach ($properties as $property) {
-            $this->propertiesInfos[$property->getName()] = new PropertyInfo();
             foreach ($this->reader->getPropertyAnnotations($property) as $annotation) {
+                if(!isset($this->propertiesInfos[$property->getName()])){
+                    $this->propertiesInfos[$property->getName()] = new PropertyInfo();
+                }
                 $this->processPropertiesAnnotation($property->getName(), $annotation);
             }
         }
