@@ -322,9 +322,9 @@ class RepositoryTest extends TestCase {
 		$document = new \stdClass();
 
 		$this->hydratorMock->expects($this->once())->method("unhydrate")->with($document)->willReturn(["field" => "value"]);
-		$this->hydratorMock->expects($this->once())->method("hydrate")->with($document, ["_id" => 1, "field" => "value"])->will($this->returnCallback(function($document, $data) use ($document){
-			$document->id = $data["_id"];
-			$document->field = $data["field"];
+		$this->hydratorMock->expects($this->once())->method("hydrate")->with($document, ["_id" => 1, "field" => "value"])->will($this->returnCallback(function($doc, $data) use ($document){
+			$doc->id = $data["_id"];
+			$doc->field = $data["field"];
 		}));
 
 		$insertOneResult = $this->createMock(InsertOneResult::class);
