@@ -422,7 +422,7 @@ class Repository {
         return $object;
     }
 
-    protected function createOption($projection, $sort, $otherOptions = []){
+    protected function createOption($projections, $sort, $otherOptions = []){
         $options = [];
         isset($projections) ? $options["projection"] = $this->castQuery($projections) : null ;
         isset($sort) ? $options["sort"] = $this->castQuery($sort) : null ;
