@@ -21,9 +21,7 @@ class EventManager {
 	private $events = [];
 
 	public function add(Event $event, $method){
-		if(!isset($this->events[$event->getName()])){
-			$this->events[$event->getName()][] = $method;
-		}
+		$this->events[$event->getName()][] = $method;
 	}
 
 	public function execute($eventName, $object){
