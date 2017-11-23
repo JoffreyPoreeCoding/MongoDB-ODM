@@ -75,11 +75,11 @@ class Hydrator {
                         $class = $this->classMetadata->getNamespace() . "\\" . $class;
                     }
                     $array = [];
-                    foreach ($datas[$field] as $value) {
+                    foreach ($datas[$field] as $key => $value) {
                         if($value === null) continue;
                         $embedded = new $class();
                         $this->getHydrator($class)->hydrate($embedded, $value);
-                        $array[] = $embedded;
+                        $array[$key] = $embedded;
                     }
                     $datas[$field] = $array;
                 }
