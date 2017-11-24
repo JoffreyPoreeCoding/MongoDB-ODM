@@ -180,12 +180,12 @@ class Hydrator {
 
             if (is_array($value) && $infos->getMultiEmbedded()) {
                 $array = [];
-                foreach ($value as $embeddedValue) {
+                foreach ($value as $key => $embeddedValue) {
                     $class = $infos->getEmbeddedClass();
                     if(!class_exists($class)){
                         $class = $this->classMetadata->getNamespace() . "\\" . $class;
                     }
-                    $array[] = $this->getHydrator($class)->unhydrate($embeddedValue);
+                    $array[$key] = $this->getHydrator($class)->unhydrate($embeddedValue);
                 }
                 $value = $array;
             }

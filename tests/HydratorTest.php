@@ -39,23 +39,26 @@ class HydratorTest extends TestCase {
 		$this->repositoryFactory->method("getRepository")->willReturn($repository);
 
 		$data = [
-		"simple_field"         => "value 1",
-		"embedded_field"       => [
-		"simple_field"         => "value 2"
-		],
-		"multi_embedded_field" => [
-		0                      => [
-		"simple_field"         => "value 3"
-		],
-		1                      => [
-		"simple_field"         => "value 4"
-		],
-		2                      => [
-		"simple_field"         => "value 5"
-		]
-		],
-		"refers_one_field" => "id",
-		"refers_many_field" => ["id"]
+			'simple_field' => 'value 1',
+			'embedded_field' => [
+				'simple_field' => 'value 2'
+			],
+			'multi_embedded_field' => [
+				0 => [
+					'simple_field' => 'value 3'
+				],
+				1 => [
+					'simple_field' => 'value 4'
+				],
+				2 => [
+					'simple_field' => 'value 5'
+				],
+				'key' => [
+					'simple_field' => 'value 6'
+				]
+			],
+			"refers_one_field" => "id",
+			"refers_many_field" => ["id"]
 		];
 
 		$object = new ObjectMapping();
@@ -66,13 +69,17 @@ class HydratorTest extends TestCase {
 
 		$this->assertInstanceOf("JPC\Test\MongoDB\ODM\Model\ObjectMapping", $object->getEmbeddedField());
 		$this->assertEquals("value 2", $object->getEmbeddedField()->getSimpleField());
-
-		foreach($object->getMultiEmbeddedField() as $key => $embedded){
+		for($i = 0 ; $i < 3 ; $i++){
+			$embedded = $object->getMultiEmbeddedField()[$i];
 			$this->assertInstanceOf("JPC\Test\MongoDB\ODM\Model\ObjectMapping", $embedded);
-			$this->assertEquals("value " . ($key + 3), $embedded->getSimpleField());
+			$this->assertEquals("value " . ($i + 3), $embedded->getSimpleField());
 		}
 
+		$this->assertArrayHasKey('key', $object->getMultiEmbeddedField());
+		$this->assertEquals('value 6', $object->getMultiEmbeddedField()['key']->getSimpleField());
+
 		$this->assertEquals("reference", $object->getRefersOneField()->getId());
+		$this->assertInstanceOf("JPC\Test\MongoDB\ODM\Model\ObjectMapping", $object->getRefersManyField()[0]);
 		$this->assertEquals("reference", $object->getRefersManyField()[0]->getId());
 	}
 
@@ -92,7 +99,8 @@ class HydratorTest extends TestCase {
 			(new ObjectMapping())->setSimpleField("value 3"),
 			(new ObjectMapping())->setSimpleField("value 4"),
 			(new ObjectMapping())->setSimpleField("value 5"),
-			])
+			'key' => (new ObjectMapping())->setSimpleField("value 6")
+		])
 		->setRefersOneField($reference)
 		->setRefersManyField([$reference]);
 		;
@@ -100,23 +108,26 @@ class HydratorTest extends TestCase {
 		$unhydrated = $this->hydrator->unhydrate($object);
 
 		$expected = [
-		"simple_field"         => "value 1",
-		"embedded_field"       => [
-		"simple_field"         => "value 2",
-		],
-		"multi_embedded_field" => [
-		0                      => [
-		"simple_field"         => "value 3",
-		],
-		1                      => [
-		"simple_field"         => "value 4",
-		],
-		2                      => [
-		"simple_field"         => "value 5",
-		]
-		],
-		"refers_one_field" => "reference",
-		"refers_many_field" => ["reference"]
+			"simple_field"         => "value 1",
+			"embedded_field"       => [
+				"simple_field"         => "value 2",
+			],
+			"multi_embedded_field" => [
+				0                      => [
+					"simple_field"         => "value 3",
+				],
+				1                      => [
+					"simple_field"         => "value 4",
+				],
+				2                      => [
+					"simple_field"         => "value 5",
+				],
+				'key'                      => [
+					"simple_field"         => "value 6",
+				]
+			],
+			"refers_one_field" => "reference",
+			"refers_many_field" => ["reference"]
 		];
 
 		$this->assertEquals($expected, $unhydrated);
