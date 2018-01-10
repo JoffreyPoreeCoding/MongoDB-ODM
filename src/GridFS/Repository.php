@@ -3,6 +3,7 @@
 namespace JPC\MongoDB\ODM\GridFS;
 
 use JPC\MongoDB\ODM\DocumentManager;
+use JPC\MongoDB\ODM\Exception\MappingException;
 use JPC\MongoDB\ODM\GridFS\Hydrator;
 use JPC\MongoDB\ODM\Repository as BaseRepository;
 use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;

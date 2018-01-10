@@ -70,7 +70,7 @@ class Hydrator {
                     $datas[$field] = $embedded;
                 }
 
-                if ((($datas[$field] instanceof \MongoDB\Model\BSONArray) || is_array($datas[$field])) && $infos->getMultiEmbedded() && null !== ($class = $infos->getEmbeddedClass())) {
+                if ((($datas[$field] instanceof \MongoDB\Model\BSONArray) || ($datas[$field] instanceof \MongoDB\Model\BSONDocument) || is_array($datas[$field])) && $infos->getMultiEmbedded() && null !== ($class = $infos->getEmbeddedClass())) {
                     if(!class_exists($class)){
                         $class = $this->classMetadata->getNamespace() . "\\" . $class;
                     }
