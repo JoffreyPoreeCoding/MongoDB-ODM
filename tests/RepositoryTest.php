@@ -35,6 +35,8 @@ class RepositoryTest extends TestCase {
 
 	public function setUp(){
 		$this->documentManagerMock = $this->createMock(DocumentManager::class);
+		$this->documentManagerMock->method('getDefaultOptions')->willReturn(['iterator' => true]);
+
 		$this->collectionMock = $this->createMock(Collection::class);
 		$this->classMetadataMock = $this->createMock(ClassMetadata::class);
 		$this->hydratorMock = $this->createMock(Hydrator::class);

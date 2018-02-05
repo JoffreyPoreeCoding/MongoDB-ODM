@@ -56,6 +56,12 @@ class DocumentManager extends ObjectManager {
      */
     protected $logger;
 
+    /**
+     * Default options for repositories
+     * @var array
+     */
+    protected $defaultOptions;
+
     /* ================================== */
     /*          PUBLICS FUNCTIONS         */
     /* ================================== */
@@ -74,7 +80,8 @@ class DocumentManager extends ObjectManager {
         MongoDatabase           $database, 
         RepositoryFactory       $repositoryFactory = null,
         LoggerInterface         $logger = null, 
-        $debug = false
+                                $debug = false,
+                                $defaultOptions = []
         ) 
     {
         $this->debug = $debug;
@@ -414,6 +421,26 @@ class DocumentManager extends ObjectManager {
     public function setRepositoryFactory(RepositoryFactory $repositoryFactory)
     {
         $this->repositoryFactory = $repositoryFactory;
+
+        return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function getDefaultOptions()
+    {
+        return $this->defaultOptions;
+    }
+
+    /**
+     * @param array $defaultOptions
+     *
+     * @return self
+     */
+    public function setDefaultOptions(array $defaultOptions)
+    {
+        $this->defaultOptions = $defaultOptions;
 
         return $this;
     }

@@ -7,6 +7,7 @@ use Doctrine\Common\Cache\CacheProvider;
 use JPC\MongoDB\ODM\DocumentManager;
 use JPC\MongoDB\ODM\Exception\MappingException;
 use JPC\MongoDB\ODM\Factory\RepositoryFactory;
+use JPC\MongoDB\ODM\Iterator\DocumentIterator;
 use JPC\MongoDB\ODM\ObjectManager;
 use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
 use JPC\MongoDB\ODM\Tools\EventManager;
@@ -131,7 +132,7 @@ class Repository {
         $this->log("debug", "Get distinct value of field '$field' in '".$this->collection->getCollectionName()."', see metadata for more details", [
             "filters" => $filters,
             "options" => $options
-            ]);
+        ]);
 
         $result = $this->collection->distinct($field, $filters, $options);
         return $result;
@@ -169,15 +170,21 @@ class Repository {
         $this->log("debug", "Find all document in collection '".$this->collection->getCollectionName()."'");
         $result = $this->collection->find([], $options);
 
-        $objects = [];
-
-        foreach ($result as $datas) {
-            if(null != ($object = $this->createObject($datas))){
-                $objects[] = $object;
+        if(!isset($options['iterator']) || $options['iterator'] == false){
+            $objects = [];
+            foreach ($result as $datas) {
+                if(null != ($object = $this->createObject($datas, $options))){
+                    $objects[] = $object;
+                }
             }
+            return $objects;
+        } else {
+            $iterator = new DocumentIterator($result, $this->modelName, $this);
+            if(isset($options['readOnly']) && $options['readOnly'] == true){
+                $iterator->readOnly();
+            }
+            return $iterator;
         }
-
-        return $objects;
     }
 
     /**
@@ -197,18 +204,24 @@ class Repository {
         $this->log("debug", "Find documents in collection '".$this->collection->getCollectionName()."', see metadata for more details", [
             "filters" => $filters,
             "options" => $options
-            ]);
+        ]);
 
         $result = $this->collection->find($filters, $options);
-        $objects = [];
-
-        foreach ($result as $datas) {
-            if(null != ($object = $this->createObject($datas))){
-                $objects[] = $object;
+        if(!isset($options['iterator']) || $options['iterator'] == false){
+            $objects = [];
+            foreach ($result as $datas) {
+                if(null != ($object = $this->createObject($datas, $options))){
+                    $objects[] = $object;
+                }
             }
+            return $objects;
+        } else {
+            $iterator = new DocumentIterator($result, $this->modelName, $this);
+            if(isset($options['readOnly']) && $options['readOnly'] == true){
+                $iterator->readOnly();
+            }
+            return $iterator;
         }
-
-        return $objects;
     }
 
     /**
@@ -227,7 +240,7 @@ class Repository {
         $this->log("debug", "Find one document in collection '".$this->collection->getCollectionName()."', see metadata for more details", [
             "filters" => $filters,
             "options" => $options
-            ]);
+        ]);
 
         $result = $this->collection->findOne($filters, $options);
 
@@ -255,7 +268,7 @@ class Repository {
             "filters" => $filters,
             "update" => $update,
             "options" => $options
-            ]);
+        ]);
 
         $result = (array) $this->collection->findOneAndUpdate($filters, $update, $options);
 
@@ -408,15 +421,17 @@ class Repository {
         }
     }
 
-    protected function createObject($data){
+    protected function createObject($data, $options = []){
         $object = null;
         if($data != null){
             $model = $this->getModelName();
             $object = new $this->modelName();
             $this->hydrator->hydrate($object, $data);
             $this->classMetadata->getEventManager()->execute(EventManager::EVENT_POST_LOAD, $object);
-            $this->cacheObject($object);
-            $this->documentManager->addObject($object, DocumentManager::OBJ_MANAGED, $this);
+            if(!isset($options['readOnly']) || $options['readOnly'] != true){
+                $this->cacheObject($object);
+                $this->documentManager->addObject($object, DocumentManager::OBJ_MANAGED, $this);
+            }
             return $object;
         }
         return $object;
@@ -427,8 +442,7 @@ class Repository {
         isset($projections) ? $options["projection"] = $this->castQuery($projections) : null ;
         isset($sort) ? $options["sort"] = $this->castQuery($sort) : null ;
 
-        $options = array_merge($otherOptions, $options);
-
+        $options = array_merge($this->documentManager->getDefaultOptions(), $otherOptions, $options);
         return $options;
     }
 
