@@ -23,9 +23,9 @@ class Repository extends BaseRepository {
      */
     protected $bucket;
 
-    public function __construct(DocumentManager $documentManager, Collection $collection, ClassMetadata $classMetadata, Hydrator $hydrator, QueryCaster $queryCaster = null, UpdateQueryCreator $uqc = null, Bucket $bucket = null) {
+    public function __construct(DocumentManager $documentManager, Collection $collection, ClassMetadata $classMetadata, Hydrator $hydrator, QueryCaster $queryCaster = null, UpdateQueryCreator $uqc = null, CacheProvider $objectCache = null, Bucket $bucket = null) {
 
-        parent::__construct($documentManager, $collection, $classMetadata, $hydrator, $queryCaster, $uqc);
+        parent::__construct($documentManager, $collection, $classMetadata, $hydrator, $queryCaster, $uqc, $objectCache);
 
         if(!is_subclass_of($this->modelName, Document::class)){
             throw new MappingException("Model must extends '" . Document::class . "'.");
