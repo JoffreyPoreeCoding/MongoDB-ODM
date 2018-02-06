@@ -60,7 +60,7 @@ class DocumentManager extends ObjectManager {
      * Default options for repositories
      * @var array
      */
-    protected $defaultOptions;
+    protected $defaultOptions = [];
 
     /* ================================== */
     /*          PUBLICS FUNCTIONS         */

@@ -4,6 +4,7 @@ namespace JPC\MongoDB\ODM;
 
 use Doctrine\Common\Cache\ArrayCache;
 use Doctrine\Common\Cache\CacheProvider;
+use Doctrine\Common\Cache\FlushableCache;
 use JPC\MongoDB\ODM\DocumentManager;
 use JPC\MongoDB\ODM\Exception\MappingException;
 use JPC\MongoDB\ODM\Factory\RepositoryFactory;
@@ -48,7 +49,7 @@ class Repository {
 
     /**
      * Cache for object changes
-     * @var ApcuCache 
+     * @var CacheProvider 
      */
     protected $objectCache;
 
@@ -75,21 +76,23 @@ class Repository {
      * 
      * @param   Tools\ClassMetadata     $classMetadata      Metadata of managed class
      */
-    public function __construct(DocumentManager $documentManager, Collection $collection, ClassMetadata $classMetadata, Hydrator $hydrator, QueryCaster $queryCaster, UpdateQueryCreator $uqc = null) {
+    public function __construct(DocumentManager $documentManager, Collection $collection, ClassMetadata $classMetadata, Hydrator $hydrator, QueryCaster $queryCaster, UpdateQueryCreator $uqc = null, CacheProvider $objectCache = null) {
         $this->documentManager = $documentManager;
         $this->collection = $collection;
         $this->classMetadata = $classMetadata;
         $this->hydrator = $hydrator;
 
         $this->modelName = $classMetadata->getName();
-        $this->objectCache = new ArrayCache();
+        $this->objectCache = isset($objectCache) ? $objectCache : new ArrayCache();
 
         $this->queryCaster = $queryCaster;
         $this->updateQueryCreator = isset($uqc) ? $uqc : new UpdateQueryCreator();
     }
 
     public function clear(){
-        $this->objectCache->flushAll();
+        if(is_a($this->objectCache, FlushableCache::class)){
+            $this->objectCache->flushAll();
+        }
     }
 
     /**
