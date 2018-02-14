@@ -13,13 +13,17 @@ class UpdateQueryCreator {
 					$update[key($value)][$prefix . $key] = $value[key($value)];
 				}
 				else if(is_array($value) && is_array($old[$key])){
-					$embeddedUpdate = array_merge_recursive($update, $this->createUpdateQuery($old[$key], $value, $prefix . $key . "."));
+					if(!empty($old[$key])){
+						$embeddedUpdate = array_merge_recursive($update, $this->createUpdateQuery($old[$key], $value, $prefix . $key . "."));
 
-					foreach($embeddedUpdate as $updateOperator => $value){
-						if(!isset($update[$updateOperator])){
-							$update[$updateOperator] = [];
+						foreach($embeddedUpdate as $updateOperator => $value){
+							if(!isset($update[$updateOperator])){
+								$update[$updateOperator] = [];
+							}
+							$update[$updateOperator] += $value; 
 						}
-						$update[$updateOperator] += $value; 
+					} else {
+						$update['$set'][$prefix . $key] = $value;
 					}
 				} else {
 					if($value !== null && $value !== $old[$key]){
