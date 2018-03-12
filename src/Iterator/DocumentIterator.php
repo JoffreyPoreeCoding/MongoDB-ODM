@@ -8,7 +8,7 @@ use JPC\MongoDB\ODM\Repository;
 use JPC\MongoDB\ODM\Tools\EventManager;
 use MongoDB\Driver\Cursor;
 
-class DocumentIterator implements Iterator {
+class DocumentIterator implements Iterator, \Countable {
 
     protected $data;
 
@@ -105,5 +105,9 @@ class DocumentIterator implements Iterator {
         foreach($this->data as $data){
             yield $data;
         }
+    }
+
+    public function count(){
+        return count($this->data);
     }
 }
