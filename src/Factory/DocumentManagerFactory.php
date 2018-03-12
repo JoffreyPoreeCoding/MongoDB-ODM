@@ -19,10 +19,13 @@ class DocumentManagerFactory {
 
 	private $classMetadataFactory;
 
-	public function __construct($repositoryFactoryClass = null){
+	private $defaultExtensions = [];
+
+	public function __construct($repositoryFactoryClass = null, $defaultExtensions = []){
 		$this->repositoryFactoryClass = isset($repositoryFactoryClass) ? $repositoryFactoryClass : "JPC\MongoDB\ODM\Factory\RepositoryFactory";
 
 		$this->classMetadataFactory = new ClassMetadataFactory();
+		$this->defaultExtensions = $defaultExtensions;
 	}
 
 	/**
@@ -55,8 +58,10 @@ class DocumentManagerFactory {
 				$database, 
 				$repositoryFactory,
 				$logger, 
-				$debug
-				);
+				$debug,
+				[],
+				$this->defaultExtensions
+			);
 		}
 		
 		return $this->managers[$managerId];

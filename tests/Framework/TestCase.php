@@ -2,7 +2,9 @@
 
 namespace JPC\Test\MongoDB\ODM\Framework;
 
-class TestCase extends \PHPUnit_Framework_TestCase{
+use PHPUnit\Framework\TestCase as BaseTestCase;
+
+class TestCase extends BaseTestCase{
     
     protected function getPropertyValue($object, $propertyName){
         $prop = new \ReflectionProperty($object, $propertyName);

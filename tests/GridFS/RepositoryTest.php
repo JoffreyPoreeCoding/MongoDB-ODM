@@ -65,7 +65,7 @@ class RepositoryTest extends TestCase {
 		$this->hydrator->method("hydrate")->will($this->returnCallback([$this, "fakeHydration"]));
 		$objects = $this->repository->findAll();
 
-		foreach($objects as $object){
+		foreach($objects as $i => $object){
 			$this->assertEquals("filecontent", $object->getStream());
 			$this->assertEquals("filename", $object->getFilename());
 		}

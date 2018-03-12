@@ -10,25 +10,25 @@ use MongoDB\Driver\Cursor;
 
 class DocumentIterator implements Iterator {
 
-    private $data;
+    protected $data;
 
-    private $objectClass;
+    protected $objectClass;
 
-    private $repository;
+    protected $repository;
 
-    private $hydrator;
+    protected $hydrator;
 
-    private $classMetadata;
+    protected $classMetadata;
 
-    private $documentManager;
+    protected $documentManager;
 
-    private $generator;
+    protected $generator;
 
-    private $currentData;
+    protected $currentData;
 
-    private $position = 0;
+    protected $position = 0;
 
-    private $readOnly = false;
+    protected $readOnly = false;
 
     public function __construct($data, $objectClass, Repository $repository)
     {

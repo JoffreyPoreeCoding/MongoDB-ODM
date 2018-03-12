@@ -5,6 +5,7 @@ namespace JPC\MongoDB\ODM\GridFS;
 use JPC\MongoDB\ODM\DocumentManager;
 use JPC\MongoDB\ODM\Exception\MappingException;
 use JPC\MongoDB\ODM\GridFS\Hydrator;
+use JPC\MongoDB\ODM\Iterator\GridFSDocumentIterator;
 use JPC\MongoDB\ODM\Repository as BaseRepository;
 use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
 use JPC\MongoDB\ODM\Tools\QueryCaster;
@@ -50,21 +51,37 @@ class Repository extends BaseRepository {
     }
 
     public function findAll($projections = array(), $sorts = array(), $options = array()) {
-        $objects = parent::findAll($projections, $sorts, $options);
-        foreach($objects as $object){
-            $data["stream"] = $this->bucket->openDownloadStream($object->getId());
-            $this->hydrator->hydrate($object, $data);
+        $options = $this->createOption($projections, $sorts, $options);
+        if(!isset($options['iterator']) || $options['iterator'] === false){
+            $objects = parent::findAll($projections, $sorts, $options);
+            foreach($objects as $object){
+                $data["stream"] = $this->bucket->openDownloadStream($object->getId());
+                $this->hydrator->hydrate($object, $data);
+            }
+            return $objects;
+        } else {
+            if(!is_string($options['iterator'])){
+                $options['iterator'] = GridFSDocumentIterator::class;
+            }
+            return parent::findAll($projections, $sorts, $options);
         }
-        return $objects;
     }
 
     public function findBy($filters, $projections = array(), $sorts = array(), $options = array()) {
-        $objects = parent::findBy($filters, $projections, $sorts, $options);
-        foreach($objects as $object){
-            $data["stream"] = $this->bucket->openDownloadStream($object->getId());
-            $this->hydrator->hydrate($object, $data);
+        $options = $this->createOption($projections, $sorts, $options);
+        if(!isset($options['iterator']) || $options['iterator'] === false){
+            $objects = parent::findBy($filters, $projections, $sorts, $options);
+            foreach($objects as $object){
+                $data["stream"] = $this->bucket->openDownloadStream($object->getId());
+                $this->hydrator->hydrate($object, $data);
+            }
+            return $objects;
+        } else {
+            if(!is_string($options['iterator'])){
+                $options['iterator'] = GridFSDocumentIterator::class;
+            }
+            return parent::findBy($filters, $projections, $sorts, $options);
         }
-        return $objects;
     }
 
     public function findOneBy($filters = array(), $projections = array(), $sorts = array(), $options = array()) {

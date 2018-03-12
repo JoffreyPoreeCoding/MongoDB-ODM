@@ -173,7 +173,7 @@ class Repository {
         $this->log("debug", "Find all document in collection '".$this->collection->getCollectionName()."'");
         $result = $this->collection->find([], $options);
 
-        if(!isset($options['iterator']) || $options['iterator'] == false){
+        if(!isset($options['iterator']) || $options['iterator'] === false){
             $objects = [];
             foreach ($result as $datas) {
                 if(null != ($object = $this->createObject($datas, $options))){
@@ -182,7 +182,8 @@ class Repository {
             }
             return $objects;
         } else {
-            $iterator = new DocumentIterator($result, $this->modelName, $this);
+            $iteratorClass = $options['iterator'];
+            $iterator = $iteratorClass === true ? new DocumentIterator($result, $this->modelName, $this) : new $iteratorClass($result, $this->modelName, $this);
             if(isset($options['readOnly']) && $options['readOnly'] == true){
                 $iterator->readOnly();
             }
@@ -219,7 +220,8 @@ class Repository {
             }
             return $objects;
         } else {
-            $iterator = new DocumentIterator($result, $this->modelName, $this);
+            $iteratorClass = $options['iterator'];
+            $iterator = $iteratorClass === true ? new DocumentIterator($result, $this->modelName, $this) : new $iteratorClass($result, $this->modelName, $this);
             if(isset($options['readOnly']) && $options['readOnly'] == true){
                 $iterator->readOnly();
             }

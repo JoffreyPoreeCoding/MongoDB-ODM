@@ -36,5 +36,7 @@ class RepositoryFactoryTest extends TestCase {
 
 		$repositoryFactory = new RepositoryFactory(new ArrayCache(), $classMetadataFactory);
 		$repository = $repositoryFactory->getRepository($documentManager, "MyModel", "collection");
+
+		$this->assertInstanceOf(Repository::class, $repository);
 	}
 }

@@ -341,6 +341,29 @@ class RepositoryTest extends TestCase {
 		$this->assertEquals("value", $document->field);
 	}
 
+	public function test_insertOne(){
+		$repository = $this->repositoryMockBuilder->setMethods(["cacheObject"])->getMock();
+
+		$document = new \stdClass();
+
+		$this->hydratorMock->expects($this->once())->method("unhydrate")->with($document)->willReturn(["field" => "value"]);
+		$this->hydratorMock->expects($this->once())->method("hydrate")->with($document, ["_id" => 1, "field" => "value"])->will($this->returnCallback(function($doc, $data) use ($document){
+			$doc->id = $data["_id"];
+			$doc->field = $data["field"];
+		}));
+
+		$insertOneResult = $this->createMock(InsertOneResult::class);
+		$insertOneResult->method("isAcknowledged")->willReturn(true);
+		$insertOneResult->method("getInsertedId")->willReturn(1);
+
+		$this->collectionMock->expects($this->once())->method("insertOne")->with(["field" => "value"], ["option" => "value"])->willReturn($insertOneResult);
+
+		$repository->insertOne($document, ["option" => "value"]);
+
+		$this->assertEquals(1, $document->id);
+		$this->assertEquals("value", $document->field);
+	}
+
 	/** 
 	 * @TODO("VERIFIER SI DOCUMENT MANAGER addObject et setOBjectState are called")
 	 */
