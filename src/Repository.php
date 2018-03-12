@@ -221,7 +221,7 @@ class Repository {
             return $objects;
         } else {
             $iteratorClass = $options['iterator'];
-            $iterator = $iteratorClass === true ? new DocumentIterator($result, $this->modelName, $this) : new $iteratorClass($result, $this->modelName, $this);
+            $iterator = $iteratorClass === true ? new DocumentIterator($result, $this->modelName, $this, $filters) : new $iteratorClass($result, $this->modelName, $this, $filters);
             if(isset($options['readOnly']) && $options['readOnly'] == true){
                 $iterator->readOnly();
             }

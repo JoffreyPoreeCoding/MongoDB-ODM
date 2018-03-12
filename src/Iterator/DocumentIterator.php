@@ -16,6 +16,8 @@ class DocumentIterator implements Iterator, \Countable {
 
     protected $repository;
 
+    protected $query;
+
     protected $hydrator;
 
     protected $classMetadata;
@@ -30,16 +32,17 @@ class DocumentIterator implements Iterator, \Countable {
 
     protected $readOnly = false;
 
-    public function __construct($data, $objectClass, Repository $repository)
+    protected $count;
+
+    public function __construct($data, $objectClass, Repository $repository, $query = [])
     {
-        $this->data     = $data;
+        $this->data            = $data;
         $this->objectClass     = $objectClass;
         $this->repository      = $repository;
+        $this->query           = $query;
         $this->hydrator        = $repository->getHydrator();
         $this->classMetadata   = $repository->getClassMetadata();
         $this->documentManager = $repository->getDocumentManager();
-        $this->generator       = $this->createGenerator();
-        $this->currentData     = $this->generator->current();
     }
 
     public function readOnly(){
@@ -61,6 +64,11 @@ class DocumentIterator implements Iterator, \Countable {
      */
     public function valid()
     {
+        if(!isset($this->generator)){
+            $this->generator = $this->createGenerator();
+            $this->currentData = $this->generator->current();
+        }
+
         return $this->generator->valid();
     }
 
@@ -81,6 +89,11 @@ class DocumentIterator implements Iterator, \Countable {
      */
     public function current()
     {
+        if(!isset($this->generator)){
+            $this->generator = $this->createGenerator();
+            $this->currentData = $this->generator->current();
+        }
+
         $class = $this->objectClass;
         $object = new $class();
         $this->hydrator->hydrate($object, $this->currentData);
@@ -108,6 +121,9 @@ class DocumentIterator implements Iterator, \Countable {
     }
 
     public function count(){
-        return count($this->data);
+        if(!isset($this->count)){
+            $this->count = $this->repository->count($this->query);
+        }
+        return $this->count;
     }
 }
