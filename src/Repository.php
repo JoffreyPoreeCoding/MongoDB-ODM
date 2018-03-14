@@ -300,8 +300,11 @@ class Repository {
 
         $result = $this->collection->insertOne($insertQuery, $options);
 
-        if($result->isAcknowledged()){
-            $insertQuery["_id"] = $result->getInsertedId();
+	if($result->isAcknowledged()){
+            if($id instanceof \stdClass){
+                $id = (array) $id;
+            }    
+	    $insertQuery["_id"] = $result->getInsertedId();
             $this->hydrator->hydrate($document, $insertQuery);
             $this->classMetadata->getEventManager()->execute(EventManager::EVENT_POST_INSERT, $document);
             $this->cacheObject($document);
@@ -323,7 +326,10 @@ class Repository {
 
         if($result->isAcknowledged()){
             foreach ($result->getInsertedIds() as $key => $id) {
-                $insertQuery[$key]["_id"] = $id;
+		if($id instanceof \stdClass){
+		    $id = (array) $id;
+		}
+		$insertQuery[$key]["_id"] = $id;
                 $this->hydrator->hydrate($documents[$key], $insertQuery[$key]);
 
                 $this->classMetadata->getEventManager()->execute(EventManager::EVENT_POST_INSERT, $documents[$key]);
