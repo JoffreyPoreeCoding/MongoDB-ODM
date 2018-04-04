@@ -300,11 +300,12 @@ class Repository {
 
         $result = $this->collection->insertOne($insertQuery, $options);
 
-	if($result->isAcknowledged()){
+        if($result->isAcknowledged()){
+            $id = $result->getInsertedId();
             if($id instanceof \stdClass){
                 $id = (array) $id;
             }    
-	    $insertQuery["_id"] = $result->getInsertedId();
+            $insertQuery["_id"] = $id;
             $this->hydrator->hydrate($document, $insertQuery);
             $this->classMetadata->getEventManager()->execute(EventManager::EVENT_POST_INSERT, $document);
             $this->cacheObject($document);
@@ -326,22 +327,22 @@ class Repository {
 
         if($result->isAcknowledged()){
             foreach ($result->getInsertedIds() as $key => $id) {
-		if($id instanceof \stdClass){
-		    $id = (array) $id;
-		}
-		$insertQuery[$key]["_id"] = $id;
-                $this->hydrator->hydrate($documents[$key], $insertQuery[$key]);
+              if($id instanceof \stdClass){
+                  $id = (array) $id;
+              }
+              $insertQuery[$key]["_id"] = $id;
+              $this->hydrator->hydrate($documents[$key], $insertQuery[$key]);
 
-                $this->classMetadata->getEventManager()->execute(EventManager::EVENT_POST_INSERT, $documents[$key]);
+              $this->classMetadata->getEventManager()->execute(EventManager::EVENT_POST_INSERT, $documents[$key]);
 
-                $this->cacheObject($documents[$key]);
-            }
+              $this->cacheObject($documents[$key]);
+          }
 
-            return true;
-        } else {
-            return false;
-        }
+          return true;
+      } else {
+        return false;
     }
+}
 
     /**
      * [updateOne description]
