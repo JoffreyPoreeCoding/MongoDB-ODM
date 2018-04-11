@@ -108,7 +108,7 @@ class DocumentIterator implements Iterator, \Countable {
 	$this->currentData = $this->generator->current();
     }
 
-    private function createGenerator(){
+    protected function createGenerator(){
         foreach($this->data as $data){
             yield $data;
         }

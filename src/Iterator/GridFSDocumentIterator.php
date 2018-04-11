@@ -26,13 +26,8 @@ class GridFSDocumentIterator extends DocumentIterator {
      */
     public function next()
     {
-        $this->position++;
-        $this->currentItem = $this->generator->next();
-    }
-
-    private function createGenerator(){
-        foreach($this->data as $data){
-            yield $data;
-        }
+	$this->position++;
+        $this->generator->next();
+        $this->currentData = $this->generator->current();
     }
 }
