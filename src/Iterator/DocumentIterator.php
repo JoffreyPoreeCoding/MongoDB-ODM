@@ -43,9 +43,10 @@ class DocumentIterator implements Iterator, \Countable {
         $this->hydrator        = $repository->getHydrator();
         $this->classMetadata   = $repository->getClassMetadata();
         $this->documentManager = $repository->getDocumentManager();
-    
+        $this->objects         = [];
+
         $this->generator = $this->createGenerator();
-	$this->currentData = $this->generator->current();
+        $this->currentData = $this->generator->current();
     }
 
     public function readOnly(){
@@ -57,7 +58,7 @@ class DocumentIterator implements Iterator, \Countable {
      */
     public function rewind()
     {
-        //throw new \Exception('Method rewind() is not implemented.');
+        $this->position = 0;
     }
 
     /**
@@ -67,6 +68,10 @@ class DocumentIterator implements Iterator, \Countable {
      */
     public function valid()
     {
+        if(isset($this->objects[$this->position])){
+            return true;
+        }
+        
         return $this->generator->valid();
     }
 
@@ -87,15 +92,18 @@ class DocumentIterator implements Iterator, \Countable {
      */
     public function current()
     {
-        $class = $this->objectClass;
-        $object = new $class();
-        $this->hydrator->hydrate($object, $this->currentData);
-        $this->classMetadata->getEventManager()->execute(EventManager::EVENT_POST_LOAD, $object);
-        if(!$this->readOnly){
-            $this->repository->cacheObject($object);
-            $this->documentManager->addObject($object, DocumentManager::OBJ_MANAGED, $this);
+        if(!isset($this->objects[$this->position])){
+            $class = $this->objectClass;
+            $object = new $class();
+            $this->hydrator->hydrate($object, $this->currentData);
+            $this->classMetadata->getEventManager()->execute(EventManager::EVENT_POST_LOAD, $object);
+            if(!$this->readOnly){
+                $this->repository->cacheObject($object);
+                $this->documentManager->addObject($object, DocumentManager::OBJ_MANAGED, $this);
+            }
+            $this->objects[] = $object;
         }
-        return $object;
+        return $this->objects[$this->position];
     }
 
     /**
@@ -104,8 +112,8 @@ class DocumentIterator implements Iterator, \Countable {
     public function next()
     {
         $this->position++;
-	$this->generator->next();
-	$this->currentData = $this->generator->current();
+        $this->generator->next();
+        $this->currentData = $this->generator->current();
     }
 
     protected function createGenerator(){
