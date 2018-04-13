@@ -99,7 +99,7 @@ class DocumentIterator implements Iterator, \Countable {
             $this->classMetadata->getEventManager()->execute(EventManager::EVENT_POST_LOAD, $object);
             if(!$this->readOnly){
                 $this->repository->cacheObject($object);
-                $this->documentManager->addObject($object, DocumentManager::OBJ_MANAGED, $this);
+                $this->documentManager->addObject($object, DocumentManager::OBJ_MANAGED, $this->repository);
             }
             $this->objects[] = $object;
         }
