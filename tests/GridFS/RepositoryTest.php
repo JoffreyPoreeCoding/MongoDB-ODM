@@ -63,7 +63,7 @@ class RepositoryTest extends TestCase {
 		$this->collection->method("find")->willReturn([["filename" => "filename"], ["filename" => "filename"]]);
 		$this->bucket->method("openDownloadStream")->willReturn("filecontent");
 		$this->hydrator->method("hydrate")->will($this->returnCallback([$this, "fakeHydration"]));
-		$objects = $this->repository->findAll(['cursor' => false]);
+		$objects = $this->repository->findAll();
 
 		foreach($objects as $i => $object){
 			$this->assertEquals("filecontent", $object->getStream());

@@ -51,7 +51,9 @@ class Repository extends BaseRepository {
     }
 
     public function findAll($projections = array(), $sorts = array(), $options = array()) {
+        dump($options);
         $options = $this->createOption($projections, $sorts, $options);
+        dump($options);
         if(!isset($options['iterator']) || $options['iterator'] === false){
             $objects = parent::findAll($projections, $sorts, $options);
             foreach($objects as $object){
