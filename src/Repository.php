@@ -168,7 +168,6 @@ class Repository {
      * @return  array                                       Array containing all the document of the collection
      */
     public function findAll($projections = [], $sorts = [], $options = []) {
-        dump($options);
         $options = $this->createOption($projections, $sorts, $options);
 
         $this->log("debug", "Find all document in collection '".$this->collection->getCollectionName()."'");
@@ -183,14 +182,10 @@ class Repository {
             }
             return $objects;
         } else {
-            dump('ITERATOR');
             $iteratorClass = $options['iterator'];
             $iterator = $iteratorClass === true ? new DocumentIterator($result, $this->modelName, $this) : new $iteratorClass($result, $this->modelName, $this);
             if(isset($options['readOnly']) && $options['readOnly'] == true){
                 $iterator->readOnly();
-            }
-            foreach($iterator as $item){
-                dump($item);
             }
             return $iterator;
         }

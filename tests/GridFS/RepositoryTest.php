@@ -60,7 +60,7 @@ class RepositoryTest extends TestCase {
 	}
 
 	public function test_findAll(){
-		$this->collection->method("find")->willReturn([["filename" => "filename"], ["filename" => "filename"]]);
+		$this->collection->method("find")->willReturn([["_id" => 1, "filename" => "filename"], ["_id" => 2, "filename" => "filename"]]);
 		$this->bucket->method("openDownloadStream")->willReturn("filecontent");
 		$this->hydrator->method("hydrate")->will($this->returnCallback([$this, "fakeHydration"]));
 		$objects = $this->repository->findAll();
@@ -72,7 +72,7 @@ class RepositoryTest extends TestCase {
 	}
 
 	public function test_findBy(){
-		$this->collection->method("find")->willReturn([["filename" => "filename"], ["filename" => "filename"]]);
+		$this->collection->method("find")->willReturn([["_id" => 1, "filename" => "filename"], ["_id" => 2, "filename" => "filename"]]);
 		$this->bucket->method("openDownloadStream")->willReturn("filecontent");
 		$this->hydrator->method("hydrate")->will($this->returnCallback([$this, "fakeHydration"]));
 		$objects = $this->repository->findBy(["test" => "test"], [], [], ['cursor' => false]);
