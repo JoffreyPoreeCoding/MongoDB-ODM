@@ -8,7 +8,7 @@ class UpdateQueryCreator {
 		$update = [];
 
 		foreach ($new as $key => $value) {
-			if(array_key_exists($key, $old)){
+			if(is_array($old) && array_key_exists($key, $old)){
 				if(is_array($value) && strstr(key($value), '$') !== false){
 					$update[key($value)][$prefix . $key] = $value[key($value)];
 				}
@@ -51,9 +51,10 @@ class UpdateQueryCreator {
 			unset($new[$key]);
 			unset($old[$key]);
 		}
-
-		foreach(array_keys($old) as $key){
-			$update['$unset'][$prefix . $key] = 1; 
+		if(is_array($old)){
+			foreach(array_keys($old) as $key){
+				$update['$unset'][$prefix . $key] = 1; 
+			}
 		}
 
 		return $update;
