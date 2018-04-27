@@ -355,7 +355,6 @@ class Repository {
      */
     public function updateOne($document, $update = [], $options = []){
         if(is_object($document) && $document instanceof $this->modelName){
-            $this->classMetadata->getEventManager()->execute(EventManager::EVENT_PRE_UPDATE, $document);
             $unhydratedObject = $this->hydrator->unhydrate($document);
             $id = $unhydratedObject["_id"];
             $filters = ["_id" => $id];
@@ -366,9 +365,13 @@ class Repository {
         }
 
         if(empty($update)){
-            $update = $this->getUpdateQuery($document);
+	    $update = $this->getUpdateQuery($document);
+            if(!empty($update)){
+                $this->classMetadata->getEventManager()->execute(EventManager::EVENT_PRE_UPDATE, $document);
+		$update = $this->getUpdateQuery($document);
+	    }
         } else {
-            $update = $this->castQuery($update);
+	    $update = $this->castQuery($update);
         }
 
         if(!empty($update)){
