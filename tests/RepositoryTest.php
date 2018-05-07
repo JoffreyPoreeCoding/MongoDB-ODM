@@ -383,7 +383,7 @@ class RepositoryTest extends TestCase {
 
 		$this->hydratorMock->expects($this->exactly(1))->method("unhydrate")->willReturn(["_id" => 1]);
 
-		$repository->expects($this->once())->method("getUpdateQuery")->willReturn(["update" => "value"]);
+		$repository->expects($this->exactly(2))->method("getUpdateQuery")->willReturn(["update" => "value"]);
 		$repository->expects($this->any())->method("castQuery");
 
 		$result = $this->createMock(UpdateResult::class);
