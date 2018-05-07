@@ -156,7 +156,7 @@ class Repository {
 
         $result = $this->collection->findOne(["_id" => $id], $options);
 
-        return $this->createObject($result);
+        return $this->createObject($result, $options);
     }
 
     /**
@@ -249,7 +249,7 @@ class Repository {
 
         $result = $this->collection->findOne($filters, $options);
 
-        return $this->createObject($result);
+        return $this->createObject($result, $options);
     }
 
     /**
@@ -277,7 +277,7 @@ class Repository {
 
         $result = (array) $this->collection->findOneAndUpdate($filters, $update, $options);
 
-        return $this->createObject($result);
+        return $this->createObject($result, $options);
 
     }
 
