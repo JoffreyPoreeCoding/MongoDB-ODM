@@ -18,85 +18,55 @@ class ClassMetadataTest extends TestCase
         $this->classMetadata = new ClassMetadata(\JPC\Test\MongoDB\ODM\Tools\ObjectMapping::class);
     }
 
-    /**
-     * @test
-     */
-    public function getName()
+    public function testGetName()
     {
         $this->assertEquals("JPC\Test\MongoDB\ODM\Tools\ObjectMapping", $this->classMetadata->getName());
     }
 
-    /**
-     * @test
-     */
-    public function getColection()
+    public function testGetColection()
     {
         $this->assertEquals("object_mapping", $this->classMetadata->getCollection());
     }
 
-    /**
-     * @test
-     */
-    public function getPropertiesInfos()
+    public function testGetPropertiesInfos()
     {
         $this->assertContainsOnlyInstancesOf("JPC\MongoDB\ODM\Tools\ClassMetadata\Info\PropertyInfo", $this->classMetadata->getPropertiesInfos());
     }
 
-    /**
-     * @test
-     */
-    public function getPropertyForField()
+    public function testGetPropertyForField()
     {
         $this->assertInstanceOf("ReflectionProperty", $this->classMetadata->getPropertyForField("simple_field"));
         $this->assertFalse($this->classMetadata->getPropertyForField("inexisting"));
     }
 
-    /**
-     * @test
-     */
-    public function getPropertyInfoForField()
+    public function testGetPropertyInfoForField()
     {
         $this->assertInstanceOf("JPC\MongoDB\ODM\Tools\ClassMetadata\Info\PropertyInfo", $this->classMetadata->getPropertyInfo("simpleField"));
         $this->assertFalse($this->classMetadata->getPropertyInfo("inexisting"));
     }
 
-    /**
-     * @test
-     */
-    public function getPropertyInfo()
+    public function testGetPropertyInfo()
     {
         $this->assertInstanceOf("JPC\MongoDB\ODM\Tools\ClassMetadata\Info\PropertyInfo", $this->classMetadata->getPropertyInfoForField("simple_field"));
         $this->assertFalse($this->classMetadata->getPropertyInfoForField("inexisting"));
     }
 
-    /**
-     * @test
-     */
-    public function getRepositoryClass()
+    public function testGetRepositoryClass()
     {
         $this->assertEquals("JPC\MongoDB\ODM\Repository", $this->classMetadata->getRepositoryClass());
     }
 
-    /**
-     * @test
-     */
-    public function getCollectionOptions()
+    public function testGetCollectionOptions()
     {
         $this->assertEmpty($this->classMetadata->getCollectionOptions());
     }
 
-    /**
-     * @test
-     */
-    public function getCollectionCreationOptions()
+    public function testGetCollectionCreationOptions()
     {
         $this->assertEmpty($this->classMetadata->getCollectionCreationOptions());
     }
 
-    /**
-     * @test
-     */
-    public function getEventManager()
+    public function testGetEventManager()
     {
         $this->assertEquals(["pre_persist" => ["event"]], $this->classMetadata->getEventManager()->getEvents());
     }

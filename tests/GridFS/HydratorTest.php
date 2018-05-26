@@ -25,10 +25,7 @@ class HydratorTest extends TestCase
         $this->hydrator = new Hydrator($classMetadataFactory, $classMetadata, $documentManager, $repositoryFactory);
     }
 
-    /**
-     * @test
-     */
-    public function hydrate()
+    public function testHydrate()
     {
         $datas = [
             "_id" => "id",
@@ -51,10 +48,7 @@ class HydratorTest extends TestCase
         $this->assertEquals("metadata", $object->getSimpleMetadata());
     }
 
-    /**
-     * @test
-     */
-    public function unhydrate()
+    public function testUnhydrate()
     {
         $object = new GridFSObjectMapping();
         $object

@@ -8,10 +8,7 @@ use JPC\MongoDB\ODM\Id\DefaultGenerator;
 
 class DefaultGeneratorTest extends TestCase
 {
-    /**
-     * @test
-     */
-    public function generateId()
+    public function testGenerateId()
     {
         $generator = new DefaultGenerator();
         $id = $generator->generate($this->createMock(DocumentManager::class), new \stdClass());

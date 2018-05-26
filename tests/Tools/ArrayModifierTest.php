@@ -8,10 +8,7 @@ use JPC\Test\MongoDB\ODM\Framework\TestCase;
 class ArrayModifierTest extends TestCase
 {
 
-    /**
-     * @test
-     */
-    public function clearNullValues()
+    public function testClearNullValues()
     {
         $array = [
             "my_value" => null,
@@ -23,10 +20,7 @@ class ArrayModifierTest extends TestCase
         $this->assertEmpty($array);
     }
 
-    /**
-     * @test
-     */
-    public function aggregate()
+    public function testAggregate()
     {
         $array = [
             "value" => "value",
@@ -67,10 +61,7 @@ class ArrayModifierTest extends TestCase
         $this->assertEquals($expected, $result);
     }
 
-    /**
-     * @test
-     */
-    public function disaggregate()
+    public function testDisaggregate()
     {
         $array = [
             "value" => "value",

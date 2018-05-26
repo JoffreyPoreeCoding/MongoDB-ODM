@@ -16,10 +16,7 @@ use MongoDB\Database;
 class RepositoryFactoryTest extends TestCase
 {
 
-    /**
-     * @test
-     */
-    public function getRepository()
+    public function testGetRepository()
     {
         $documentManager = $this->createMock(DocumentManager::class);
         $classMetadataFactory = $this->createMock(ClassMetadataFactory::class);

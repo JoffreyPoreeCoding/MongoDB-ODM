@@ -15,18 +15,15 @@ class ObjectManagerTest extends TestCase
         $this->objectManager = new ObjectManager();
     }
 
-    /**
-     * @test
-     */
-    public function addObject()
+    public function testAddObject()
     {
         $object = new \stdClass();
         $this->objectManager->addObject($object);
 
         $oid = spl_object_hash($object);
 
-        $objects = $this->getPrivatePropValue($this->objectManager, "objects");
-        $objectStates = $this->getPrivatePropValue($this->objectManager, "objectStates");
+        $objects = $this->getPropertyValue($this->objectManager, "objects");
+        $objectStates = $this->getPropertyValue($this->objectManager, "objectStates");
 
         $this->assertArrayHasKey($oid, $objects);
         $this->assertArrayHasKey($oid, $objectStates);
@@ -34,10 +31,7 @@ class ObjectManagerTest extends TestCase
         $this->assertEquals(ObjectManager::OBJ_NEW, $objectStates[$oid]);
     }
 
-    /**
-     * @test
-     */
-    public function removeObjectInexisting()
+    public function testRemoveObjectInexisting()
     {
         $object = new \stdClass();
 
@@ -45,10 +39,7 @@ class ObjectManagerTest extends TestCase
         $this->objectManager->removeObject($object);
     }
 
-    /**
-     * @test
-     */
-    public function removeObject()
+    public function testRemoveObject()
     {
         $object = new \stdClass();
         $this->objectManager->addObject($object);
@@ -56,17 +47,14 @@ class ObjectManagerTest extends TestCase
         $oid = spl_object_hash($object);
         $this->objectManager->removeObject($object);
 
-        $objects = $this->getPrivatePropValue($this->objectManager, "objects");
-        $objectStates = $this->getPrivatePropValue($this->objectManager, "objectStates");
+        $objects = $this->getPropertyValue($this->objectManager, "objects");
+        $objectStates = $this->getPropertyValue($this->objectManager, "objectStates");
 
         $this->assertArrayNotHasKey($oid, $objects);
         $this->assertArrayNotHasKey($oid, $objectStates);
     }
 
-    /**
-     * @test
-     */
-    public function setObjectStateOk()
+    public function testSetObjectStateOk()
     {
         $object = new \stdClass();
         $this->objectManager->addObject($object);
@@ -74,18 +62,15 @@ class ObjectManagerTest extends TestCase
         $oid = spl_object_hash($object);
 
         $this->objectManager->setObjectState($object, ObjectManager::OBJ_MANAGED);
-        $objectStates = $this->getPrivatePropValue($this->objectManager, "objectStates");
+        $objectStates = $this->getPropertyValue($this->objectManager, "objectStates");
         $this->assertEquals(ObjectManager::OBJ_MANAGED, $objectStates[$oid]);
 
         $this->objectManager->setObjectState($object, ObjectManager::OBJ_REMOVED);
-        $objectStates = $this->getPrivatePropValue($this->objectManager, "objectStates");
+        $objectStates = $this->getPropertyValue($this->objectManager, "objectStates");
         $this->assertEquals(ObjectManager::OBJ_REMOVED, $objectStates[$oid]);
     }
 
-    /**
-     * @test
-     */
-    public function setObjectStateNok()
+    public function testSetObjectStateNok()
     {
         $object = new \stdClass();
         $this->objectManager->addObject($object);
@@ -94,13 +79,10 @@ class ObjectManagerTest extends TestCase
 
         $this->expectException("JPC\MongoDB\ODM\Exception\StateException");
         $this->objectManager->setObjectState($object, ObjectManager::OBJ_REMOVED);
-        $objectStates = $this->getPrivatePropValue($this->objectManager, "objectStates");
+        $objectStates = $this->getPropertyValue($this->objectManager, "objectStates");
     }
 
-    /**
-     * @test
-     */
-    public function getObjectState()
+    public function testGetObjectState()
     {
         $object = new \stdClass();
         $this->assertNull($this->objectManager->getObjectState($object));
@@ -108,10 +90,7 @@ class ObjectManagerTest extends TestCase
         $this->assertEquals(ObjectManager::OBJ_NEW, $this->objectManager->getObjectState($object));
     }
 
-    /**
-     * @test
-     */
-    public function getObject()
+    public function testGetObject()
     {
         $object1 = new \stdClass();
         $this->objectManager->addObject($object1);
@@ -134,10 +113,7 @@ class ObjectManagerTest extends TestCase
         $this->assertCount(3, $this->objectManager->getObject(ObjectManager::OBJ_REMOVED));
     }
 
-    /**
-     * @test
-     */
-    public function clear()
+    public function testClear()
     {
         $object1 = new \stdClass();
         $this->objectManager->addObject($object1);
@@ -152,15 +128,8 @@ class ObjectManagerTest extends TestCase
         $object6 = new \stdClass();
         $this->objectManager->addObject($object6, ObjectManager::OBJ_REMOVED);
 
-        $this->assertCount(6, $this->getPrivatePropValue($this->objectManager, "objects"));
+        $this->assertCount(6, $this->getPropertyValue($this->objectManager, "objects"));
         $this->objectManager->clear();
-        $this->assertCount(0, $this->getPrivatePropValue($this->objectManager, "objects"));
-    }
-
-    private function getPrivatePropValue($object, $propertyName)
-    {
-        $reflProp = new \ReflectionProperty($object, $propertyName);
-        $reflProp->setAccessible(true);
-        return $reflProp->getValue($object);
+        $this->assertCount(0, $this->getPropertyValue($this->objectManager, "objects"));
     }
 }

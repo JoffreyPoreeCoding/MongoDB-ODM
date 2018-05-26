@@ -34,10 +34,7 @@ class DocumentManagerTest extends TestCase
         $this->documentManager = new DocumentManager($this->mongoClient, $this->mongoDatabase, $this->repositoryFactory, $this->logger, true);
     }
 
-    /**
-     * @test
-     */
-    public function getRepository()
+    public function testGetRepository()
     {
         $this->repositoryFactory->method("getRepository")->willReturn("repository");
 
@@ -50,7 +47,7 @@ class DocumentManagerTest extends TestCase
      * @test
      * unpersist
      */
-    public function persistUnpersist()
+    public function testPersistUnpersist()
     {
         $repositoryMock = $this->createMock(Repository::class);
         $classMetadataMock = $this->createMock(ClassMetadata::class);
@@ -80,11 +77,7 @@ class DocumentManagerTest extends TestCase
         $this->assertEmpty($repositories);
     }
 
-    /**
-     * @test
-     * Remove object
-     */
-    public function addObjectRemoveObject()
+    public function testAddObjectRemoveObject()
     {
         $object = new \stdClass();
         $this->documentManager->addObject($object, DocumentManager::OBJ_NEW, "repository");
@@ -107,11 +100,7 @@ class DocumentManagerTest extends TestCase
         $this->assertEmpty($repositories);
     }
 
-    /**
-     * @test
-     * Clear
-     */
-    public function deleteClear()
+    public function testDeleteClear()
     {
         $object = new \stdClass();
 
@@ -135,10 +124,7 @@ class DocumentManagerTest extends TestCase
         $this->documentManager->remove($object);
     }
 
-    /**
-     * @test
-     */
-    public function flush()
+    public function testFlush()
     {
         $rep = $this->createMock(Repository::class);
         $classMetadataMock = $this->createMock(ClassMetadata::class);

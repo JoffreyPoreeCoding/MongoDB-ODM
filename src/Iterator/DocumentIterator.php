@@ -36,6 +36,8 @@ class DocumentIterator implements Iterator, \Countable
 
     protected $rewindable = false;
 
+    protected $firstCross = true;
+
     public function __construct($data, $objectClass, Repository $repository, $query = [])
     {
         $this->data = $data;
@@ -61,9 +63,10 @@ class DocumentIterator implements Iterator, \Countable
      */
     public function rewind()
     {
-        if (!$this->rewindable) {
+        if (!$this->rewindable && !$this->firstCross) {
             throw new \Exception('Unable to traverse not rewindable iterator multiple time');
         }
+        $this->firstCross = false;
         $this->position = 0;
     }
 

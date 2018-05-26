@@ -8,10 +8,7 @@ use JPC\Test\MongoDB\ODM\Framework\TestCase;
 class UpdateQueryCreatorTest extends TestCase
 {
 
-    /**
-     * @test
-     */
-    public function createUpdateQuery()
+    public function testCreateUpdateQuery()
     {
         $old = [
             "same" => "value",

@@ -18,22 +18,14 @@ class ClassMetadataFactoryTest extends TestCase
         $this->classMetadataFactory = new ClassMetadataFactory();
     }
 
-    /**
-     * @test
-     * Inexisting Class
-     */
-    public function getMetadataForClassInexisting()
+    public function testGetMetadataForClassInexisting()
     {
         $this->expectException(\Exception::class);
 
         $this->classMetadataFactory->getMetadataForClass("Inexisting");
     }
 
-    /**
-     * @test
-     * Existing class
-     */
-    public function getMetadataForClass()
+    public function testGetMetadataForClass()
     {
         $classMeta = $this->classMetadataFactory->getMetadataForClass("stdClass");
 

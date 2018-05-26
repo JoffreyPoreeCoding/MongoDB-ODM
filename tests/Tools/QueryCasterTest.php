@@ -16,10 +16,7 @@ class QueryCasterTest extends TestCase
      */
     private $queryCaster;
 
-    /**
-     * @test
-     */
-    public function castQuery()
+    public function testCastQuery()
     {
         $metadata = $this->createMetadataMock();
 

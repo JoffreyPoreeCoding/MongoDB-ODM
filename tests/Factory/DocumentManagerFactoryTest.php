@@ -9,10 +9,7 @@ use JPC\Test\MongoDB\ODM\Framework\TestCase;
 class DocumentManagerFactoryTest extends TestCase
 {
 
-    /**
-     * @test
-     */
-    public function createDocumentManager()
+    public function testCreateDocumentManager()
     {
         $documentManagerFactory = new DocumentManagerFactory();
         $documentManager = $documentManagerFactory->createDocumentManager("mongodb://localhost", "test");

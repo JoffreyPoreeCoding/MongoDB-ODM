@@ -36,6 +36,7 @@ class RepositoryTest extends TestCase
 
     public function setUp()
     {
+        parent::setup();
         $this->documentManagerMock = $this->createMock(DocumentManager::class);
         $this->documentManagerMock->method('getDefaultOptions')->willReturn(['iterator' => true]);
 
@@ -55,10 +56,7 @@ class RepositoryTest extends TestCase
             ->disallowMockingUnknownTypes();
     }
 
-    /**
-     * @test
-     */
-    public function count()
+    public function testCount()
     {
         $repository = $this->repositoryMockBuilder
             ->setMethods(["castQuery"])->getMock();
@@ -71,10 +69,7 @@ class RepositoryTest extends TestCase
         $this->assertEquals(10, $count);
     }
 
-    /**
-     * @test
-     */
-    public function distinctNoField()
+    public function testDistinctNoField()
     {
         $repository = $this->repositoryMockBuilder
             ->setMethods(["castQuery", "log"])
@@ -93,10 +88,7 @@ class RepositoryTest extends TestCase
         $repository->distinct("inexisting", ["filter" => "value"], ["option" => "value"]);
     }
 
-    /**
-     * @test
-     */
-    public function distinctProperty()
+    public function testDistinctProperty()
     {
         $repository = $this->repositoryMockBuilder
             ->setMethods(["castQuery", "log"])
@@ -123,10 +115,7 @@ class RepositoryTest extends TestCase
         $repository->distinct("property", ["filter" => "value"], ["option" => "value"]);
     }
 
-    /**
-     * @test
-     */
-    public function distinctField()
+    public function testDistinctField()
     {
         $repository = $this->repositoryMockBuilder
             ->setMethods(["castQuery", "log"])
@@ -152,10 +141,7 @@ class RepositoryTest extends TestCase
         $repository->distinct("field", ["filter" => "value"], ["option" => "value"]);
     }
 
-    /**
-     * @test
-     */
-    public function findNoResult()
+    public function testFindNoResult()
     {
         $repository = $this->repositoryMockBuilder
             ->setMethods(["createOption", "log"])->getMock();
@@ -171,10 +157,7 @@ class RepositoryTest extends TestCase
         $this->assertNull($result);
     }
 
-    /**
-     * @test
-     */
-    public function find()
+    public function testFind()
     {
         $repository = $this->repositoryMockBuilder
             ->setMethods(["createOption", "log", "createObject"])->getMock();
@@ -192,10 +175,7 @@ class RepositoryTest extends TestCase
         $this->assertTrue($result);
     }
 
-    /**
-     * @test
-     */
-    public function findAllNoResult()
+    public function testFindAllNoResult()
     {
         $repository = $this->repositoryMockBuilder
             ->setMethods(["createOption", "log"])->getMock();
@@ -211,10 +191,7 @@ class RepositoryTest extends TestCase
         $this->assertEquals([], $result);
     }
 
-    /**
-     * @test
-     */
-    public function findAll()
+    public function testFindAll()
     {
         $repository = $this->repositoryMockBuilder
             ->setMethods(["createOption", "log", "createObject"])->getMock();
@@ -236,10 +213,7 @@ class RepositoryTest extends TestCase
         $this->assertEquals([4, 5, 6], $result);
     }
 
-    /**
-     * @test
-     */
-    public function findByNoResult()
+    public function testFindByNoResult()
     {
         $repository = $this->repositoryMockBuilder
             ->setMethods(["createOption", "log", "castQuery"])->getMock();
@@ -257,10 +231,7 @@ class RepositoryTest extends TestCase
         $this->assertEquals([], $result);
     }
 
-    /**
-     * @test
-     */
-    public function findBy()
+    public function testFindBy()
     {
         $repository = $this->repositoryMockBuilder
             ->setMethods(["createOption", "log", "castQuery", "createObject"])->getMock();
@@ -284,10 +255,7 @@ class RepositoryTest extends TestCase
         $this->assertEquals([4, 5, 6], $result);
     }
 
-    /**
-     * @test
-     */
-    public function findOneByNoResult()
+    public function testFindOneByNoResult()
     {
         $repository = $this->repositoryMockBuilder
             ->setMethods(["createOption", "log", "castQuery"])->getMock();
@@ -305,10 +273,7 @@ class RepositoryTest extends TestCase
         $this->assertNull($result);
     }
 
-    /**
-     * @test
-     */
-    public function findOneBy()
+    public function testFindOneBy()
     {
         $repository = $this->repositoryMockBuilder
             ->setMethods(["createOption", "log", "createObject", "castQuery"])->getMock();
@@ -328,10 +293,7 @@ class RepositoryTest extends TestCase
         $this->assertTrue($result);
     }
 
-    /**
-     * @test
-     */
-    public function findAndModifyOneByNoResult()
+    public function testFindAndModifyOneByNoResult()
     {
         $repository = $this->repositoryMockBuilder
             ->setMethods(["createOption", "log", "castQuery"])->getMock();
@@ -352,10 +314,7 @@ class RepositoryTest extends TestCase
         $this->assertNull($result);
     }
 
-    /**
-     * @test
-     */
-    public function findAndModifyOneBy()
+    public function testFindAndModifyOneBy()
     {
         $repository = $this->repositoryMockBuilder
             ->setMethods(["createOption", "log", "castQuery", "createObject"])->getMock();
@@ -378,10 +337,7 @@ class RepositoryTest extends TestCase
         $this->assertTrue($result);
     }
 
-    /**
-     * @test
-     */
-    public function getTailableCursor()
+    public function testGetTailableCursor()
     {
         $repository = $this->repositoryMockBuilder->setMethods(["castQuery"])->getMock();
 
@@ -394,10 +350,7 @@ class RepositoryTest extends TestCase
         $this->assertTrue($result);
     }
 
-    /**
-     * @test
-     */
-    public function insertOne()
+    public function testInsertOne()
     {
         $repository = $this->repositoryMockBuilder->setMethods(["cacheObject"])->getMock();
 
@@ -424,10 +377,7 @@ class RepositoryTest extends TestCase
     /**
      * @TODO("VERIFIER SI DOCUMENT MANAGER addObject et setOBjectState are called")
      */
-    /**
-     * @test
-     */
-    public function insertMany()
+    public function testInsertMany()
     {
         $repository = $this->repositoryMockBuilder->setMethods(["cacheObject"])->getMock();
 
@@ -461,10 +411,7 @@ class RepositoryTest extends TestCase
         $this->assertEquals("value", $documentThree->field);
     }
 
-    /**
-     * @test
-     */
-    public function updateOne()
+    public function testUpdateOne()
     {
         $this->classMetadataMock->method("getName")->willReturn("stdClass");
         $repository = $this->repositoryMockBuilder->setMethods(["castQuery", "getUpdateQuery"])->getMock();
@@ -486,10 +433,7 @@ class RepositoryTest extends TestCase
         $this->assertTrue($result);
     }
 
-    /**
-     * @test
-     */
-    public function updateOneBadObject()
+    public function testUpdateOneBadObject()
     {
         $this->classMetadataMock->method("getName")->willReturn("anotherObject");
         $repository = $this->repositoryMockBuilder->setMethods(null)->getMock();
@@ -501,10 +445,7 @@ class RepositoryTest extends TestCase
         $repository->updateOne($document, [], ["option" => "value"]);
     }
 
-    /**
-     * @test
-     */
-    public function updateOneEmptyUpdateQuery()
+    public function testUpdateOneEmptyUpdateQuery()
     {
         $this->classMetadataMock->method("getName")->willReturn("stdClass");
         $repository = $this->repositoryMockBuilder->setMethods(["castQuery", "getUpdateQuery"])->getMock();
@@ -525,10 +466,7 @@ class RepositoryTest extends TestCase
         $this->assertTrue($result);
     }
 
-    /**
-     * @test
-     */
-    public function updateOneWithFilter()
+    public function testUpdateOneWithFilter()
     {
         $this->classMetadataMock->method("getName")->willReturn("stdClass");
         $repository = $this->repositoryMockBuilder->setMethods(["castQuery", "getUpdateQuery"])->getMock();
@@ -548,10 +486,7 @@ class RepositoryTest extends TestCase
         $this->assertTrue($result);
     }
 
-    /**
-     * @test
-     */
-    public function updateMany()
+    public function testUpdateMany()
     {
         $repository = $this->repositoryMockBuilder->setMethods(["castQuery"])->getMock();
 
@@ -565,10 +500,7 @@ class RepositoryTest extends TestCase
         $this->assertTrue($repository->updateMany(["filter" => "value"], ["update" => "value"], ["option" => "value"]));
     }
 
-    /**
-     * @test
-     */
-    public function deleteOne()
+    public function testDeleteOne()
     {
         $repository = $this->repositoryMockBuilder->setMethods(null)->getMock();
 
@@ -586,10 +518,7 @@ class RepositoryTest extends TestCase
         $this->assertTrue($result);
     }
 
-    /**
-     * @test
-     */
-    public function deleteMany()
+    public function testDeleteMany()
     {
         $repository = $this->repositoryMockBuilder->setMethods(["castQuery"])->getMock();
 
@@ -608,10 +537,7 @@ class RepositoryTest extends TestCase
         $this->assertEquals(3, $result);
     }
 
-    /**
-     * @test
-     */
-    public function getUpdateQuery()
+    public function testDetUpdateQuery()
     {
         $repository = $this->repositoryMockBuilder->setMethods(["uncacheObject"])->getMock();
 

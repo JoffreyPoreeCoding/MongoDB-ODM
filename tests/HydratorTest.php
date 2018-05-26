@@ -29,10 +29,7 @@ class HydratorTest extends TestCase
         $this->hydrator = new Hydrator($classMetadataFactory, $classMetadata, $documentManager, $this->repositoryFactory);
     }
 
-    /**
-     * @test
-     */
-    public function hydrate()
+    public function testHydrate()
     {
         $repository = $this->createMock(Repository::class);
         $collection = $this->createMock(Collection::class);
@@ -94,10 +91,7 @@ class HydratorTest extends TestCase
         $object->setId("reference");
     }
 
-    /**
-     * @test
-     */
-    public function unhydrate()
+    public function testUnhydrate()
     {
         $reference = new ObjectMapping();
         $reference->setId("reference");
