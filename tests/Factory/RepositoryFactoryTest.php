@@ -13,30 +13,35 @@ use JPC\Test\MongoDB\ODM\Framework\TestCase;
 use MongoDB\Collection;
 use MongoDB\Database;
 
-class RepositoryFactoryTest extends TestCase {
+class RepositoryFactoryTest extends TestCase
+{
 
-	public function test_getRepository(){
-		$documentManager = $this->createMock(DocumentManager::class);
-		$classMetadataFactory = $this->createMock(ClassMetadataFactory::class);
-		$classMetadata = $this->createMock(ClassMetadata::class);
-		$hydrator = $this->createMock(Hydrator::class);
+    /**
+     * @test
+     */
+    public function getRepository()
+    {
+        $documentManager = $this->createMock(DocumentManager::class);
+        $classMetadataFactory = $this->createMock(ClassMetadataFactory::class);
+        $classMetadata = $this->createMock(ClassMetadata::class);
+        $hydrator = $this->createMock(Hydrator::class);
 
-		$database = $this->createMock(Database::class);
-		$database->method("listCollections")->willReturn([]);
-		$database->method("selectCollection")->willReturn($this->createMock(Collection::class));
+        $database = $this->createMock(Database::class);
+        $database->method("listCollections")->willReturn([]);
+        $database->method("selectCollection")->willReturn($this->createMock(Collection::class));
 
-		$documentManager->method("getDatabase")->willReturn($database);
+        $documentManager->method("getDatabase")->willReturn($database);
 
-		$classMetadata->method("getRepositoryClass")->willReturn(Repository::class);
-		$classMetadata->method("getHydratorClass")->willReturn(get_class($hydrator));
-		$classMetadata->method("getCollectionCreationOptions")->willReturn(["capped" => true]);
-		$classMetadata->method("getCollectionOptions")->willReturn(["writeConcern" => "majority"]);
+        $classMetadata->method("getRepositoryClass")->willReturn(Repository::class);
+        $classMetadata->method("getHydratorClass")->willReturn(get_class($hydrator));
+        $classMetadata->method("getCollectionCreationOptions")->willReturn(["capped" => true]);
+        $classMetadata->method("getCollectionOptions")->willReturn(["writeConcern" => "majority"]);
 
-		$classMetadataFactory->method("getMetadataForClass")->willReturn($classMetadata);
+        $classMetadataFactory->method("getMetadataForClass")->willReturn($classMetadata);
 
-		$repositoryFactory = new RepositoryFactory(new ArrayCache(), $classMetadataFactory);
-		$repository = $repositoryFactory->getRepository($documentManager, "MyModel", "collection");
+        $repositoryFactory = new RepositoryFactory(new ArrayCache(), $classMetadataFactory);
+        $repository = $repositoryFactory->getRepository($documentManager, "MyModel", "collection");
 
-		$this->assertInstanceOf(Repository::class, $repository);
-	}
+        $this->assertInstanceOf(Repository::class, $repository);
+    }
 }

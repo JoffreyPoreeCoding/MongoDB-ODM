@@ -16,77 +16,84 @@ use MongoDB\GridFS\Bucket;
 /**
  * @author poree
  */
-class Repository extends BaseRepository {
+class Repository extends BaseRepository
+{
 
     /**
      * GridFS Bucket
-     * @var \MongoDB\GridFS\Bucket 
+     * @var \MongoDB\GridFS\Bucket
      */
     protected $bucket;
 
-    public function __construct(DocumentManager $documentManager, Collection $collection, ClassMetadata $classMetadata, Hydrator $hydrator, QueryCaster $queryCaster = null, UpdateQueryCreator $uqc = null, CacheProvider $objectCache = null, Bucket $bucket = null) {
+    public function __construct(DocumentManager $documentManager, Collection $collection, ClassMetadata $classMetadata, Hydrator $hydrator, QueryCaster $queryCaster = null, UpdateQueryCreator $uqc = null, CacheProvider $objectCache = null, Bucket $bucket = null)
+    {
 
         parent::__construct($documentManager, $collection, $classMetadata, $hydrator, $queryCaster, $uqc, $objectCache);
 
-        if(!is_subclass_of($this->modelName, Document::class)){
+        if (!is_subclass_of($this->modelName, Document::class)) {
             throw new MappingException("Model must extends '" . Document::class . "'.");
         }
 
         $this->bucket = $bucket;
-        if(!isset($this->bucket)){
+        if (!isset($this->bucket)) {
             $this->bucket = $documentManager->getDatabase()->selectGridFSBucket(["bucketName" => $this->classMetadata->getBucketName()]);
         }
     }
 
-    public function getBucket() {
+    public function getBucket()
+    {
         return $this->bucket;
     }
 
-    public function find($id, $projections = array(), $options = array()) {
-        if(null !== ($object = parent::find($id, $projections, $options))){
+    public function find($id, $projections = array(), $options = array())
+    {
+        if (null !== ($object = parent::find($id, $projections, $options))) {
             $data["stream"] = $this->bucket->openDownloadStream($object->getId());
             $this->hydrator->hydrate($object, $data);
             return $object;
         }
     }
 
-    public function findAll($projections = array(), $sorts = array(), $options = array()) {
+    public function findAll($projections = array(), $sorts = array(), $options = array())
+    {
         $options = $this->createOption($projections, $sorts, $options);
-        if(!isset($options['iterator']) || $options['iterator'] === false){
+        if (!isset($options['iterator']) || $options['iterator'] === false) {
             $objects = parent::findAll($projections, $sorts, $options);
-            foreach($objects as $object){
+            foreach ($objects as $object) {
                 $data["stream"] = $this->bucket->openDownloadStream($object->getId());
                 $this->hydrator->hydrate($object, $data);
             }
             return $objects;
         } else {
-            if(!is_string($options['iterator'])){
+            if (!is_string($options['iterator'])) {
                 $options['iterator'] = GridFSDocumentIterator::class;
             }
             return parent::findAll($projections, $sorts, $options);
         }
     }
 
-    public function findBy($filters, $projections = array(), $sorts = array(), $options = array()) {
+    public function findBy($filters, $projections = array(), $sorts = array(), $options = array())
+    {
         $options = $this->createOption($projections, $sorts, $options);
-        if(!isset($options['iterator']) || $options['iterator'] === false){
+        if (!isset($options['iterator']) || $options['iterator'] === false) {
             $objects = parent::findBy($filters, $projections, $sorts, $options);
-            foreach($objects as $object){
+            foreach ($objects as $object) {
                 $data["stream"] = $this->bucket->openDownloadStream($object->getId());
                 $this->hydrator->hydrate($object, $data);
             }
             return $objects;
         } else {
-            if(!is_string($options['iterator'])){
+            if (!is_string($options['iterator'])) {
                 $options['iterator'] = GridFSDocumentIterator::class;
             }
             return parent::findBy($filters, $projections, $sorts, $options);
         }
     }
 
-    public function findOneBy($filters = array(), $projections = array(), $sorts = array(), $options = array()) {
+    public function findOneBy($filters = array(), $projections = array(), $sorts = array(), $options = array())
+    {
         $object = parent::findOneBy($filters, $projections, $sorts, $options);
-        
+
         if (isset($object)) {
             $data["stream"] = $this->bucket->openDownloadStream($object->getId());
             $this->hydrator->hydrate($object, $data);
@@ -104,7 +111,8 @@ class Repository extends BaseRepository {
      * @param   array                   $options            Options for the query
      * @return  array                                       Array containing all the document of the collection
      */
-    public function findAndModifyOneBy($filters = [], $update = [], $projections = [], $sorts = [], $options = []) {
+    public function findAndModifyOneBy($filters = [], $update = [], $projections = [], $sorts = [], $options = [])
+    {
         $object = parent::findAndModifyOneBy($filters, $update, $projections, $sorts, $options);
 
         if (isset($object)) {
@@ -114,11 +122,13 @@ class Repository extends BaseRepository {
         }
     }
 
-    public function drop() {
+    public function drop()
+    {
         $this->bucket->drop();
     }
 
-    public function cacheObject($object) {
+    public function cacheObject($object)
+    {
         if (is_object($object)) {
             $unhyd = $this->hydrator->unhydrate($object);
             unset($unhyd["stream"]);
@@ -126,17 +136,19 @@ class Repository extends BaseRepository {
         }
     }
 
-    protected function uncacheObject($object) {
+    protected function uncacheObject($object)
+    {
         return $this->objectCache->fetch(spl_object_hash($object));
     }
 
-    public function insertOne($document, $options = []){
+    public function insertOne($document, $options = [])
+    {
         $objectDatas = $this->hydrator->unhydrate($document);
 
         $stream = $objectDatas["stream"];
         unset($objectDatas["stream"]);
 
-        if(!isset($objectDatas["filename"])){
+        if (!isset($objectDatas["filename"])) {
             $filename = stream_get_meta_data($stream)["uri"];
         } else {
             $filename = $objectDatas["filename"];
@@ -154,9 +166,10 @@ class Repository extends BaseRepository {
         return true;
     }
 
-    public function insertMany($documents, $options = []){
-        foreach($documents as $document){
-            if(!$this->insertOne($document)){
+    public function insertMany($documents, $options = [])
+    {
+        foreach ($documents as $document) {
+            if (!$this->insertOne($document)) {
                 return false;
             }
         }
@@ -164,7 +177,8 @@ class Repository extends BaseRepository {
         return true;
     }
 
-    public function deleteOne($document, $options = []){
+    public function deleteOne($document, $options = [])
+    {
         $unhydratedObject = $this->hydrator->unhydrate($document);
 
         $id = $unhydratedObject["_id"];
@@ -172,11 +186,13 @@ class Repository extends BaseRepository {
         $this->bucket->delete($id);
     }
 
-    public function deleteMany($filter, $options = []){
+    public function deleteMany($filter, $options = [])
+    {
         throw new \JPC\MongoDB\ODM\GridFS\Exception\DeleteManyException();
     }
 
-    protected function getUpdateQuery($document){
+    protected function getUpdateQuery($document)
+    {
         $updateQuery = [];
         $old = $this->uncacheObject($document);
         $new = $this->hydrator->unhydrate($document);

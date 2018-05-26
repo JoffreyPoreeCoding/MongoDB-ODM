@@ -2,18 +2,16 @@
 
 namespace JPC\MongoDB\ODM\Iterator;
 
-use JPC\MongoDB\ODM\DocumentManager;
 use JPC\MongoDB\ODM\Iterator\DocumentIterator;
 use JPC\MongoDB\ODM\Repository;
-use JPC\MongoDB\ODM\Tools\EventManager;
-use MongoDB\Driver\Cursor;
 
-class GridFSDocumentIterator extends DocumentIterator {
+class GridFSDocumentIterator extends DocumentIterator
+{
 
     /**
      * Returns the current element.
      *
-     * @return \PHPUnit_Framework_Test
+     * @return mixed
      */
     public function current()
     {

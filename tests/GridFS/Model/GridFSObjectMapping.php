@@ -2,21 +2,21 @@
 
 namespace JPC\Test\MongoDB\ODM\GridFS\Model;
 
-use JPC\MongoDB\ODM\GridFS\Annotations\Mapping as GFS;
 use JPC\MongoDB\ODM\Annotations\Mapping as ODM;
+use JPC\MongoDB\ODM\GridFS\Annotations\Mapping as GFS;
 use JPC\MongoDB\ODM\GridFS\Document;
 
 /**
  * @GFS\Document("gridfs_mapping")
  */
-class GridFSObjectMapping extends Document {
+class GridFSObjectMapping extends Document
+{
 
-	/**
-	 * @ODM\Field("simple_metadata")
-	 * @GFS\Metadata
-	 */
-	private $simpleMetadata;
-
+    /**
+     * @ODM\Field("simple_metadata")
+     * @GFS\Metadata
+     */
+    private $simpleMetadata;
 
     /**
      * Gets the value of simpleMetadata.

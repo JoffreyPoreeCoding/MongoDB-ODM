@@ -7,7 +7,8 @@ use JPC\MongoDB\ODM\Factory\ClassMetadataFactory;
 use JPC\MongoDB\ODM\Factory\RepositoryFactory;
 use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
 
-class Hydrator {
+class Hydrator
+{
 
     /**
      * Document Manager
@@ -25,7 +26,7 @@ class Hydrator {
      * Document Manager
      * @var DocumentManager
      */
-    protected $documentManager; 
+    protected $documentManager;
 
     /**
      * Repository factory (Used for referenced fields)
@@ -38,7 +39,8 @@ class Hydrator {
      * @param   DocumentManager     $classMetadataFactory    Document manager of the repository
      * @param   ClassMetadata       $classMetadata      Class metadata corresponding to class
      */
-    function __construct(ClassMetadataFactory $classMetadataFactory, ClassMetadata $classMetadata, DocumentManager $documentManager, RepositoryFactory $repositoryFactory) {
+    public function __construct(ClassMetadataFactory $classMetadataFactory, ClassMetadata $classMetadata, DocumentManager $documentManager, RepositoryFactory $repositoryFactory)
+    {
         $this->classMetadataFactory = $classMetadataFactory;
         $this->classMetadata = $classMetadata;
         $this->documentManager = $documentManager;
@@ -50,8 +52,9 @@ class Hydrator {
      * @param   object              $object             Object to hydrate
      * @param   array               $datas              Data which will hydrate the object
      */
-    function hydrate(&$object, $datas, $maxReferenceDeep = 10) {
-        if($datas instanceof \MongoDB\Model\BSONArray || $datas instanceof \MongoDB\Model\BSONDocument){
+    public function hydrate(&$object, $datas, $maxReferenceDeep = 10)
+    {
+        if ($datas instanceof \MongoDB\Model\BSONArray || $datas instanceof \MongoDB\Model\BSONDocument) {
             $datas = (array) $datas;
         }
         $properties = $this->classMetadata->getPropertiesInfos();
@@ -62,7 +65,7 @@ class Hydrator {
                 $prop->setAccessible(true);
 
                 if ((($datas[$field] instanceof \MongoDB\Model\BSONDocument) || is_array($datas[$field])) && $infos->getEmbedded() && null !== ($class = $infos->getEmbeddedClass())) {
-                    if(!class_exists($class)){
+                    if (!class_exists($class)) {
                         $class = $this->classMetadata->getNamespace() . "\\" . $class;
                     }
                     $embedded = new $class();
@@ -71,12 +74,15 @@ class Hydrator {
                 }
 
                 if ((($datas[$field] instanceof \MongoDB\Model\BSONArray) || ($datas[$field] instanceof \MongoDB\Model\BSONDocument) || is_array($datas[$field])) && $infos->getMultiEmbedded() && null !== ($class = $infos->getEmbeddedClass())) {
-                    if(!class_exists($class)){
+                    if (!class_exists($class)) {
                         $class = $this->classMetadata->getNamespace() . "\\" . $class;
                     }
                     $array = [];
                     foreach ($datas[$field] as $key => $value) {
-                        if($value === null) continue;
+                        if ($value === null) {
+                            continue;
+                        }
+
                         $embedded = new $class();
                         $this->getHydrator($class)->hydrate($embedded, $value);
                         $array[$key] = $embedded;
@@ -84,16 +90,16 @@ class Hydrator {
                     $datas[$field] = $array;
                 }
 
-                if(null !== ($refInfos = $infos->getReferenceInfo()) && !$refInfos->getIsMultiple() && $maxReferenceDeep > 0){
+                if (null !== ($refInfos = $infos->getReferenceInfo()) && !$refInfos->getIsMultiple() && $maxReferenceDeep > 0) {
                     $repository = $this->repositoryFactory->getRepository($this->documentManager, $refInfos->getDocument(), $refInfos->getCollection());
 
                     $objectDatas = $repository->getCollection()->findOne(["_id" => $datas[$field]]);
                     $referedObject = null;
 
-                    if(isset($objectDatas)){
+                    if (isset($objectDatas)) {
                         $class = $refInfos->getDocument();
 
-                        if(!class_exists($class)){
+                        if (!class_exists($class)) {
                             $class = $this->classMetadata->getNamespace() . "\\" . $class;
                         }
 
@@ -101,16 +107,14 @@ class Hydrator {
 
                         $hydrator = $repository->getHydrator();
                         $hydrator->hydrate($referedObject, $objectDatas, $maxReferenceDeep - 1);
-
                     }
                     $datas[$field] = $referedObject;
                 }
 
-                if(null !== ($refInfos = $infos->getReferenceInfo()) && $refInfos->getIsMultiple()){
+                if (null !== ($refInfos = $infos->getReferenceInfo()) && $refInfos->getIsMultiple()) {
                     $repository = $this->repositoryFactory->getRepository($this->documentManager, $refInfos->getDocument(), $refInfos->getCollection());
 
-
-                    if(!$datas[$field] instanceof \MongoDB\Model\BSONArray && !is_array($datas[$field])){
+                    if (!$datas[$field] instanceof \MongoDB\Model\BSONArray && !is_array($datas[$field])) {
                         throw new \Exception("RefersMany value must be an array for document with '_id' : " . $datas["_id"]);
                     } else {
                         $objectsDatas = $repository->getCollection()->find(["_id" => ['$in' => $datas[$field]]]);
@@ -118,12 +122,12 @@ class Hydrator {
 
                     $objectArray = null;
 
-                    if(!empty($objectsDatas)){
+                    if (!empty($objectsDatas)) {
                         $objectArray = [];
-                        foreach($objectsDatas as $objectDatas){
+                        foreach ($objectsDatas as $objectDatas) {
                             $class = $refInfos->getDocument();
 
-                            if(!class_exists($class)){
+                            if (!class_exists($class)) {
                                 $class = $this->classMetadata->getNamespace() . "\\" . $class;
                             }
 
@@ -148,11 +152,12 @@ class Hydrator {
      * @param   object              $object             Object to unhydrate
      * @return  array               Unhydrated Object
      */
-    function unhydrate($object) {
+    public function unhydrate($object)
+    {
         $properties = $this->classMetadata->getPropertiesInfos();
         $datas = [];
 
-        if(!is_object($object)){
+        if (!is_object($object)) {
             return $object;
         }
 
@@ -162,17 +167,17 @@ class Hydrator {
 
             $value = $prop->getValue($object);
 
-            if(null === $value){
+            if (null === $value) {
                 continue;
             }
 
-            if(($value instanceof \MongoDB\Model\BSONDocument) || ($value instanceof \MongoDB\Model\BSONArray)){
+            if (($value instanceof \MongoDB\Model\BSONDocument) || ($value instanceof \MongoDB\Model\BSONArray)) {
                 $value = $this->recursiveConvertInArray((array) $value);
             }
 
             if (is_object($value) && $infos->getEmbedded()) {
                 $class = $infos->getEmbeddedClass();
-                if(!class_exists($class)){
+                if (!class_exists($class)) {
                     $class = $this->classMetadata->getNamespace() . "\\" . $class;
                 }
                 $value = $this->getHydrator($class)->unhydrate($value);
@@ -182,7 +187,7 @@ class Hydrator {
                 $array = [];
                 foreach ($value as $key => $embeddedValue) {
                     $class = $infos->getEmbeddedClass();
-                    if(!class_exists($class)){
+                    if (!class_exists($class)) {
                         $class = $this->classMetadata->getNamespace() . "\\" . $class;
                     }
                     $array[$key] = $this->getHydrator($class)->unhydrate($embeddedValue);
@@ -190,9 +195,9 @@ class Hydrator {
                 $value = $array;
             }
 
-            if(is_object($value) && null != ($refInfos = $infos->getReferenceInfo()) && !$refInfos->getIsMultiple() && !$value instanceof \MongoDB\BSON\ObjectId) {
+            if (is_object($value) && null != ($refInfos = $infos->getReferenceInfo()) && !$refInfos->getIsMultiple() && !$value instanceof \MongoDB\BSON\ObjectId) {
                 $class = $refInfos->getDocument();
-                if(!class_exists($class)){
+                if (!class_exists($class)) {
                     $class = $this->classMetadata->getNamespace() . "\\" . $class;
                 }
 
@@ -203,10 +208,10 @@ class Hydrator {
                 $array = [];
                 foreach ($value as $referedValue) {
                     $class = $refInfos->getDocument();
-                    if(!class_exists($class)){
+                    if (!class_exists($class)) {
                         $class = $this->classMetadata->getNamespace() . "\\" . $class;
                     }
-                    if(!$value instanceof \MongoDB\BSON\ObjectId){
+                    if (!$value instanceof \MongoDB\BSON\ObjectId) {
                         $array[] = $this->getHydrator($class)->unhydrate($referedValue)["_id"];
                     } else {
                         $array[] = $value;
@@ -215,7 +220,7 @@ class Hydrator {
                 $value = $array;
             }
 
-            if($value instanceof \DateTime){
+            if ($value instanceof \DateTime) {
                 $value = new \MongoDB\BSON\UTCDateTime($value->getTimestamp() * 1000);
             }
 
@@ -225,14 +230,15 @@ class Hydrator {
         return $datas;
     }
 
-    public function recursiveConvertInArray($array){
+    public function recursiveConvertInArray($array)
+    {
         $newArray = [];
         foreach ($array as $key => $value) {
-            if($value instanceof \MongoDB\Model\BSONDocument || $value instanceof \MongoDB\Model\BSONArray){
+            if ($value instanceof \MongoDB\Model\BSONDocument || $value instanceof \MongoDB\Model\BSONArray) {
                 $value = (array) $value;
             }
 
-            if(is_array($value)){
+            if (is_array($value)) {
                 $value = $this->recursiveConvertInArray($value);
             }
 
@@ -244,13 +250,13 @@ class Hydrator {
 
     /**
      * Get hydrator for specified class
-     * 
+     *
      * @param   string              $class              Class which you will get hydrator
      * @return  Hydrator            Hydrator corresponding to specified class
      */
-    public function getHydrator($class) {
+    public function getHydrator($class)
+    {
         $metadata = $this->classMetadataFactory->getMetadataForClass($class);
         return new Hydrator($this->classMetadataFactory, $metadata, $this->documentManager, $this->repositoryFactory);
     }
-
 }

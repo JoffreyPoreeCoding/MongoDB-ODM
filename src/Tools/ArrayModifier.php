@@ -5,24 +5,26 @@ namespace JPC\MongoDB\ODM\Tools;
 /**
  * Provide functions to modify array
  */
-class ArrayModifier {
+class ArrayModifier
+{
 
     const SPECIALS_KEYS = [];
 
     /**
      * Clear all null values of an array (and sub-arrays)
-     * 
+     *
      * @param   array   $array          Array to clear
-     * 
+     *
      * @return  array   Array cleaned
      */
-    public static function clearNullValues(&$array) {
+    public static function clearNullValues(&$array)
+    {
         foreach ($array as $key => &$value) {
             if (null === $value) {
                 unset($array[$key]);
             } else if (is_array($value)) {
                 self::clearNullValues($value);
-                if(empty($value)){
+                if (empty($value)) {
                     unset($array[$key]);
                 }
             }
@@ -31,7 +33,8 @@ class ArrayModifier {
         return $array;
     }
 
-    public static function aggregate($array, $specialKeys = self::SPECIALS_KEYS, $prefix = '') {
+    public static function aggregate($array, $specialKeys = self::SPECIALS_KEYS, $prefix = '')
+    {
         $new = [];
         foreach ($array as $key => $value) {
             $newKey = (!empty($prefix)) ? $prefix . '.' . $key : $key;
@@ -55,7 +58,8 @@ class ArrayModifier {
         return $new;
     }
 
-    public static function disaggregate($array) {
+    public static function disaggregate($array)
+    {
         $new = [];
         foreach ($array as $key => $val) {
             if (false !== strpos($key, ".")) {
@@ -70,7 +74,8 @@ class ArrayModifier {
         return $new;
     }
 
-    private static function getDisaggregatedValues($keys, $array) {
+    private static function getDisaggregatedValues($keys, $array)
+    {
         $values = [];
         foreach ($keys as $key) {
             $realKey = explode(".", $key, 2)[1];
@@ -78,5 +83,4 @@ class ArrayModifier {
         }
         return $values;
     }
-
 }

@@ -5,129 +5,162 @@ namespace JPC\Test\MongoDB\ODM;
 use JPC\MongoDB\ODM\ObjectManager;
 use JPC\Test\MongoDB\ODM\Framework\TestCase;
 
-class ObjectManagerTest extends TestCase {
+class ObjectManagerTest extends TestCase
+{
 
-	private $objectManager;
+    private $objectManager;
 
-	public function setUp(){
-		$this->objectManager = new ObjectManager();
-	}
+    public function setUp()
+    {
+        $this->objectManager = new ObjectManager();
+    }
 
-	public function test_addObject(){
-		$object = new \stdClass();
-		$this->objectManager->addObject($object);
+    /**
+     * @test
+     */
+    public function addObject()
+    {
+        $object = new \stdClass();
+        $this->objectManager->addObject($object);
 
-		$oid = spl_object_hash($object);
+        $oid = spl_object_hash($object);
 
-		$objects = $this->getPrivatePropValue($this->objectManager, "objects");
-		$objectStates = $this->getPrivatePropValue($this->objectManager, "objectStates");
+        $objects = $this->getPrivatePropValue($this->objectManager, "objects");
+        $objectStates = $this->getPrivatePropValue($this->objectManager, "objectStates");
 
-		$this->assertArrayHasKey($oid, $objects);
-		$this->assertArrayHasKey($oid, $objectStates);
-		$this->assertEquals($object, $objects[$oid]);
-		$this->assertEquals(ObjectManager::OBJ_NEW, $objectStates[$oid]);
-	}
+        $this->assertArrayHasKey($oid, $objects);
+        $this->assertArrayHasKey($oid, $objectStates);
+        $this->assertEquals($object, $objects[$oid]);
+        $this->assertEquals(ObjectManager::OBJ_NEW, $objectStates[$oid]);
+    }
 
-	public function test_removeObject_inexisting(){
-		$object = new \stdClass();
+    /**
+     * @test
+     */
+    public function removeObjectInexisting()
+    {
+        $object = new \stdClass();
 
-		$this->expectException("JPC\MongoDB\ODM\Exception\StateException");
-		$this->objectManager->removeObject($object);
-	}
+        $this->expectException("JPC\MongoDB\ODM\Exception\StateException");
+        $this->objectManager->removeObject($object);
+    }
 
-	public function test_removeObject(){
-		$object = new \stdClass();
-		$this->objectManager->addObject($object);
+    /**
+     * @test
+     */
+    public function removeObject()
+    {
+        $object = new \stdClass();
+        $this->objectManager->addObject($object);
 
-		$oid = spl_object_hash($object);
-		$this->objectManager->removeObject($object);
+        $oid = spl_object_hash($object);
+        $this->objectManager->removeObject($object);
 
-		$objects = $this->getPrivatePropValue($this->objectManager, "objects");
-		$objectStates = $this->getPrivatePropValue($this->objectManager, "objectStates");
+        $objects = $this->getPrivatePropValue($this->objectManager, "objects");
+        $objectStates = $this->getPrivatePropValue($this->objectManager, "objectStates");
 
-		$this->assertArrayNotHasKey($oid, $objects);
-		$this->assertArrayNotHasKey($oid, $objectStates);
-	}
+        $this->assertArrayNotHasKey($oid, $objects);
+        $this->assertArrayNotHasKey($oid, $objectStates);
+    }
 
-	public function test_setObjectState_Ok(){
-		$object = new \stdClass();
-		$this->objectManager->addObject($object);
+    /**
+     * @test
+     */
+    public function setObjectStateOk()
+    {
+        $object = new \stdClass();
+        $this->objectManager->addObject($object);
 
-		$oid = spl_object_hash($object);
+        $oid = spl_object_hash($object);
 
-		$this->objectManager->setObjectState($object, ObjectManager::OBJ_MANAGED);
-		$objectStates = $this->getPrivatePropValue($this->objectManager, "objectStates");
-		$this->assertEquals(ObjectManager::OBJ_MANAGED, $objectStates[$oid]);
+        $this->objectManager->setObjectState($object, ObjectManager::OBJ_MANAGED);
+        $objectStates = $this->getPrivatePropValue($this->objectManager, "objectStates");
+        $this->assertEquals(ObjectManager::OBJ_MANAGED, $objectStates[$oid]);
 
-		$this->objectManager->setObjectState($object, ObjectManager::OBJ_REMOVED);
-		$objectStates = $this->getPrivatePropValue($this->objectManager, "objectStates");
-		$this->assertEquals(ObjectManager::OBJ_REMOVED, $objectStates[$oid]);
-	}
+        $this->objectManager->setObjectState($object, ObjectManager::OBJ_REMOVED);
+        $objectStates = $this->getPrivatePropValue($this->objectManager, "objectStates");
+        $this->assertEquals(ObjectManager::OBJ_REMOVED, $objectStates[$oid]);
+    }
 
-	public function test_setObjectState_Nok(){
-		$object = new \stdClass();
-		$this->objectManager->addObject($object);
+    /**
+     * @test
+     */
+    public function setObjectStateNok()
+    {
+        $object = new \stdClass();
+        $this->objectManager->addObject($object);
 
-		$oid = spl_object_hash($object);
+        $oid = spl_object_hash($object);
 
-		$this->expectException("JPC\MongoDB\ODM\Exception\StateException");
-		$this->objectManager->setObjectState($object, ObjectManager::OBJ_REMOVED);
-		$objectStates = $this->getPrivatePropValue($this->objectManager, "objectStates");
-	}
+        $this->expectException("JPC\MongoDB\ODM\Exception\StateException");
+        $this->objectManager->setObjectState($object, ObjectManager::OBJ_REMOVED);
+        $objectStates = $this->getPrivatePropValue($this->objectManager, "objectStates");
+    }
 
-	public function test_getObjectState(){
-		$object = new \stdClass();
-		$this->assertNull($this->objectManager->getObjectState($object));
-		$this->objectManager->addObject($object);
-		$this->assertEquals(ObjectManager::OBJ_NEW, $this->objectManager->getObjectState($object));
-	}
+    /**
+     * @test
+     */
+    public function getObjectState()
+    {
+        $object = new \stdClass();
+        $this->assertNull($this->objectManager->getObjectState($object));
+        $this->objectManager->addObject($object);
+        $this->assertEquals(ObjectManager::OBJ_NEW, $this->objectManager->getObjectState($object));
+    }
 
-	public function test_getObject(){
-		$object1 = new \stdClass();
-		$this->objectManager->addObject($object1);
+    /**
+     * @test
+     */
+    public function getObject()
+    {
+        $object1 = new \stdClass();
+        $this->objectManager->addObject($object1);
 
-		$object2 = new \stdClass();
-		$this->objectManager->addObject($object2, ObjectManager::OBJ_MANAGED);
-		$object3 = new \stdClass();
-		$this->objectManager->addObject($object3, ObjectManager::OBJ_MANAGED);
+        $object2 = new \stdClass();
+        $this->objectManager->addObject($object2, ObjectManager::OBJ_MANAGED);
+        $object3 = new \stdClass();
+        $this->objectManager->addObject($object3, ObjectManager::OBJ_MANAGED);
 
-		$object4 = new \stdClass();
-		$this->objectManager->addObject($object4, ObjectManager::OBJ_REMOVED);
-		$object5 = new \stdClass();
-		$this->objectManager->addObject($object5, ObjectManager::OBJ_REMOVED);
-		$object6 = new \stdClass();
-		$this->objectManager->addObject($object6, ObjectManager::OBJ_REMOVED);
+        $object4 = new \stdClass();
+        $this->objectManager->addObject($object4, ObjectManager::OBJ_REMOVED);
+        $object5 = new \stdClass();
+        $this->objectManager->addObject($object5, ObjectManager::OBJ_REMOVED);
+        $object6 = new \stdClass();
+        $this->objectManager->addObject($object6, ObjectManager::OBJ_REMOVED);
 
-		$this->assertCount(6, $this->objectManager->getObject());
-		$this->assertCount(1, $this->objectManager->getObject(ObjectManager::OBJ_NEW));
-		$this->assertCount(2, $this->objectManager->getObject(ObjectManager::OBJ_MANAGED));
-		$this->assertCount(3, $this->objectManager->getObject(ObjectManager::OBJ_REMOVED));
-	}
+        $this->assertCount(6, $this->objectManager->getObject());
+        $this->assertCount(1, $this->objectManager->getObject(ObjectManager::OBJ_NEW));
+        $this->assertCount(2, $this->objectManager->getObject(ObjectManager::OBJ_MANAGED));
+        $this->assertCount(3, $this->objectManager->getObject(ObjectManager::OBJ_REMOVED));
+    }
 
-	public function test_clear(){
-		$object1 = new \stdClass();
-		$this->objectManager->addObject($object1);
-		$object2 = new \stdClass();
-		$this->objectManager->addObject($object2, ObjectManager::OBJ_MANAGED);
-		$object3 = new \stdClass();
-		$this->objectManager->addObject($object3, ObjectManager::OBJ_MANAGED);
-		$object4 = new \stdClass();
-		$this->objectManager->addObject($object4, ObjectManager::OBJ_REMOVED);
-		$object5 = new \stdClass();
-		$this->objectManager->addObject($object5, ObjectManager::OBJ_REMOVED);
-		$object6 = new \stdClass();
-		$this->objectManager->addObject($object6, ObjectManager::OBJ_REMOVED);
+    /**
+     * @test
+     */
+    public function clear()
+    {
+        $object1 = new \stdClass();
+        $this->objectManager->addObject($object1);
+        $object2 = new \stdClass();
+        $this->objectManager->addObject($object2, ObjectManager::OBJ_MANAGED);
+        $object3 = new \stdClass();
+        $this->objectManager->addObject($object3, ObjectManager::OBJ_MANAGED);
+        $object4 = new \stdClass();
+        $this->objectManager->addObject($object4, ObjectManager::OBJ_REMOVED);
+        $object5 = new \stdClass();
+        $this->objectManager->addObject($object5, ObjectManager::OBJ_REMOVED);
+        $object6 = new \stdClass();
+        $this->objectManager->addObject($object6, ObjectManager::OBJ_REMOVED);
 
-		$this->assertCount(6, $this->getPrivatePropValue($this->objectManager, "objects"));
-		$this->objectManager->clear();
-		$this->assertCount(0, $this->getPrivatePropValue($this->objectManager, "objects"));
+        $this->assertCount(6, $this->getPrivatePropValue($this->objectManager, "objects"));
+        $this->objectManager->clear();
+        $this->assertCount(0, $this->getPrivatePropValue($this->objectManager, "objects"));
+    }
 
-	}
-
-	private function getPrivatePropValue($object, $propertyName){
-		$reflProp = new \ReflectionProperty($object, $propertyName);
-		$reflProp->setAccessible(true);
-		return $reflProp->getValue($object);
-	}
-
+    private function getPrivatePropValue($object, $propertyName)
+    {
+        $reflProp = new \ReflectionProperty($object, $propertyName);
+        $reflProp->setAccessible(true);
+        return $reflProp->getValue($object);
+    }
 }

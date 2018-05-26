@@ -1,30 +1,30 @@
 <?php
 
-
 namespace JPC\MongoDB\ODM\Tools;
 
 use JPC\MongoDB\ODM\Factory\ClassMetadataFactory;
 
-class QueryCaster {
+class QueryCaster
+{
 
     /**
      * Contain all of MongoDD Operators
      * @var array<string>
      */
     protected static $mongoDbQueryOperators;
-    
+
     /**
      * Initial Query
      * @var array
      */
     private $query;
-    
+
     /**
      * Inital class metadata
      * @var ClassMetadata
      */
     private $initialMetadata;
-    
+
     /**
      * last used class metadata by query caster
      * @var ClassMetadata
@@ -37,34 +37,39 @@ class QueryCaster {
      */
     private $classMetadataFactory;
 
-    public function __construct($classMetadata, $classMetadataFactory){
+    public function __construct($classMetadata, $classMetadataFactory)
+    {
         $this->initialMetadata = $classMetadata;
         if (!isset(self::$mongoDbQueryOperators)) {
             $callBack = [$this, 'aggregOnMongoDbOperators'];
             self::$mongoDbQueryOperators = [
-            '$gt' => $callBack, '$lt' => $callBack, '$gte' => $callBack, '$lte' => $callBack, '$eq' => $callBack, '$ne' => $callBack, '$in' => $callBack, '$nin' => $callBack
+                '$gt' => $callBack, '$lt' => $callBack, '$gte' => $callBack, '$lte' => $callBack, '$eq' => $callBack, '$ne' => $callBack, '$in' => $callBack, '$nin' => $callBack,
             ];
         }
         $this->classMetadataFactory = $classMetadataFactory;
     }
 
-    public function init($query) {
+    public function init($query)
+    {
         $this->query = $query;
     }
 
-    public function getCastedQuery() {
+    public function getCastedQuery()
+    {
         $newQuery = $this->castArray($this->query, $this->initialMetadata);
         ArrayModifier::aggregate($newQuery, self::$mongoDbQueryOperators);
         return $newQuery;
     }
 
-    public function getQuery() {
+    public function getQuery()
+    {
         return $this->query;
     }
 
-    private function castArray($array, $classMetadata) {
+    private function castArray($array, $classMetadata)
+    {
         $newQuery = [];
-        if(is_array($array)){
+        if (is_array($array)) {
             foreach ($array as $field => $value) {
                 $field = $this->castDottedString($field, $classMetadata);
                 if (is_array($value)) {
@@ -88,7 +93,8 @@ class QueryCaster {
         return $newQuery;
     }
 
-    private function castDottedString($string, $classMetadata = null) {
+    private function castDottedString($string, $classMetadata = null)
+    {
         if (!isset($classMetadata)) {
             $classMetadata = $this->initialMetadata;
         }
@@ -108,19 +114,19 @@ class QueryCaster {
                 return $propInfo->getField() . "." . $this->castDottedString($remainingField, $classMetadata);
             }
             $result = $propInfo->getField();
-            if($propInfo->getMetadata()){
+            if ($propInfo->getMetadata()) {
                 $result = "metadata." . $result;
             }
             return $result;
         } else if ($propInfo != false) {
-            if(!empty($remainingField)){
+            if (!empty($remainingField)) {
                 $remainingField = "." . $remainingField;
             } else {
                 $remainingField = "";
             }
 
             $result = $propInfo->getField() . $remainingField;
-            if($propInfo->getMetadata()){
+            if ($propInfo->getMetadata()) {
                 $result = "metadata." . $result;
             }
             return $result;
@@ -129,11 +135,11 @@ class QueryCaster {
         }
     }
 
-    private function aggregOnMongoDbOperators($prefix, $key, $value, $new) {
+    private function aggregOnMongoDbOperators($prefix, $key, $value, $new)
+    {
         !isset($new[$prefix]) ? $new[$prefix] = [] : null;
         $new[$prefix] += [$key => $value];
 
         return $new;
     }
-
 }

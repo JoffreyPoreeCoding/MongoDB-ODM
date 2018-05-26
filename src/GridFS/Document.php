@@ -2,16 +2,17 @@
 
 namespace JPC\MongoDB\ODM\GridFS;
 
-use JPC\MongoDB\ODM\GridFS\Annotations\Mapping as GFS;
 use JPC\MongoDB\ODM\Annotations\Mapping as ODM;
+use JPC\MongoDB\ODM\GridFS\Annotations\Mapping as GFS;
 
-class Document {
-    
+class Document
+{
+
     /**
      * @ODM\Id
      */
     protected $id;
-    
+
     /**
      * @GFS\Filename
      */
@@ -26,84 +27,97 @@ class Document {
      * @GFS\ChunkSize
      */
     protected $chunkSize;
-    
+
     /**
      * @GFS\UploadDate
      */
     protected $uploadDate;
-    
+
     /**
      * @GFS\Length
      */
     protected $length;
-    
+
     /**
      * @GFS\ContentType
      */
     protected $contentType;
-    
+
     /**
      * @GFS\Md5
      */
     protected $md5;
-    
+
     /**
      * @GFS\Stream
      */
     protected $stream;
-    
-    function getId() {
+
+    public function getId()
+    {
         return $this->id;
     }
 
-    function getFilename() {
+    public function getFilename()
+    {
         return $this->filename;
     }
 
-    function getAliases() {
+    public function getAliases()
+    {
         return $this->aliases;
     }
 
-    function getChunkSize() {
+    public function getChunkSize()
+    {
         return $this->chunkSize;
     }
 
-    function getUploadDate() {
+    public function getUploadDate()
+    {
         return $this->uploadDate;
     }
 
-    function getLength() {
+    public function getLength()
+    {
         return $this->length;
     }
 
-    function getContentType() {
+    public function getContentType()
+    {
         return $this->contentType;
     }
 
-    function getMd5() {
+    public function getMd5()
+    {
         return $this->md5;
     }
-    
-    function getStream() {
+
+    public function getStream()
+    {
         return $this->stream;
     }
-    
-    function setId($id) {
+
+    public function setId($id)
+    {
         $this->id = $id;
         return $this;
     }
-	
-	function setContentType($contentType){
-		$this->contentType = $contentType;
-		return $this;
-	}
 
-    function setFilename($filename) {
+    public function setContentType($contentType)
+    {
+        $this->contentType = $contentType;
+        return $this;
+    }
+
+    public function setFilename($filename)
+    {
         $this->filename = $filename;
         return $this;
     }
 
-    function setStream($stream) {
+    public function setStream($stream)
+    {
         $this->stream = $stream;
         return $this;
     }

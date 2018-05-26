@@ -15,24 +15,27 @@ use JPC\MongoDB\ODM\Hydrator as BaseHydrator;
  *
  * @author JoffreyP
  */
-class Hydrator extends BaseHydrator {
+class Hydrator extends BaseHydrator
+{
 
-    public function hydrate(&$object, $datas, $maxReferenceDeep = 10){
-        if(isset($datas["metadata"])){
+    public function hydrate(&$object, $datas, $maxReferenceDeep = 10)
+    {
+        if (isset($datas["metadata"])) {
             parent::hydrate($object, $datas["metadata"], $maxReferenceDeep);
             unset($datas["metadata"]);
         }
         parent::hydrate($object, $datas);
     }
 
-    public function unhydrate($object) {
+    public function unhydrate($object)
+    {
         $datas = parent::unhydrate($object);
-        
+
         $properties = $this->classMetadata->getPropertiesInfos();
 
         foreach ($properties as $name => $infos) {
-            if($infos->getMetadata()){
-                if(isset($datas[$infos->getField()])){
+            if ($infos->getMetadata()) {
+                if (isset($datas[$infos->getField()])) {
                     $datas["metadata"][$infos->getField()] = $datas[$infos->getField()];
                     unset($datas[$infos->getField()]);
                 }
@@ -41,5 +44,4 @@ class Hydrator extends BaseHydrator {
 
         return $datas;
     }
-
 }

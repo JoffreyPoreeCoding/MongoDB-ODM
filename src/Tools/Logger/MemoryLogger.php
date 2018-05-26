@@ -2,32 +2,33 @@
 
 namespace JPC\MongoDB\ODM\Tools\Logger;
 
-class MemoryLogger implements LoggerInterface {
+class MemoryLogger implements LoggerInterface
+{
 
-	protected $debugLogs = [];
-	protected $infoLogs = [];
-	protected $warningLogs = [];
-	protected $errorLogs = [];
+    protected $debugLogs = [];
+    protected $infoLogs = [];
+    protected $warningLogs = [];
+    protected $errorLogs = [];
 
-	public function debug($message, $metadata = [])
-	{
-		$this->debugLogs[] = ["message" => $message, "metadata" => $metadata];
-	}
+    public function debug($message, $metadata = [])
+    {
+        $this->debugLogs[] = ["message" => $message, "metadata" => $metadata];
+    }
 
-	public function info($message, $metadata = [])
-	{
-		$this->infoLogs[] = ["message" => $message, "metadata" => $metadata];
-	}
+    public function info($message, $metadata = [])
+    {
+        $this->infoLogs[] = ["message" => $message, "metadata" => $metadata];
+    }
 
-	public function warning($message, $metadata = [])
-	{
-		$this->warningLogs[] = ["message" => $message, "metadata" => $metadata];
-	}
+    public function warning($message, $metadata = [])
+    {
+        $this->warningLogs[] = ["message" => $message, "metadata" => $metadata];
+    }
 
-	public function error($message, $metadata = [])
-	{
-		$this->errorLogs[] = ["message" => $message, "metadata" => $metadata];
-	}
+    public function error($message, $metadata = [])
+    {
+        $this->errorLogs[] = ["message" => $message, "metadata" => $metadata];
+    }
 
     /**
      * Gets the value of debugLogs.
@@ -69,4 +70,3 @@ class MemoryLogger implements LoggerInterface {
         return $this->errorLogs;
     }
 }
-

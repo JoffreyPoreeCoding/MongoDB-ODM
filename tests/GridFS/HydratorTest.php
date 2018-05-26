@@ -10,59 +10,69 @@ use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
 use JPC\Test\MongoDB\ODM\Framework\TestCase;
 use JPC\Test\MongoDB\ODM\GridFS\Model\GridFSObjectMapping;
 
-class HydratorTest extends TestCase {
+class HydratorTest extends TestCase
+{
 
-	private $hydrator;
+    private $hydrator;
 
-	public function setUp(){
-		$classMetadata = new ClassMetadata(GridFSObjectMapping::class);
-		$classMetadataFactory = new ClassMetadataFactory();
-		$documentManager = $this->createMock(DocumentManager::class);
-		$repositoryFactory = $this->createMock(RepositoryFactory::class);
-		
-		$this->hydrator = new Hydrator($classMetadataFactory, $classMetadata, $documentManager, $repositoryFactory);
-	}
+    public function setUp()
+    {
+        $classMetadata = new ClassMetadata(GridFSObjectMapping::class);
+        $classMetadataFactory = new ClassMetadataFactory();
+        $documentManager = $this->createMock(DocumentManager::class);
+        $repositoryFactory = $this->createMock(RepositoryFactory::class);
 
-	public function test_hydrate(){
-		$datas = [
-		"_id" => "id",
-		"filename" => "filename",
-		"length" => 1024,
-		"contentType" => "plain/text",
-		"md5" => "abcdef",
-		"simple_metadata" => "metadata"
-		];
+        $this->hydrator = new Hydrator($classMetadataFactory, $classMetadata, $documentManager, $repositoryFactory);
+    }
 
-		$object = new GridFSObjectMapping();
+    /**
+     * @test
+     */
+    public function hydrate()
+    {
+        $datas = [
+            "_id" => "id",
+            "filename" => "filename",
+            "length" => 1024,
+            "contentType" => "plain/text",
+            "md5" => "abcdef",
+            "simple_metadata" => "metadata",
+        ];
 
-		$this->hydrator->hydrate($object, $datas);
-		
-		$this->assertEquals("id", $object->getId());
-		$this->assertEquals("filename", $object->getFilename());
-		$this->assertEquals(1024, $object->getLength());
-		$this->assertEquals("plain/text", $object->getContentType());
-		$this->assertEquals("abcdef", $object->getMd5());
-		$this->assertEquals("metadata", $object->getSimpleMetadata());
-	}
+        $object = new GridFSObjectMapping();
 
-	public function test_unhydrate(){
-		$object = new GridFSObjectMapping();
-		$object
-		->setId("id")
-		->setFilename("filename")
-		->setContentType("plain/text")
-		->setSimpleMetadata("metadata")
-		;
+        $this->hydrator->hydrate($object, $datas);
 
-		$expected = [
-		"_id" => "id",
-		"filename" => "filename",
-		"contentType" => "plain/text",
-		"metadata" => [
-		"simple_metadata" => "metadata"
-		]
-		];
+        $this->assertEquals("id", $object->getId());
+        $this->assertEquals("filename", $object->getFilename());
+        $this->assertEquals(1024, $object->getLength());
+        $this->assertEquals("plain/text", $object->getContentType());
+        $this->assertEquals("abcdef", $object->getMd5());
+        $this->assertEquals("metadata", $object->getSimpleMetadata());
+    }
 
-		$this->assertEquals($expected, $this->hydrator->unhydrate($object));
-	}
+    /**
+     * @test
+     */
+    public function unhydrate()
+    {
+        $object = new GridFSObjectMapping();
+        $object
+            ->setId("id")
+            ->setFilename("filename")
+            ->setContentType("plain/text")
+            ->setSimpleMetadata("metadata")
+        ;
+
+        $expected = [
+            "_id" => "id",
+            "filename" => "filename",
+            "contentType" => "plain/text",
+            "metadata" => [
+                "simple_metadata" => "metadata",
+            ],
+        ];
+
+        $this->assertEquals($expected, $this->hydrator->unhydrate($object));
+    }
 }

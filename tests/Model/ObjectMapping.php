@@ -7,13 +7,14 @@ use JPC\MongoDB\ODM\Annotations\Mapping as ODM;
 /**
  * @ODM\Document("object_mapping")
  */
-class ObjectMapping {
-    
+class ObjectMapping
+{
+
     /**
      * @ODM\Id
      */
     private $id;
-    
+
     /**
      * @ODM\Field("simple_field")
      */

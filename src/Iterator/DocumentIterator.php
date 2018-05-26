@@ -6,9 +6,9 @@ use Iterator;
 use JPC\MongoDB\ODM\DocumentManager;
 use JPC\MongoDB\ODM\Repository;
 use JPC\MongoDB\ODM\Tools\EventManager;
-use MongoDB\Driver\Cursor;
 
-class DocumentIterator implements Iterator, \Countable {
+class DocumentIterator implements Iterator, \Countable
+{
 
     protected $data;
 
@@ -34,22 +34,25 @@ class DocumentIterator implements Iterator, \Countable {
 
     protected $count;
 
+    protected $rewindable = false;
+
     public function __construct($data, $objectClass, Repository $repository, $query = [])
     {
-        $this->data            = $data;
-        $this->objectClass     = $objectClass;
-        $this->repository      = $repository;
-        $this->query           = $query;
-        $this->hydrator        = $repository->getHydrator();
-        $this->classMetadata   = $repository->getClassMetadata();
+        $this->data = $data;
+        $this->objectClass = $objectClass;
+        $this->repository = $repository;
+        $this->query = $query;
+        $this->hydrator = $repository->getHydrator();
+        $this->classMetadata = $repository->getClassMetadata();
         $this->documentManager = $repository->getDocumentManager();
-        $this->objects         = [];
+        $this->objects = [];
 
         $this->generator = $this->createGenerator();
         $this->currentData = $this->generator->current();
     }
 
-    public function readOnly(){
+    public function readOnly()
+    {
         $this->readOnly = true;
     }
 
@@ -58,6 +61,9 @@ class DocumentIterator implements Iterator, \Countable {
      */
     public function rewind()
     {
+        if (!$this->rewindable) {
+            throw new \Exception('Unable to traverse not rewindable iterator multiple time');
+        }
         $this->position = 0;
     }
 
@@ -68,10 +74,10 @@ class DocumentIterator implements Iterator, \Countable {
      */
     public function valid()
     {
-        if(isset($this->objects[$this->position])){
+        if (isset($this->objects[$this->position])) {
             return true;
         }
-        
+
         return $this->generator->valid();
     }
 
@@ -88,20 +94,24 @@ class DocumentIterator implements Iterator, \Countable {
     /**
      * Returns the current element.
      *
-     * @return \PHPUnit_Framework_Test
+     * @return mixed
      */
     public function current()
     {
-        if(!isset($this->objects[$this->position])){
+        if (!isset($this->objects[$this->position])) {
             $class = $this->objectClass;
             $object = new $class();
             $this->hydrator->hydrate($object, $this->currentData);
             $this->classMetadata->getEventManager()->execute(EventManager::EVENT_POST_LOAD, $object);
-            if(!$this->readOnly){
+            if (!$this->readOnly) {
                 $this->repository->cacheObject($object);
                 $this->documentManager->addObject($object, DocumentManager::OBJ_MANAGED, $this->repository);
             }
-            $this->objects[] = $object;
+            if ($this->rewindable) {
+                $this->objects[] = $object;
+            } else {
+                return $object;
+            }
         }
         return $this->objects[$this->position];
     }
@@ -116,14 +126,21 @@ class DocumentIterator implements Iterator, \Countable {
         $this->currentData = $this->generator->current();
     }
 
-    protected function createGenerator(){
-        foreach($this->data as $data){
+    protected function createGenerator()
+    {
+        foreach ($this->data as $data) {
             yield $data;
         }
     }
 
-    public function count(){
-        if(!isset($this->count)){
+    public function rewindable()
+    {
+        $this->rewindable = true;
+    }
+
+    public function count()
+    {
+        if (!isset($this->count)) {
             $this->count = $this->repository->count($this->query);
         }
         return $this->count;

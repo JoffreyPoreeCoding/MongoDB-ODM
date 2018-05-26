@@ -2,13 +2,14 @@
 
 namespace JPC\MongoDB\ODM\Tools\ClassMetadata\Info;
 
-class ReferenceInfo {
+class ReferenceInfo
+{
 
-	private $isMultiple = false;
+    private $isMultiple = false;
 
-	private $document;
+    private $document;
 
-	private $collection;
+    private $collection;
 
     /**
      * Gets the value of isMultiple.

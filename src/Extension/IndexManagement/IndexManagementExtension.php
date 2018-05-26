@@ -5,11 +5,12 @@ namespace JPC\MongoDB\ODM\Extension\IndexManagement;
 use JPC\MongoDB\ODM\DocumentManager;
 
 /**
-* 
-*/
+ *
+ */
 class IndexManagementExtension
 {
-    public static function getMethodPrefix(){
+    public static function getMethodPrefix()
+    {
         return 'im_';
     }
 
@@ -18,7 +19,8 @@ class IndexManagementExtension
         dump('extension loaded');
     }
 
-    public function createIndexes(){
+    public function createIndexes()
+    {
         dump('createIndexes');
     }
 }

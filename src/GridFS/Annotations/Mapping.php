@@ -6,8 +6,9 @@ namespace JPC\MongoDB\ODM\GridFS\Annotations\Mapping;
  * @Annotation
  * @Target("CLASS")
  */
-class Document {
-    
+class Document
+{
+
     /**
      * @Required
      */
@@ -20,51 +21,78 @@ class Document {
  * @Annotation
  * @Target("PROPERTY")
  */
-class Filename {}
+class Filename
+{
+    
+}
 
 /**
  * @Annotation
  * @Target("PROPERTY")
  */
-class Aliases {}
+class Aliases
+{
+    
+}
 /**
  * @Annotation
  * @Target("PROPERTY")
  */
-class ChunkSize {}
+class ChunkSize
+{
+    
+}
 
 /**
  * @Annotation
  * @Target("PROPERTY")
  */
-class UploadDate {}
+class UploadDate
+{
+    
+}
 
 /**
  * @Annotation
  * @Target("PROPERTY")
  */
-class Length {}
+class Length
+{
+    
+}
 
 /**
  * @Annotation
  * @Target("PROPERTY")
  */
-class ContentType {}
+class ContentType
+{
+    
+}
 
 /**
  * @Annotation
  * @Target("PROPERTY")
  */
-class Md5 {}
+class Md5
+{
+    
+}
 
 /**
  * @Annotation
  * @Target("PROPERTY")
  */
-class Stream {}
+class Stream
+{
+    
+}
 
 /**
  * @Annotation
  * @Target("PROPERTY")
  */
-class Metadata {}
+class Metadata
+{
+
+}

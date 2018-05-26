@@ -3,8 +3,6 @@
 namespace JPC\MongoDB\ODM;
 
 use JPC\MongoDB\ODM\Exception\ExtensionException;
-use JPC\MongoDB\ODM\Exception\ModelNotFoundException;
-use JPC\MongoDB\ODM\Factory\ClassMetadataFactory;
 use JPC\MongoDB\ODM\Factory\RepositoryFactory;
 use JPC\MongoDB\ODM\ObjectManager;
 use JPC\MongoDB\ODM\Repository;
@@ -19,7 +17,8 @@ use MongoDB\Database as MongoDatabase;
  *
  * @author Joffrey Porée <contact@joffreyporee.com>
  */
-class DocumentManager extends ObjectManager {
+class DocumentManager extends ObjectManager
+{
 
     /* ================================== */
     /*             PROPERTIES             */
@@ -41,7 +40,7 @@ class DocumentManager extends ObjectManager {
 
     /**
      * Store repository associated with object (for flush on special collection)
-     * @var array 
+     * @var array
      */
     private $objectsRepository = [];
 
@@ -64,7 +63,7 @@ class DocumentManager extends ObjectManager {
     protected $defaultOptions = [];
 
     /**
-     * 
+     *
      */
     protected $extensions = [];
 
@@ -82,32 +81,30 @@ class DocumentManager extends ObjectManager {
      * @param array                     $defaultOptions     Default options for commands
      * @param array                     $extensions         Extension to add to DocumentManager
      */
-    public function __construct
-    (
-        MongoClient             $client, 
-        MongoDatabase           $database, 
-        RepositoryFactory       $repositoryFactory = null,
-        LoggerInterface         $logger = null, 
-                                $debug = false,
-                                $defaultOptions = [],
-                                $extensions = []
-        ) 
-    {
+    public function __construct(
+        MongoClient $client,
+        MongoDatabase $database,
+        RepositoryFactory $repositoryFactory = null,
+        LoggerInterface $logger = null,
+        $debug = false,
+        $defaultOptions = [],
+        $extensions = []
+    ) {
         $this->debug = $debug;
         if ($this->debug) {
             apcu_clear_cache();
         }
 
-        if(isset($logger) && !$logger instanceof LoggerInterface){
+        if (isset($logger) && !$logger instanceof LoggerInterface) {
             throw new \Exception("Logger must implements '" . LoggerInterface::class . "'");
         }
 
-        foreach($extensions as $extension){
+        foreach ($extensions as $extension) {
             $baseExtension = $extension;
             $extension .= '\\' . $extension . 'Extension';
-            if(!class_exists($extension)){
+            if (!class_exists($extension)) {
                 $extension = 'JPC\\MongoDB\\ODM\\Extension\\' . $extension;
-                if(!class_exists($extension)){
+                if (!class_exists($extension)) {
                     throw new ExtensionException($baseExtension);
                 }
             }
@@ -122,43 +119,46 @@ class DocumentManager extends ObjectManager {
         $this->objectManager = isset($objectManager) ? $objectManager : new ObjectManager();
     }
 
-    function __call($method, $args){
+    public function __call($method, $args)
+    {
         $explodedMethod = explode('_', $method, 2);
-        if(isset($explodedMethod[0])){
+        if (isset($explodedMethod[0])) {
             $prefix = $explodedMethod[0] . '_';
         } else {
             return;
         }
 
-        if(isset($explodedMethod[1])){
+        if (isset($explodedMethod[1])) {
             $method = $explodedMethod[1];
         } else {
             return;
         }
 
-        if(isset($this->extensions[$prefix])){
+        if (isset($this->extensions[$prefix])) {
             call_user_func_array([$this->extensions[$prefix], $method], $args);
         }
     }
 
     /**
      * Allow to get repository for specified model
-     * 
+     *
      * @param   string      $modelName  Name of the model
      * @param   string      $collection Name of the collection (null for get collection from document annotation)
-     * 
+     *
      * @return  Repository  Repository for model
      */
-    public function getRepository($modelName, $collection = null) {
+    public function getRepository($modelName, $collection = null)
+    {
         return $this->repositoryFactory->getRepository($this, $modelName, $collection);
     }
 
     /**
      * Persist an object in object manager
-     * 
+     *
      * @param   mixed       $object     Object to persist
      */
-    public function persist($object, $collection = null) {
+    public function persist($object, $collection = null)
+    {
         $repository = $this->getRepository(get_class($object), $collection);
         $repository->getClassMetadata()->getEventManager()->execute(EventManager::EVENT_PRE_PERSIST, $object);
         $this->addObject($object, ObjectManager::OBJ_NEW, $repository);
@@ -167,60 +167,66 @@ class DocumentManager extends ObjectManager {
 
     /**
      * Unpersist an object in object Manager
-     * 
+     *
      * @param   mixed       $object     Object to unpersist
      */
-    public function unpersist($object) {
+    public function unpersist($object)
+    {
         $this->removeObject($object);
     }
 
     /**
      * Add a managed object
-     * 
+     *
      * @param   object          $object         Object to manage
      * @param   Repository      $repository     Repository
      * @param   integer         $state          State of managed object
      */
-    public function addObject($object, $state = self::OBJ_NEW, $repository = null){
+    public function addObject($object, $state = self::OBJ_NEW, $repository = null)
+    {
         parent::addObject($object, $state);
         $this->objectsRepository[spl_object_hash($object)] = $repository;
     }
 
     /**
      * Remove object from object manager
-     * 
+     *
      * @param  object           $object         Object to remove
      */
-    public function removeObject($object){
+    public function removeObject($object)
+    {
         parent::removeObject($object);
         unset($this->objectsRepository[spl_object_hash($object)]);
     }
 
     /**
      * Set object to be deleted at next flush
-     * 
+     *
      * @param   mixed       $object     Object to delete
      */
-    public function delete($object) {
+    public function delete($object)
+    {
         $this->setObjectState($object, self::OBJ_REMOVED);
     }
 
     /**
      * Set object to be deleted at next flush
-     * 
+     *
      * @param   mixed       $object     Object to delete
      */
-    public function remove($object) {
+    public function remove($object)
+    {
         $this->setObjectState($object, self::OBJ_REMOVED);
     }
 
     /**
      * Refresh an object to last MongoDB values
-     * 
+     *
      * @param   mixed       $object     Object to refresh
      */
-    public function refresh(&$object) {
-        if(!isset($this->objectsRepository[spl_object_hash($object)])){
+    public function refresh(&$object)
+    {
+        if (!isset($this->objectsRepository[spl_object_hash($object)])) {
             return;
         }
         $repository = $this->objectsRepository[spl_object_hash($object)];
@@ -229,7 +235,7 @@ class DocumentManager extends ObjectManager {
 
         $id = $repository->getHydrator()->unhydrate($object)["_id"];
 
-        if($this->debug){
+        if ($this->debug) {
             $this->logger->debug("Refresh datas for object with id " . (string) $id . ' in collection ' . $mongoCollection);
         }
 
@@ -246,8 +252,9 @@ class DocumentManager extends ObjectManager {
     /**
      * Flush all changes and write it in mongoDB
      */
-    public function flush() {
-        if($this->debug){
+    public function flush()
+    {
+        if ($this->debug) {
             $countRemove = count($this->getObject(ObjectManager::OBJ_REMOVED));
             $countUpdate = count($this->getObject(ObjectManager::OBJ_MANAGED));
             $countInsert = count($this->getObject(ObjectManager::OBJ_NEW));
@@ -286,7 +293,7 @@ class DocumentManager extends ObjectManager {
         foreach ($toInsert as $repository => $objects) {
             $repository = $repositories[$repository];
             $repository->insertMany($objects);
-            foreach($objects as $object){
+            foreach ($objects as $object) {
                 $this->setObjectState($object, self::OBJ_MANAGED);
                 $repository->getClassMetadata()->getEventManager()->execute(EventManager::EVENT_POST_FLUSH, $object);
             }
@@ -296,28 +303,30 @@ class DocumentManager extends ObjectManager {
     /**
      * Unmanaged (unpersist) all object
      */
-    public function clear() {
-        foreach($this->objectsRepository as $repository){
-            if($repository instanceof Repository){
+    public function clear()
+    {
+        foreach ($this->objectsRepository as $repository) {
+            if ($repository instanceof Repository) {
                 $repository->clear();
             }
         }
         parent::clear();
         $this->objectsRepository = [];
     }
-    
+
     /* ------------------------------- */
     /*        GETTERS / SETTERS        */
     /* ------------------------------- */
 
     /**
      * Select database from name
-     * 
+     *
      * @param  string       $name       Database name
      *
      * @return self
      */
-    public function selectDatabase($name){
+    public function selectDatabase($name)
+    {
         $this->database = $this->client->selectDatabase($name);
         return $this;
     }

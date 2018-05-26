@@ -2,8 +2,9 @@
 
 namespace JPC\MongoDB\ODM\Tools\Logger;
 
-interface LoggerInterface {
-	public function debug($message, $metadata = []);
+interface LoggerInterface
+{
+    public function debug($message, $metadata = []);
 
     public function info($message, $metadata = []);
 
@@ -11,4 +12,3 @@ interface LoggerInterface {
 
     public function error($message, $metadata = []);
 }
-

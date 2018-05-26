@@ -2,63 +2,104 @@
 
 namespace JPC\Test\MongoDB\ODM\Tools;
 
-use JPC\Test\MongoDB\ODM\Framework\TestCase;
 use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
+use JPC\Test\MongoDB\ODM\Framework\TestCase;
 
-class ClassMetadataTest extends TestCase {
-    
+class ClassMetadataTest extends TestCase
+{
+
     /**
      * @var ClassMetadata
      */
     private $classMetadata;
-    
-    public function setUp(){
+
+    public function setUp()
+    {
         $this->classMetadata = new ClassMetadata(\JPC\Test\MongoDB\ODM\Tools\ObjectMapping::class);
     }
-    
-    public function test_getName(){
+
+    /**
+     * @test
+     */
+    public function getName()
+    {
         $this->assertEquals("JPC\Test\MongoDB\ODM\Tools\ObjectMapping", $this->classMetadata->getName());
     }
-    
-    public function test_getColection(){
+
+    /**
+     * @test
+     */
+    public function getColection()
+    {
         $this->assertEquals("object_mapping", $this->classMetadata->getCollection());
     }
-    
-    public function test_getPropertiesInfos(){
+
+    /**
+     * @test
+     */
+    public function getPropertiesInfos()
+    {
         $this->assertContainsOnlyInstancesOf("JPC\MongoDB\ODM\Tools\ClassMetadata\Info\PropertyInfo", $this->classMetadata->getPropertiesInfos());
     }
-    
-    public function test_getPropertyForField(){
+
+    /**
+     * @test
+     */
+    public function getPropertyForField()
+    {
         $this->assertInstanceOf("ReflectionProperty", $this->classMetadata->getPropertyForField("simple_field"));
         $this->assertFalse($this->classMetadata->getPropertyForField("inexisting"));
     }
-    
-    public function test_getPropertyInfoForField(){
+
+    /**
+     * @test
+     */
+    public function getPropertyInfoForField()
+    {
         $this->assertInstanceOf("JPC\MongoDB\ODM\Tools\ClassMetadata\Info\PropertyInfo", $this->classMetadata->getPropertyInfo("simpleField"));
         $this->assertFalse($this->classMetadata->getPropertyInfo("inexisting"));
     }
-    
-    public function test_getPropertyInfo(){
+
+    /**
+     * @test
+     */
+    public function getPropertyInfo()
+    {
         $this->assertInstanceOf("JPC\MongoDB\ODM\Tools\ClassMetadata\Info\PropertyInfo", $this->classMetadata->getPropertyInfoForField("simple_field"));
         $this->assertFalse($this->classMetadata->getPropertyInfoForField("inexisting"));
     }
-    
-    public function test_getRepositoryClass(){
+
+    /**
+     * @test
+     */
+    public function getRepositoryClass()
+    {
         $this->assertEquals("JPC\MongoDB\ODM\Repository", $this->classMetadata->getRepositoryClass());
     }
-    
-    public function test_getCollectionOptions(){
+
+    /**
+     * @test
+     */
+    public function getCollectionOptions()
+    {
         $this->assertEmpty($this->classMetadata->getCollectionOptions());
     }
-    
-    public function test_getCollectionCreationOptions(){
+
+    /**
+     * @test
+     */
+    public function getCollectionCreationOptions()
+    {
         $this->assertEmpty($this->classMetadata->getCollectionCreationOptions());
     }
 
-    public function test_getEventManager(){
+    /**
+     * @test
+     */
+    public function getEventManager()
+    {
         $this->assertEquals(["pre_persist" => ["event"]], $this->classMetadata->getEventManager()->getEvents());
     }
-    
 }
 
 use JPC\MongoDB\ODM\Annotations\Mapping as ODM;
@@ -68,13 +109,14 @@ use JPC\MongoDB\ODM\Annotations\Event;
  * @ODM\Document("object_mapping")
  * @Event\HasLifecycleCallbacks
  */
-class ObjectMapping {
-    
+class ObjectMapping
+{
+
     /**
      * @ODM\Id
      */
     private $id;
-    
+
     /**
      * @ODM\Field("simple_field")
      */
@@ -191,8 +233,8 @@ class ObjectMapping {
     /**
      * @Event\PrePersist
      */
-    public function event(){
+    public function event()
+    {
         echo "HEYYY";
     }
 }
-

@@ -7,29 +7,31 @@ use Doctrine\Common\Cache\Cache;
 use Doctrine\Common\Cache\CacheProvider;
 use JPC\MongoDB\ODM\DocumentManager;
 use JPC\MongoDB\ODM\Factory\ClassMetadataFactory;
-use JPC\MongoDB\ODM\Hydrator;
 use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
 use JPC\MongoDB\ODM\Tools\QueryCaster;
 use MongoDB\Collection;
 
-class RepositoryFactory {
+class RepositoryFactory
+{
 
-   protected $cache;
+    protected $cache;
 
-   protected $classMetadataFactory;
+    protected $classMetadataFactory;
 
     /**
      * Create new repository factory
-     * 
+     *
      * @param Cache|null                $cache                Cache used to store repositories
      * @param ClassMetadataFactory|null $classMetadataFactory Factory that will create class Metadata
      */
-    public function __construct(Cache $cache = null, ClassMetadataFactory $classMetadataFactory = null){
+    public function __construct(Cache $cache = null, ClassMetadataFactory $classMetadataFactory = null)
+    {
         $this->cache = isset($cache) ? $cache : new ArrayCache();
         $this->classMetadataFactory = isset($classMetadataFactory) ? $classMetadataFactory : new ClassMetadataFactory();
     }
 
-    public function getRepository(DocumentManager $documentManager, $modelName, $collectionName, CacheProvider $repositoryCache = null){
+    public function getRepository(DocumentManager $documentManager, $modelName, $collectionName, CacheProvider $repositoryCache = null)
+    {
         $repIndex = $modelName . $collectionName;
         if (false != ($repository = $this->cache->fetch($repIndex))) {
             return $repository;
@@ -37,17 +39,16 @@ class RepositoryFactory {
 
         $classMetadata = $this->classMetadataFactory->getMetadataForClass($modelName);
 
-
         if (!isset($collectionName)) {
             $collectionName = $classMetadata->getCollection();
-        } 
+        }
 
         $repositoryClass = $classMetadata->getRepositoryClass();
 
-        if(is_a($repositoryClass, "JPC\MongoDB\ODM\GridFS\Repository", true) && false === strstr($collectionName, ".files")){
+        if (is_a($repositoryClass, "JPC\MongoDB\ODM\GridFS\Repository", true) && false === strstr($collectionName, ".files")) {
             $bucketName = $collectionName;
             $collectionName .= ".files";
-        } else if (is_a($repositoryClass, "JPC\MongoDB\ODM\GridFS\Repository", true) && false !== strstr($collectionName, ".files")){
+        } else if (is_a($repositoryClass, "JPC\MongoDB\ODM\GridFS\Repository", true) && false !== strstr($collectionName, ".files")) {
             $bucketName = strstr($collectionName, ".files", true);
         }
 
@@ -63,7 +64,7 @@ class RepositoryFactory {
 
         $queryCaster = new QueryCaster($classMetadata, $this->classMetadataFactory);
 
-        if(isset($bucketName)){
+        if (isset($bucketName)) {
             $bucket = $documentManager->getDatabase()->selectGridFSBucket(["bucketName" => $bucketName]);
 
             $repository = new $repositoryClass($documentManager, $collection, $classMetadata, $hydrator, $queryCaster, null, $repositoryCache, $bucket);
@@ -82,12 +83,13 @@ class RepositoryFactory {
      * @param  [type]          $collectionName  [description]
      * @return [type]                           [description]
      */
-    private function createCollection(DocumentManager $documentManager, ClassMetadata $classMetadata, $collectionName){
+    private function createCollection(DocumentManager $documentManager, ClassMetadata $classMetadata, $collectionName)
+    {
 
         $database = $documentManager->getDatabase();
 
         $exists = false;
-        foreach ($database->listCollections()as $collection) {
+        foreach ($database->listCollections() as $collection) {
             if ($collection->getName() == $collectionName) {
                 $exists = true;
             }
@@ -102,5 +104,4 @@ class RepositoryFactory {
 
         return $database->selectCollection($collectionName, $collectionOptions);
     }
-
 }

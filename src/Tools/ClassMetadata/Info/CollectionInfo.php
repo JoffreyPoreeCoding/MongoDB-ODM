@@ -7,11 +7,12 @@ namespace JPC\MongoDB\ODM\Tools\ClassMetadata\Info;
  *
  * @author poree
  */
-class CollectionInfo {
-    
+class CollectionInfo
+{
+
     /**
      * Collection Name
-     * @var string 
+     * @var string
      */
     private $collectionName;
 
@@ -20,7 +21,7 @@ class CollectionInfo {
      * @var string
      */
     private $bucketName;
-    
+
     /**
      * Repository class name
      * @var string
@@ -32,97 +33,113 @@ class CollectionInfo {
      * @var string
      */
     private $hydrator;
-    
+
     /**
      * Options for collection creation
-     * @var array 
+     * @var array
      */
     private $creationOptions = [];
-    
+
     /**
      * Options for collection constructor
      * @var array
      */
     private $options = [];
-    
-    function getCollection() {
+
+    public function getCollection()
+    {
         return $this->collectionName;
     }
 
-    function getBucketName() {
+    public function getBucketName()
+    {
         return $this->bucketName;
     }
 
-    function getWriteConcern() {
+    public function getWriteConcern()
+    {
         return $this->writeConcern;
     }
 
-    function getReadPreference() {
+    public function getReadPreference()
+    {
         return $this->readPreference;
     }
 
-    function getWritePreference() {
+    public function getWritePreference()
+    {
         return $this->writePreference;
     }
 
-    function getRepository() {
+    public function getRepository()
+    {
         return $this->repository;
     }
 
-    function getHydrator()
+    public function getHydrator()
     {
         return $this->hydrator;
     }
-    
-    function getCreationOptions(){
+
+    public function getCreationOptions()
+    {
         return $this->creationOptions;
     }
 
-    function getOptions() {
+    public function getOptions()
+    {
         return $this->options;
     }
-    
-    function setCollection($collection) {
+
+    public function setCollection($collection)
+    {
         $this->collectionName = $collection;
         return $this;
     }
 
-    function setBucketName($bucketName){
+    public function setBucketName($bucketName)
+    {
         $this->bucketName = $bucketName;
     }
 
-    function setWriteConcern($writeConcern) {
+    public function setWriteConcern($writeConcern)
+    {
         $this->writeConcern = $writeConcern;
         return $this;
     }
 
-    function setReadPreference($readPreference) {
+    public function setReadPreference($readPreference)
+    {
         $this->readPreference = $readPreference;
         return $this;
     }
 
-    function setWritePreference($writePreference) {
+    public function setWritePreference($writePreference)
+    {
         $this->writePreference = $writePreference;
         return $this;
     }
 
-    function setRepository($repository) {
+    public function setRepository($repository)
+    {
         $this->repository = $repository;
         return $this;
     }
 
-    function setHydrator($hydrator)
+    public function setHydrator($hydrator)
     {
         $this->hydrator = $hydrator;
         return $this;
     }
-    
-    function setCreationOptions($options){
+
+    public function setCreationOptions($options)
+    {
         $this->creationOptions = $options;
         return $this;
     }
-    
-    function setOptions($options) {
+
+    public function setOptions($options)
+    {
         $this->options = $options;
         return $this;
     }
