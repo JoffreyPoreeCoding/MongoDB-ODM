@@ -81,6 +81,10 @@ class DocumentIterator implements Iterator, \Countable
             return true;
         }
 
+        if ($this->currentData == null) {
+            return false;
+        }
+
         return $this->generator->valid();
     }
 
@@ -101,7 +105,7 @@ class DocumentIterator implements Iterator, \Countable
      */
     public function current()
     {
-        if (!isset($this->objects[$this->position])) {
+        if ($this->valid() && !isset($this->objects[$this->position])) {
             $class = $this->objectClass;
             $object = new $class();
             $this->hydrator->hydrate($object, $this->currentData);
@@ -116,7 +120,12 @@ class DocumentIterator implements Iterator, \Countable
                 return $object;
             }
         }
-        return $this->objects[$this->position];
+
+        if (isset($this->objects[$this->position])) {
+            return $this->objects[$this->position];
+        } else {
+            return null;
+        }
     }
 
     /**
