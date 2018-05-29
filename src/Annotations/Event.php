@@ -2,12 +2,16 @@
 
 namespace JPC\MongoDB\ODM\Annotations\Event;
 
+/**
+ * Event definition
+ */
 interface Event
 {
     public function getName();
 }
 
 /**
+ * Inform that model has events
  * @Annotation
  * @Target("CLASS")
  */
@@ -17,6 +21,7 @@ class HasLifecycleCallbacks
 }
 
 /**
+ * Executed after document loaded (after find, findBy, etc...)
  * @Annotation
  * @Target("METHOD")
  */
@@ -29,6 +34,7 @@ class PostLoad implements Event
 }
 
 /**
+ * Executed before document persisted
  * @Annotation
  * @Target("METHOD")
  */
@@ -41,6 +47,7 @@ class PrePersist implements Event
 }
 
 /**
+ * Executed after document persisted
  * @Annotation
  * @Target("METHOD")
  */
@@ -53,6 +60,7 @@ class PostPersist implements Event
 }
 
 /**
+ * Executed before document flushed
  * @Annotation
  * @Target("METHOD")
  */
@@ -65,6 +73,7 @@ class PreFlush implements Event
 }
 
 /**
+ * Executed after document flushed
  * @Annotation
  * @Target("METHOD")
  */
@@ -77,6 +86,7 @@ class PostFlush implements Event
 }
 
 /**
+ * Executed before document insertion
  * @Annotation
  * @Target("METHOD")
  */
@@ -89,6 +99,7 @@ class PreInsert implements Event
 }
 
 /**
+ * Executed after document insertion
  * @Annotation
  * @Target("METHOD")
  */
@@ -101,6 +112,7 @@ class PostInsert implements Event
 }
 
 /**
+ * Executed before document update
  * @Annotation
  * @Target("METHOD")
  */
@@ -113,6 +125,7 @@ class PreUpdate implements Event
 }
 
 /**
+ * Executed after document update
  * @Annotation
  * @Target("METHOD")
  */
@@ -125,6 +138,7 @@ class PostUpdate implements Event
 }
 
 /**
+ * Executed before document deletion
  * @Annotation
  * @Target("METHOD")
  */
@@ -137,6 +151,7 @@ class PreDelete implements Event
 }
 
 /**
+ * Executed after document deletion
  * @Annotation
  * @Target("METHOD")
  */

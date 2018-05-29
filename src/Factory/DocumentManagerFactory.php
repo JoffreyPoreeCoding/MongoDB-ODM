@@ -8,34 +8,57 @@ use JPC\MongoDB\ODM\Tools\Logger\MemoryLogger;
 use MongoDB\Client;
 use MongoDB\Database;
 
+/**
+ * Factory to create document manager easily
+ */
 class DocumentManagerFactory
 {
 
+    /**
+     * Repository factory class
+     * @var string
+     */
     private $repositoryFactoryClass;
 
+    /**
+     * Already opened connexions
+     * @var Client
+     */
     private $connexions = [];
 
+    /**
+     * Already created document managers
+     * @var DocumentManager
+     */
     private $managers = [];
 
+    /**
+     * Class metadata factory
+     * @var ClassMetadataFactory
+     */
     private $classMetadataFactory;
 
-    private $defaultExtensions = [];
-
-    public function __construct($repositoryFactoryClass = null, $defaultExtensions = [])
+    /**
+     * Create a document manager factory
+     *
+     * @param   string  $repositoryFactoryClass class of repository factory
+     */
+    public function __construct($repositoryFactoryClass = null)
     {
         $this->repositoryFactoryClass = isset($repositoryFactoryClass) ? $repositoryFactoryClass : "JPC\MongoDB\ODM\Factory\RepositoryFactory";
 
         $this->classMetadataFactory = new ClassMetadataFactory();
-        $this->defaultExtensions = $defaultExtensions;
     }
 
     /**
      * Create new DocumentManager from mongouri and DB name
      *
-     * @param  string                  $mongouri mongodb uri (mongodb://user:pass@example.org/auth_db)
-     * @param  string                  $dbName   name of the DB where to work
-     * @param  LoggerInterface      $logger   A logger class
-     * @param  boolean                 $debug    Enable debug mode or not
+     * @param   string                  $mongouri       mongodb uri (mongodb://user:pass@example.org/auth_db)
+     * @param   string                  $dbName         name of the DB where to work
+     * @param   LoggerInterface         $logger         A logger class
+     * @param   boolean                 $debug          Enable debug mode or not
+     * @param   mixed                   $managerId      Manager unique id
+     * @param   boolean                 $newConnection  Force to open new connection
      *
      * @return DocumentManager      A DocumentManager connected to mongouri specified
      */
@@ -61,14 +84,18 @@ class DocumentManagerFactory
                 $repositoryFactory,
                 $logger,
                 $debug,
-                [],
-                $this->defaultExtensions
+                []
             );
         }
 
         return $this->managers[$managerId];
     }
 
+    /**
+     * Clear all document manager caches, unpersist all objects
+     *
+     * @return void
+     */
     public function clearAll()
     {
         foreach ($this->managers as $manager) {

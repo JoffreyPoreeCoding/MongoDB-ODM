@@ -146,9 +146,7 @@ class MultiEmbeddedDocument
  * Refer another document
  *
  * @param   string  $document           Class corresponding to refered document
- * @param   string  $onField            Field that have to be equal
  * @param   string  $collection         Collection where to find object
- * @param   string  $fieldToValue       Field where value will be get to hydrate object
  *
  * @Annotation
  * @Target("PROPERTY")
@@ -163,9 +161,7 @@ class RefersOne
  * Refer another documents
  *
  * @param   string  $document           Class corresponding to refered document
- * @param   string  $onField            Field that have to be equal
  * @param   string  $collection         Collection where to find object
- * @param   string  $fieldToValue       Field where value will be get to hydrate object
  *
  * @Annotation
  * @Target("PROPERTY")

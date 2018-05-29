@@ -287,7 +287,6 @@ class Repository
         $result = (array) $this->collection->findOneAndUpdate($filters, $update, $options);
 
         return $this->createObject($result, $options);
-
     }
 
     /**

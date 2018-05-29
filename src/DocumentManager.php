@@ -62,11 +62,6 @@ class DocumentManager extends ObjectManager
      */
     protected $defaultOptions = [];
 
-    /**
-     *
-     */
-    protected $extensions = [];
-
     /* ================================== */
     /*          PUBLICS FUNCTIONS         */
     /* ================================== */
@@ -79,7 +74,6 @@ class DocumentManager extends ObjectManager
      * @param LoggerInterface           $logger             A logger that implement the LoggerInterface
      * @param boolean                   $debug              Enable or not the debug mode
      * @param array                     $defaultOptions     Default options for commands
-     * @param array                     $extensions         Extension to add to DocumentManager
      */
     public function __construct(
         MongoClient $client,
@@ -87,8 +81,7 @@ class DocumentManager extends ObjectManager
         RepositoryFactory $repositoryFactory = null,
         LoggerInterface $logger = null,
         $debug = false,
-        $defaultOptions = [],
-        $extensions = []
+        $defaultOptions = []
     ) {
         $this->debug = $debug;
         if ($this->debug) {
@@ -99,44 +92,11 @@ class DocumentManager extends ObjectManager
             throw new \Exception("Logger must implements '" . LoggerInterface::class . "'");
         }
 
-        foreach ($extensions as $extension) {
-            $baseExtension = $extension;
-            $extension .= '\\' . $extension . 'Extension';
-            if (!class_exists($extension)) {
-                $extension = 'JPC\\MongoDB\\ODM\\Extension\\' . $extension;
-                if (!class_exists($extension)) {
-                    throw new ExtensionException($baseExtension);
-                }
-            }
-
-            $this->extensions[$extension::getMethodPrefix()] = new $extension($this);
-        }
-
         $this->logger = !isset($logger) ? new MemoryLogger() : $logger;
         $this->client = $client;
         $this->database = $database;
         $this->repositoryFactory = isset($repositoryFactory) ? $repositoryFactory : new RepositoryFactory();
         $this->objectManager = isset($objectManager) ? $objectManager : new ObjectManager();
-    }
-
-    public function __call($method, $args)
-    {
-        $explodedMethod = explode('_', $method, 2);
-        if (isset($explodedMethod[0])) {
-            $prefix = $explodedMethod[0] . '_';
-        } else {
-            return;
-        }
-
-        if (isset($explodedMethod[1])) {
-            $method = $explodedMethod[1];
-        } else {
-            return;
-        }
-
-        if (isset($this->extensions[$prefix])) {
-            call_user_func_array([$this->extensions[$prefix], $method], $args);
-        }
     }
 
     /**

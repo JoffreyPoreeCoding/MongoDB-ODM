@@ -11,11 +11,24 @@ use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
 use JPC\MongoDB\ODM\Tools\QueryCaster;
 use MongoDB\Collection;
 
+/**
+ * Repository factory
+ */
 class RepositoryFactory
 {
 
+    /**
+     * Already created repositories
+     *
+     * @var Cache
+     */
     protected $cache;
 
+    /**
+     * Class metadata factory
+     *
+     * @var ClassMetadataFactory
+     */
     protected $classMetadataFactory;
 
     /**
@@ -30,6 +43,15 @@ class RepositoryFactory
         $this->classMetadataFactory = isset($classMetadataFactory) ? $classMetadataFactory : new ClassMetadataFactory();
     }
 
+    /**
+     * Get a repository
+     *
+     * @param   DocumentManager     $documentManager    Document manager
+     * @param   string              $modelName          Class of the model
+     * @param   string              $collectionName     Name of MongoDB Collection
+     * @param   CacheProvider       $repositoryCache    Cache for the repository
+     * @return  Repository
+     */
     public function getRepository(DocumentManager $documentManager, $modelName, $collectionName, CacheProvider $repositoryCache = null)
     {
         $repIndex = $modelName . $collectionName;
@@ -77,11 +99,12 @@ class RepositoryFactory
     }
 
     /**
-     * @TODO
-     * @param  DocumentManager $documentManager [description]
-     * @param  ClassMetadata   $classMetadata   [description]
-     * @param  [type]          $collectionName  [description]
-     * @return [type]                           [description]
+     * Create the collection
+     *
+     * @param   DocumentManager     $documentManager    Current document manager
+     * @param   ClassMetadata       $classMetadata      Class metadata
+     * @param   string              $collectionName     Name of collection
+     * @return  Collection
      */
     private function createCollection(DocumentManager $documentManager, ClassMetadata $classMetadata, $collectionName)
     {

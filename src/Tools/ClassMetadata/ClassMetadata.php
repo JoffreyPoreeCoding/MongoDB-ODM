@@ -324,6 +324,10 @@ class ClassMetadata
         if (isset($annotation->readPreference)) {
             $options["readPreference"] = $annotation->readPreference->getReadPreference();
         }
+        
+        if (isset($annotation->typeMap)) {
+            $options["typeMap"] = $annotation->typeMap;
+        }
 
         $this->collectionInfo->setOptions($options);
     }

@@ -1,32 +1,40 @@
 <?php
 
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
 namespace JPC\MongoDB\ODM\GridFS;
 
 use JPC\MongoDB\ODM\Hydrator as BaseHydrator;
 
 /**
- * Description of Hydrator
+ * Hydrator
  *
  * @author JoffreyP
  */
 class Hydrator extends BaseHydrator
 {
 
-    public function hydrate(&$object, $datas, $maxReferenceDeep = 10)
+    /**
+     * Hydrate an object from data
+     *
+     * @param   mixed   $object         Object to hydrate
+     * @param   mixed   $datas          Data to hydrate object
+     * @param   integer $maxReference   Depth Maximum reference depth
+     * @return  void
+     */
+    public function hydrate(&$object, $datas, $maxReferenceDepth = 10)
     {
         if (isset($datas["metadata"])) {
-            parent::hydrate($object, $datas["metadata"], $maxReferenceDeep);
+            parent::hydrate($object, $datas["metadata"], $maxReferenceDepth);
             unset($datas["metadata"]);
         }
         parent::hydrate($object, $datas);
     }
 
+    /**
+     * Unhydrate object to array
+     *
+     * @param   mixed   $object     Object to unhydrate
+     * @return  array
+     */
     public function unhydrate($object)
     {
         $datas = parent::unhydrate($object);
@@ -41,7 +49,6 @@ class Hydrator extends BaseHydrator
                 }
             }
         }
-
         return $datas;
     }
 }

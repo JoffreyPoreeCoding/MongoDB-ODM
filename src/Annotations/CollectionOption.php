@@ -3,6 +3,7 @@
 namespace JPC\MongoDB\ODM\Annotations\Mapping\CollectionOption;
 
 /**
+ * Write concern option for collection
  * @Annotation
  * @Target("ANNOTATION")
  */
@@ -40,6 +41,7 @@ class WriteConcern
 }
 
 /**
+ * Read concern option for collection
  * @Annotation
  * @Target("ANNOTATION")
  */
@@ -69,6 +71,7 @@ class ReadConcern
 }
 
 /**
+ * Read preference option for collection
  * @Annotation
  * @Target("ANNOTATION")
  */
