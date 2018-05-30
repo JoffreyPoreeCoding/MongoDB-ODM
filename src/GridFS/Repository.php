@@ -76,6 +76,7 @@ class Repository extends BaseRepository
     public function find($id, $projections = array(), $options = array())
     {
         if (null !== ($object = parent::find($id, $projections, $options))) {
+            $data = [];
             if ($this->getStreamProjection($projections)) {
                 $data["stream"] = $this->bucket->openDownloadStream($object->getId());
             }
