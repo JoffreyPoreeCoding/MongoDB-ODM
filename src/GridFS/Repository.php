@@ -139,6 +139,7 @@ class Repository extends BaseRepository
         if (!isset($options['iterator']) || $options['iterator'] === false) {
             $objects = parent::findBy($filters, $projections, $sorts, $options);
             foreach ($objects as $object) {
+                $data = [];
                 if ($this->getStreamProjection($projections)) {
                     $data["stream"] = $this->bucket->openDownloadStream($object->getId());
                 }
@@ -172,6 +173,7 @@ class Repository extends BaseRepository
         $object = parent::findOneBy($filters, $projections, $sorts, $options);
 
         if (isset($object)) {
+            $data = [];
             if ($this->getStreamProjection($projections)) {
                 $data["stream"] = $this->bucket->openDownloadStream($object->getId());
             }
@@ -200,6 +202,7 @@ class Repository extends BaseRepository
         $object = parent::findAndModifyOneBy($filters, $update, $projections, $sorts, $options);
 
         if (isset($object)) {
+            $data = [];
             if ($this->getStreamProjection($projections)) {
                 $data["stream"] = $this->bucket->openDownloadStream($object->getId());
             }
