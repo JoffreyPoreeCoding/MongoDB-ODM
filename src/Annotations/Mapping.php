@@ -76,8 +76,8 @@ class Option
 class Id
 {
 
-    public const NONE = null;
-    public const DEFAULT = 'JPC\MongoDB\ODM\Id\DefaultGenerator';
+    const NONE = null;
+    const DEFAULT = 'JPC\MongoDB\ODM\Id\DefaultGenerator';
 
     public $generator = self::NONE;
 }
