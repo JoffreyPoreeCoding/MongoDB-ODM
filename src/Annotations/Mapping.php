@@ -77,7 +77,7 @@ class Id
 {
 
     const NONE = null;
-    const DEFAULT = 'JPC\MongoDB\ODM\Id\DefaultGenerator';
+    const AUTO = 'JPC\MongoDB\ODM\Id\AutoGenerator';
 
     public $generator = self::NONE;
 }
