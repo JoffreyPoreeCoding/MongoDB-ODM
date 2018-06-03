@@ -2,9 +2,20 @@
 
 namespace JPC\MongoDB\ODM\Tools;
 
+/**
+ * Create MongoDB Update queries
+ */
 class UpdateQueryCreator
 {
 
+    /**
+     * Create an update query from old and new values of a document
+     *
+     * @param   array   $old        Old values of document
+     * @param   array   $new        New values of document
+     * @param   string  $prefix
+     * @return  void
+     */
     public function createUpdateQuery($old, $new, $prefix = "")
     {
         $update = [];
@@ -13,7 +24,7 @@ class UpdateQueryCreator
             if (is_array($old) && array_key_exists($key, $old)) {
                 if (is_array($value) && strstr(key($value), '$') !== false) {
                     $update[key($value)][$prefix . $key] = $value[key($value)];
-                } else if (is_array($value) && is_array($old[$key])) {
+                } elseif (is_array($value) && is_array($old[$key])) {
                     if (!empty($old[$key])) {
                         $embeddedUpdate = array_merge_recursive($update, $this->createUpdateQuery($old[$key], $value, $prefix . $key . "."));
 
@@ -29,7 +40,7 @@ class UpdateQueryCreator
                 } else {
                     if ($value !== null && $value !== $old[$key]) {
                         $update['$set'][$prefix . $key] = $value;
-                    } else if ($value === null) {
+                    } elseif ($value === null) {
                         $update['$unset'][$prefix . $key] = 1;
                     }
                 }
@@ -41,7 +52,7 @@ class UpdateQueryCreator
                     } else {
                         $update = array_merge_recursive($update, $embeddedQuery);
                     }
-                } else if (is_array($value) && strstr(key($value), '$') !== false) {
+                } elseif (is_array($value) && strstr(key($value), '$') !== false) {
                     $update[key($value)][$prefix . $key] = $value[key($value)];
                 } else {
                     $update['$set'][$prefix . $key] = $value;

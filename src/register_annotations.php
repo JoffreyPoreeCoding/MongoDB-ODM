@@ -1,5 +1,9 @@
 <?php
 
+/**
+ * Register annotation for JPC ODM
+ */
+
 use Doctrine\Common\Annotations\AnnotationRegistry;
 
 AnnotationRegistry::registerFile(__DIR__ . "/Annotations/Mapping.php");

@@ -3,41 +3,124 @@
 namespace JPC\MongoDB\ODM\Iterator;
 
 use Iterator;
-use JPC\MongoDB\ODM\DocumentManager;
+use Traversable;
+use JPC\MongoDB\ODM\Hydrator;
 use JPC\MongoDB\ODM\Repository;
+use JPC\MongoDB\ODM\DocumentManager;
 use JPC\MongoDB\ODM\Tools\EventManager;
 
+/**
+ * Iterator for MongoDB cursor
+ */
 class DocumentIterator implements Iterator, \Countable
 {
 
+    /**
+     * Data
+     *
+     * @var array|Traversable
+     */
     protected $data;
 
+    /**
+     * Model class
+     *
+     * @var string
+     */
     protected $objectClass;
 
+    /**
+     * Repository
+     *
+     * @var Repository
+     */
     protected $repository;
 
+    /**
+     * The query used to get data
+     *
+     * @var array
+     */
     protected $query;
 
+    /**
+     * Hydrator for object
+     *
+     * @var Hydrator
+     */
     protected $hydrator;
 
+    /**
+     * The class metadata
+     *
+     * @var \JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata
+     */
     protected $classMetadata;
 
+    /**
+     * Document manager
+     *
+     * @var DocumentManager
+     */
     protected $documentManager;
 
+    /**
+     * Generator used to get data
+     *
+     * @var \Generator
+     */
     protected $generator;
 
+    /**
+     * Current data
+     *
+     * @var array
+     */
     protected $currentData;
 
+    /**
+     * Position in iterator
+     *
+     * @var integer
+     */
     protected $position = 0;
 
+    /**
+     * Cache data or no
+     *
+     * @var boolean
+     */
     protected $readOnly = false;
 
+    /**
+     * Count values
+     *
+     * @var integer
+     */
     protected $count;
 
+    /**
+     * Cursor is rewindable or not
+     *
+     * @var boolean
+     */
     protected $rewindable = false;
 
+    /**
+     * Is first cross
+     *
+     * @var boolean
+     */
     protected $firstCross = true;
 
+    /**
+     * Create a new cursor
+     *
+     * @param   Traversable|array   $data           Data to traverse
+     * @param   string              $objectClass    Class of object to hydrate
+     * @param   Repository          $repository     Repository used for query
+     * @param   array               $query          Query used
+     */
     public function __construct($data, $objectClass, Repository $repository, $query = [])
     {
         $this->data = $data;
@@ -53,6 +136,11 @@ class DocumentIterator implements Iterator, \Countable
         $this->currentData = $this->generator->current();
     }
 
+    /**
+     * Set iterator to readOnly
+     *
+     * @return void
+     */
     public function readOnly()
     {
         $this->readOnly = true;
@@ -60,6 +148,8 @@ class DocumentIterator implements Iterator, \Countable
 
     /**
      * Rewinds the Iterator to the first element.
+     *
+     * @return void
      */
     public function rewind()
     {
@@ -130,6 +220,8 @@ class DocumentIterator implements Iterator, \Countable
 
     /**
      * Moves forward to next element.
+     *
+     * @return void
      */
     public function next()
     {
@@ -138,6 +230,11 @@ class DocumentIterator implements Iterator, \Countable
         $this->currentData = $this->generator->current();
     }
 
+    /**
+     * Create generator to traverse data
+     *
+     * @return Generator
+     */
     protected function createGenerator()
     {
         foreach ($this->data as $data) {
@@ -145,11 +242,21 @@ class DocumentIterator implements Iterator, \Countable
         }
     }
 
+    /**
+     * Set the iterator to be rewindable
+     *
+     * @return void
+     */
     public function rewindable()
     {
         $this->rewindable = true;
     }
 
+    /**
+     * Count number of document from collection
+     *
+     * @return integer
+     */
     public function count()
     {
         if (!isset($this->count)) {

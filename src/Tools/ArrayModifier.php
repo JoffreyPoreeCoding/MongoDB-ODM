@@ -33,6 +33,14 @@ class ArrayModifier
         return $array;
     }
 
+    /**
+     * Aggregate an array to dot notation
+     *
+     * @param   array   $array Input    array
+     * @param   array   $specialKeys    array of key to not aggregate
+     * @param   string  $prefix         prefix
+     * @return  array
+     */
     public static function aggregate($array, $specialKeys = self::SPECIALS_KEYS, $prefix = '')
     {
         $new = [];
@@ -58,6 +66,12 @@ class ArrayModifier
         return $new;
     }
 
+    /**
+     * Disaggreate a dot notation array to an multi-dimensionnal array
+     *
+     * @param   array   $array  Dot notation array
+     * @return  void
+     */
     public static function disaggregate($array)
     {
         $new = [];
@@ -74,6 +88,13 @@ class ArrayModifier
         return $new;
     }
 
+    /**
+     * Get values of disaggregated array
+     *
+     * @param   array $keys Key
+     * @param   array $array Array to disaggegate
+     * @return  array
+     */
     private static function getDisaggregatedValues($keys, $array)
     {
         $values = [];

@@ -7,6 +7,9 @@ use JPC\MongoDB\ODM\Factory\ClassMetadataFactory;
 use JPC\MongoDB\ODM\Factory\RepositoryFactory;
 use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
 
+/**
+ * Hydrate and unhydrate object from/to array data
+ */
 class Hydrator
 {
 
@@ -35,9 +38,12 @@ class Hydrator
     protected $repositoryFactory;
 
     /**
-     * Create new Hydrator
-     * @param   DocumentManager     $classMetadataFactory    Document manager of the repository
-     * @param   ClassMetadata       $classMetadata      Class metadata corresponding to class
+     * Create hydrator
+     *
+     * @param ClassMetadataFactory  $classMetadataFactory   Class metadata factory
+     * @param ClassMetadata         $classMetadata          Metadata of class will be hydrated
+     * @param DocumentManager       $documentManager        Document manager of class to hydrate
+     * @param RepositoryFactory     $repositoryFactory      Repository factory
      */
     public function __construct(ClassMetadataFactory $classMetadataFactory, ClassMetadata $classMetadata, DocumentManager $documentManager, RepositoryFactory $repositoryFactory)
     {
@@ -48,37 +54,40 @@ class Hydrator
     }
 
     /**
-     * Hydrate on object
-     * @param   object              $object             Object to hydrate
-     * @param   array               $datas              Data which will hydrate the object
+     * Hydrate an object
+     *
+     * @param   mixed   $object             Object to hydrate
+     * @param   array   $data               Data wich will hydrate object
+     * @param   integer $maxReferenceDepth  Max reference depth
+     * @return  void
      */
-    public function hydrate(&$object, $datas, $maxReferenceDeep = 10)
+    public function hydrate(&$object, $data, $maxReferenceDepth = 10)
     {
-        if ($datas instanceof \MongoDB\Model\BSONArray || $datas instanceof \MongoDB\Model\BSONDocument) {
-            $datas = (array) $datas;
+        if ($data instanceof \MongoDB\Model\BSONArray || $data instanceof \MongoDB\Model\BSONDocument) {
+            $data = (array) $data;
         }
         $properties = $this->classMetadata->getPropertiesInfos();
 
         foreach ($properties as $name => $infos) {
-            if (null !== ($field = $infos->getField()) && is_array($datas) && array_key_exists($field, $datas) && $datas[$field] !== null) {
+            if (null !== ($field = $infos->getField()) && is_array($data) && array_key_exists($field, $data) && $data[$field] !== null) {
                 $prop = new \ReflectionProperty($this->classMetadata->getName(), $name);
                 $prop->setAccessible(true);
 
-                if ((($datas[$field] instanceof \MongoDB\Model\BSONDocument) || is_array($datas[$field])) && $infos->getEmbedded() && null !== ($class = $infos->getEmbeddedClass())) {
+                if ((($data[$field] instanceof \MongoDB\Model\BSONDocument) || is_array($data[$field])) && $infos->getEmbedded() && null !== ($class = $infos->getEmbeddedClass())) {
                     if (!class_exists($class)) {
                         $class = $this->classMetadata->getNamespace() . "\\" . $class;
                     }
                     $embedded = new $class();
-                    $this->getHydrator($class)->hydrate($embedded, $datas[$field]);
-                    $datas[$field] = $embedded;
+                    $this->getHydrator($class)->hydrate($embedded, $data[$field]);
+                    $data[$field] = $embedded;
                 }
 
-                if ((($datas[$field] instanceof \MongoDB\Model\BSONArray) || ($datas[$field] instanceof \MongoDB\Model\BSONDocument) || is_array($datas[$field])) && $infos->getMultiEmbedded() && null !== ($class = $infos->getEmbeddedClass())) {
+                if ((($data[$field] instanceof \MongoDB\Model\BSONArray) || ($data[$field] instanceof \MongoDB\Model\BSONDocument) || is_array($data[$field])) && $infos->getMultiEmbedded() && null !== ($class = $infos->getEmbeddedClass())) {
                     if (!class_exists($class)) {
                         $class = $this->classMetadata->getNamespace() . "\\" . $class;
                     }
                     $array = [];
-                    foreach ($datas[$field] as $key => $value) {
+                    foreach ($data[$field] as $key => $value) {
                         if ($value === null) {
                             continue;
                         }
@@ -87,13 +96,13 @@ class Hydrator
                         $this->getHydrator($class)->hydrate($embedded, $value);
                         $array[$key] = $embedded;
                     }
-                    $datas[$field] = $array;
+                    $data[$field] = $array;
                 }
 
-                if (null !== ($refInfos = $infos->getReferenceInfo()) && !$refInfos->getIsMultiple() && $maxReferenceDeep > 0) {
+                if (null !== ($refInfos = $infos->getReferenceInfo()) && !$refInfos->getIsMultiple() && $maxReferenceDepth > 0) {
                     $repository = $this->repositoryFactory->getRepository($this->documentManager, $refInfos->getDocument(), $refInfos->getCollection());
 
-                    $objectDatas = $repository->getCollection()->findOne(["_id" => $datas[$field]]);
+                    $objectDatas = $repository->getCollection()->findOne(["_id" => $data[$field]]);
                     $referedObject = null;
 
                     if (isset($objectDatas)) {
@@ -106,18 +115,18 @@ class Hydrator
                         $referedObject = new $class();
 
                         $hydrator = $repository->getHydrator();
-                        $hydrator->hydrate($referedObject, $objectDatas, $maxReferenceDeep - 1);
+                        $hydrator->hydrate($referedObject, $objectDatas, $maxReferenceDepth - 1);
                     }
-                    $datas[$field] = $referedObject;
+                    $data[$field] = $referedObject;
                 }
 
                 if (null !== ($refInfos = $infos->getReferenceInfo()) && $refInfos->getIsMultiple()) {
                     $repository = $this->repositoryFactory->getRepository($this->documentManager, $refInfos->getDocument(), $refInfos->getCollection());
 
-                    if (!$datas[$field] instanceof \MongoDB\Model\BSONArray && !is_array($datas[$field])) {
-                        throw new \Exception("RefersMany value must be an array for document with '_id' : " . $datas["_id"]);
+                    if (!$data[$field] instanceof \MongoDB\Model\BSONArray && !is_array($data[$field])) {
+                        throw new \Exception("RefersMany value must be an array for document with '_id' : " . $data["_id"]);
                     } else {
-                        $objectsDatas = $repository->getCollection()->find(["_id" => ['$in' => $datas[$field]]]);
+                        $objectsDatas = $repository->getCollection()->find(["_id" => ['$in' => $data[$field]]]);
                     }
 
                     $objectArray = null;
@@ -134,22 +143,23 @@ class Hydrator
                             $referedObject = new $class();
 
                             $hydrator = $repository->getHydrator();
-                            $hydrator->hydrate($referedObject, $objectDatas, $maxReferenceDeep - 1);
+                            $hydrator->hydrate($referedObject, $objectDatas, $maxReferenceDepth - 1);
 
                             $objectArray[] = $referedObject;
                         }
                     }
-                    $datas[$field] = $objectArray;
+                    $data[$field] = $objectArray;
                 }
 
-                $prop->setValue($object, $datas[$field]);
+                $prop->setValue($object, $data[$field]);
             }
         }
     }
 
     /**
      * Unhydrate an object
-     * @param   object              $object             Object to unhydrate
+     *
+     * @param   object  $object     Object to unhydrate
      * @return  array               Unhydrated Object
      */
     public function unhydrate($object)
@@ -230,6 +240,12 @@ class Hydrator
         return $datas;
     }
 
+    /**
+     * Convert BSONDocument and BSONArray to array recursively
+     *
+     * @param   array   $array  Array to convert
+     * @return  array
+     */
     public function recursiveConvertInArray($array)
     {
         $newArray = [];
@@ -252,7 +268,7 @@ class Hydrator
      * Get hydrator for specified class
      *
      * @param   string              $class              Class which you will get hydrator
-     * @return  Hydrator            Hydrator corresponding to specified class
+     * @return  Hydrator                                Hydrator corresponding to specified class
      */
     public function getHydrator($class)
     {

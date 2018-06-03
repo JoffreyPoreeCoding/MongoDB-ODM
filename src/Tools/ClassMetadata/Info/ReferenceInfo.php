@@ -2,6 +2,9 @@
 
 namespace JPC\MongoDB\ODM\Tools\ClassMetadata\Info;
 
+/**
+ * Store infos for references
+ */
 class ReferenceInfo
 {
 

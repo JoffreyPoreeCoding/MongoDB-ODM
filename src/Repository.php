@@ -72,9 +72,15 @@ class Repository
     protected $updateQueryCreator;
 
     /**
-     * Create new Repository
+     * Create a repository
      *
-     * @param   Tools\ClassMetadata     $classMetadata      Metadata of managed class
+     * @param   DocumentManager     $documentManager    Document manager
+     * @param   Collection          $collection         MongoDB Collection
+     * @param   ClassMetadata       $classMetadata      Class metadata
+     * @param   Hydrator            $hydrator           Object hydrator
+     * @param   QueryCaster         $queryCaster        Query caster
+     * @param   UpdateQueryCreator  $uqc                Update query Creator
+     * @param   CacheProvider       $objectCache        Cache for persisted objects
      */
     public function __construct(DocumentManager $documentManager, Collection $collection, ClassMetadata $classMetadata, Hydrator $hydrator, QueryCaster $queryCaster, UpdateQueryCreator $uqc = null, CacheProvider $objectCache = null)
     {
@@ -90,6 +96,11 @@ class Repository
         $this->updateQueryCreator = isset($uqc) ? $uqc : new UpdateQueryCreator();
     }
 
+    /**
+     * Clear cache
+     *
+     * @return void
+     */
     public function clear()
     {
         if (is_a($this->objectCache, FlushableCache::class)) {
@@ -148,10 +159,14 @@ class Repository
     /**
      * Find document by ID
      *
+     * Options :
+     *  *   readOnly : boolean - When false, flush will not update object
+     * @see MongoDB\Operation\FindOne::__construct for more option
+     *
      * @param   mixed                   $id                 Id of the document
      * @param   array                   $projections        Projection of the query
      * @param   array                   $options            Options for the query
-     * @return  object                                      Object corresponding to MongoDB Document (false if not found)
+     * @return  object|null
      */
     public function find($id, $projections = [], $options = [])
     {
@@ -166,6 +181,11 @@ class Repository
 
     /**
      * Find all document of the collection
+     *
+     * Options :
+     *  *   readOnly : boolean - When false, flush will not update object
+     *  *   iterator : boolean|string - Return DocumentIterator if true (or specified class if is string)
+     * @see MongoDB\Operation\Find::__construct for more option
      *
      * @param   array                   $projections        Projection of the query
      * @param   array                   $sorts              Sort options
@@ -198,13 +218,19 @@ class Repository
     }
 
     /**
-     * Find all document of the collection
+     * Get documents which match the query
      *
-     * @param   array                   $filters            Filters of the query
+     * Options :
+     *  *   readOnly : boolean - When false, flush will not update object
+     *  *   iterator : boolean|string - Return DocumentIterator if true (or specified class if is string)
+     * @see MongoDB\Operation\Find::__construct for more option
+     *
+     * @param   array                   $filters            Filters
      * @param   array                   $projections        Projection of the query
-     * @param   array                   $sorts              Sort options
+     * @param   array                   $sorts              Sorts specification
      * @param   array                   $options            Options for the query
-     * @return  array                                       Array containing all the document of the collection
+     * @param array $options
+     * @return void
      */
     public function findBy($filters, $projections = [], $sorts = [], $options = [])
     {
@@ -237,13 +263,18 @@ class Repository
     }
 
     /**
-     * Find all document of the collection
+     * Get first document which match the query
      *
-     * @param   array                   $filters            Filters of the query
+     * Options :
+     *  *   readOnly : boolean - When false, flush will not update object
+     * @see MongoDB\Operation\Find::__construct for more option
+     *
+     * @param   array                   $filters            Filters
      * @param   array                   $projections        Projection of the query
-     * @param   array                   $sorts              Sort options
+     * @param   array                   $sorts              Sorts specification
      * @param   array                   $options            Options for the query
-     * @return  array                                       Array containing all the document of the collection
+     * @param array $options
+     * @return void
      */
     public function findOneBy($filters = [], $projections = [], $sorts = [], $options = [])
     {
@@ -261,14 +292,19 @@ class Repository
     }
 
     /**
-     * FindAndModifyOneBy document
+     * Find a document and make specified update on it
      *
-     * @param   array                   $filters            Filters of the query
-     * @param   array                   $update             Update of the query
+     * Options :
+     *  *   readOnly : boolean - When false, flush will not update object
+     * @see MongoDB\Operation\FindAndModify::__construct for more option
+     *
+     * @param   array                   $filters            Filters
+     * @param   array                   $update             Update to perform
      * @param   array                   $projections        Projection of the query
-     * @param   array                   $sorts              Sort options
+     * @param   array                   $sorts              Sorts specification
      * @param   array                   $options            Options for the query
-     * @return  object                                      Object correspoding to finding element
+     * @param array $options
+     * @return void
      */
     public function findAndModifyOneBy($filters = [], $update = [], $projections = [], $sorts = [], $options = [])
     {
@@ -303,6 +339,13 @@ class Repository
         return $this->collection->find($this->castQuery($filters), $options);
     }
 
+    /**
+     * Insert a document in collection
+     *
+     * @param   mixed   $document   Document to insert
+     * @param   array   $options    Options
+     * @return  void
+     */
     public function insertOne($document, $options = [])
     {
         $this->classMetadata->getEventManager()->execute(EventManager::EVENT_PRE_INSERT, $document);
@@ -335,6 +378,13 @@ class Repository
         }
     }
 
+    /**
+     * Insert multiple documents in collection
+     *
+     * @param   mixed   $documents  Documents to insert
+     * @param   array   $options    Options
+     * @return  void
+     */
     public function insertMany($documents, $options = [])
     {
         $insertQuery = [];
@@ -376,13 +426,12 @@ class Repository
     }
 
     /**
-     * [updateOne description]
-     * @param  [type] $document [description]
-     * @param  array  $update   [description]
-     * @param  array  $options  [description]
-     * @return [type]           [description]
+     * Update a document in mongoDB
      *
-     * @todo Delete refresh to make it from PHP (Don't make find query)
+     * @param   mixed   $document   Document or query to update
+     * @param   array   $update     Update query, let empty to update document based on object changes
+     * @param   array   $options    Options
+     * @return  void
      */
     public function updateOne($document, $update = [], $options = [])
     {
@@ -390,7 +439,7 @@ class Repository
             $unhydratedObject = $this->hydrator->unhydrate($document);
             $id = $unhydratedObject["_id"];
             $filters = ["_id" => $id];
-        } else if (is_object($document)) {
+        } elseif (is_object($document)) {
             throw new MappingException('Document sended to update function must be of type "' . $this->modelName . '"');
         } else {
             $filters = $this->castQuery($document);
@@ -425,6 +474,14 @@ class Repository
         return true;
     }
 
+    /**
+     * Update many document
+     *
+     * @param   array   $filters    Filters
+     * @param   array   $update     Update to perform
+     * @param   array   $options    Options
+     * @return  void
+     */
     public function updateMany($filters, $update, $options = [])
     {
         $result = $this->collection->updateMany($this->castQuery($filters), $update, $options);
@@ -436,6 +493,13 @@ class Repository
         }
     }
 
+    /**
+     * Delete a document
+     *
+     * @param   object|array    $document   Document to delete
+     * @param   array           $options    Options
+     * @return  void
+     */
     public function deleteOne($document, $options = [])
     {
         $this->classMetadata->getEventManager()->execute(EventManager::EVENT_PRE_DELETE, $document);
@@ -453,6 +517,13 @@ class Repository
         }
     }
 
+    /**
+     * Delete many document
+     *
+     * @param   array   $filter     Filter wich match to objects to delete
+     * @param   array   $options    Options
+     * @return  void
+     */
     public function deleteMany($filter, $options = [])
     {
         $filter = $this->castQuery($filter);
@@ -465,6 +536,14 @@ class Repository
         }
     }
 
+    /**
+     * Write log in logger
+     *
+     * @param   string  $level      Level of log
+     * @param   string  $message    Message of log
+     * @param   array   $metadata   Metadata
+     * @return  void
+     */
     protected function log($level, $message, $metadata = [])
     {
         if ($this->documentManager->getDebug()) {
@@ -472,6 +551,13 @@ class Repository
         }
     }
 
+    /**
+     * Create object based on provided data
+     *
+     * @param   array   $data       Array of data which will hydrate object
+     * @param   array   $options    Options
+     * @return  void
+     */
     protected function createObject($data, $options = [])
     {
         $object = null;
@@ -489,6 +575,14 @@ class Repository
         return $object;
     }
 
+    /**
+     * Create options based on parameters
+     *
+     * @param   array   $projections    Projection specification
+     * @param   array   $sort           Sort specification
+     * @param   array   $otherOptions   Other options
+     * @return  void
+     */
     protected function createOption($projections, $sort, $otherOptions = [])
     {
         $options = [];
@@ -499,6 +593,11 @@ class Repository
         return $options;
     }
 
+    /**
+     * Drop the bucket from database
+     *
+     * @return void
+     */
     public function drop()
     {
         if ($this->documentManager->getDebug()) {
@@ -514,12 +613,24 @@ class Repository
         }
     }
 
+    /**
+     * Cast the query
+     *
+     * @param   array   $query  Query to cast
+     * @return  void
+     */
     protected function castQuery($query)
     {
         $this->queryCaster->init($query);
         return $this->queryCaster->getCastedQuery();
     }
 
+    /**
+     * Store object in cache to see changes
+     *
+     * @param   object  $object Object to cache
+     * @return  void
+     */
     public function cacheObject($object)
     {
         if (is_object($object)) {
@@ -527,11 +638,23 @@ class Repository
         }
     }
 
+    /**
+     * Get the cached document
+     *
+     * @param   object  $object     Object to uncache
+     * @return  object
+     */
     protected function uncacheObject($object)
     {
         return $this->objectCache->fetch(spl_object_hash($object));
     }
 
+    /**
+     * Create the update query from object diff
+     *
+     * @param   object  $document   The document that the update query will match
+     * @return  array
+     */
     protected function getUpdateQuery($document)
     {
         $updateQuery = [];

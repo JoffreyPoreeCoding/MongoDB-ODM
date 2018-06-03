@@ -2,14 +2,19 @@
 
 namespace JPC\MongoDB\ODM\Tools\ClassMetadata;
 
-use Doctrine\Common\Annotations\AnnotationReader;
-use Doctrine\Common\Annotations\CachedReader;
 use Doctrine\Common\Cache\ApcuCache;
-use JPC\MongoDB\ODM\Tools\ClassMetadata\Info\CollectionInfo;
+use JPC\MongoDB\ODM\Tools\EventManager;
+use Doctrine\Common\Annotations\Annotation;
+use Doctrine\Common\Annotations\CachedReader;
+use Doctrine\Common\Annotations\AnnotationReader;
 use JPC\MongoDB\ODM\Tools\ClassMetadata\Info\PropertyInfo;
 use JPC\MongoDB\ODM\Tools\ClassMetadata\Info\ReferenceInfo;
-use JPC\MongoDB\ODM\Tools\EventManager;
+use JPC\MongoDB\ODM\Tools\ClassMetadata\Info\CollectionInfo;
 
+/**
+ * Parse and store all info about a class to map
+ * fields in mongodb, events, and more
+ */
 class ClassMetadata
 {
     /* ================================== */
@@ -82,11 +87,19 @@ class ClassMetadata
         $this->name = $className;
     }
 
+    /**
+     * Return name of the class
+     *
+     * @return void
+     */
     public function getName()
     {
         return $this->name;
     }
 
+    /**
+     * Get namespace of the class
+     */
     public function getNamespace()
     {
         if (!isset($this->namespace)) {
@@ -96,6 +109,11 @@ class ClassMetadata
         return $this->namespace;
     }
 
+    /**
+     * Return default collection for this class
+     *
+     * @return void
+     */
     public function getCollection()
     {
         if (!$this->loaded) {
@@ -105,6 +123,11 @@ class ClassMetadata
         return $this->collectionInfo->getCollection();
     }
 
+    /**
+     * Return default bucket name for this class
+     *
+     * @return void
+     */
     public function getBucketName()
     {
         if (!$this->loaded) {
@@ -114,6 +137,12 @@ class ClassMetadata
         return $this->collectionInfo->getBucketName();
     }
 
+    /**
+     * Get property information
+     *
+     * @param   string  $prop Name of the property
+     * @return  PropertyInfo
+     */
     public function getPropertyInfo($prop)
     {
         if (!$this->loaded) {
@@ -127,6 +156,11 @@ class ClassMetadata
         return false;
     }
 
+    /**
+     * Get all properties
+     *
+     * @return array
+     */
     public function getPropertiesInfos()
     {
         if (!$this->loaded) {
@@ -136,6 +170,12 @@ class ClassMetadata
         return $this->propertiesInfos;
     }
 
+    /**
+     * Get property info corresponding to a field
+     *
+     * @param   string          $field  Field
+     * @return  PropertyInfo
+     */
     public function getPropertyInfoForField($field)
     {
         if (!$this->loaded) {
@@ -151,6 +191,12 @@ class ClassMetadata
         return false;
     }
 
+    /**
+     * Get ReflectionProperty for a field
+     *
+     * @param   string              $field  Field
+     * @return  \ReflectionProperty
+     */
     public function getPropertyForField($field)
     {
         if (!$this->loaded) {
@@ -166,6 +212,11 @@ class ClassMetadata
         return false;
     }
 
+    /**
+     * Get collection creation options
+     *
+     * @return array
+     */
     public function getCollectionCreationOptions()
     {
         if (!$this->loaded) {
@@ -175,6 +226,11 @@ class ClassMetadata
         return $this->collectionInfo->getCreationOptions();
     }
 
+    /**
+     * Get collection options
+     *
+     * @return array
+     */
     public function getCollectionOptions()
     {
         if (!$this->loaded) {
@@ -184,6 +240,12 @@ class ClassMetadata
         return $this->collectionInfo->getOptions();
     }
 
+    /**
+     * Set the collection
+     *
+     * @param   string          $collection     Name of the collection
+     * @return  ClassMetadata
+     */
     public function setCollection($collection)
     {
         if (!$this->loaded) {
@@ -194,6 +256,11 @@ class ClassMetadata
         return $this;
     }
 
+    /**
+     * Get the repository class
+     *
+     * @return string
+     */
     public function getRepositoryClass()
     {
         if (!$this->loaded) {
@@ -203,6 +270,11 @@ class ClassMetadata
         return $this->collectionInfo->getRepository();
     }
 
+    /**
+     * Get Hydrator class
+     *
+     * @return string
+     */
     public function getHydratorClass()
     {
         if (!$this->loaded) {
@@ -212,6 +284,11 @@ class ClassMetadata
         return $this->collectionInfo->getHydrator();
     }
 
+    /**
+     * Get the event manager
+     *
+     * @return EventManager
+     */
     public function getEventManager()
     {
         if (!$this->loaded) {
@@ -221,11 +298,21 @@ class ClassMetadata
         return $this->eventManager;
     }
 
+    /**
+     * Get id generator class
+     *
+     * @return string
+     */
     public function getIdGenerator()
     {
         return $this->idGenerator;
     }
 
+    /**
+     * Load all metadata
+     *
+     * @return void
+     */
     private function load()
     {
         $reflectionClass = new \ReflectionClass($this->name);
@@ -264,6 +351,12 @@ class ClassMetadata
         $this->loaded = true;
     }
 
+    /**
+     * Process class annotation to extract infos
+     *
+     * @param   Annotation $annotation Annotation to process
+     * @return  void
+     */
     private function processClassAnnotation($annotation)
     {
         $class = get_class($annotation);
@@ -310,6 +403,12 @@ class ClassMetadata
         }
     }
 
+    /**
+     * Process option annotation
+     *
+     * @param   \JPC\MongoDB\ODM\Annotations\Mapping\Option     $annotation Annotation to process
+     * @return  void
+     */
     private function processOptionAnnotation(\JPC\MongoDB\ODM\Annotations\Mapping\Option $annotation)
     {
         $options = [];
@@ -332,6 +431,13 @@ class ClassMetadata
         $this->collectionInfo->setOptions($options);
     }
 
+    /**
+     * Process property annotation
+     *
+     * @param   string      $name           Name of the property
+     * @param   Annotation  $annotation     Annotation to process
+     * @return  void
+     */
     private function processPropertiesAnnotation($name, $annotation)
     {
         $class = get_class($annotation);
@@ -394,11 +500,12 @@ class ClassMetadata
         }
     }
 
-    private function processMethodAnnotation()
-    {
-
-    }
-
+    /**
+     * Check and set collection creation options
+     *
+     * @param   \JPC\MongoDB\ODM\Annotations\Mapping\Document   $annotation     Annotation to process
+     * @return  void
+     */
     private function checkCollectionCreationOptions(\JPC\MongoDB\ODM\Annotations\Mapping\Document $annotation)
     {
         $options = [];

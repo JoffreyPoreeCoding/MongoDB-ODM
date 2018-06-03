@@ -19,13 +19,32 @@ class EventManager
     const EVENT_PRE_DELETE = "pre_delete";
     const EVENT_POST_DELETE = "post_delete";
 
+    /**
+     * Registered events
+     *
+     * @var array
+     */
     private $events = [];
 
+    /**
+     * Add event
+     *
+     * @param   Event   $event  Event to add
+     * @param   string  $method Method name
+     * @return  void
+     */
     public function add(Event $event, $method)
     {
         $this->events[$event->getName()][] = $method;
     }
 
+    /**
+     * Execute an event
+     *
+     * @param   string  $eventName Name of event
+     * @param   mixed   $object Object on wich object will be executed
+     * @return  void
+     */
     public function execute($eventName, $object)
     {
         if (isset($this->events[$eventName]) && is_array(($this->events[$eventName]))) {
@@ -35,6 +54,11 @@ class EventManager
         }
     }
 
+    /**
+     * Return all events
+     *
+     * @return array
+     */
     public function getEvents()
     {
         return $this->events;

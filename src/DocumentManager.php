@@ -13,17 +13,16 @@ use MongoDB\Client as MongoClient;
 use MongoDB\Database as MongoDatabase;
 
 /**
- * This allow to interact with document and repositories
- *
- * @author Joffrey Porée <contact@joffreyporee.com>
+ * MongoDB Documents manager
  */
 class DocumentManager extends ObjectManager
 {
 
-    /* ================================== */
-    /*             PROPERTIES             */
-    /* ================================== */
-
+    /**
+     * Debug mode activated or not
+     *
+     * @var boolean
+     */
     private $debug;
 
     /**
@@ -61,10 +60,6 @@ class DocumentManager extends ObjectManager
      * @var array
      */
     protected $defaultOptions = [];
-
-    /* ================================== */
-    /*          PUBLICS FUNCTIONS         */
-    /* ================================== */
 
     /**
      * Create new DocumentManager
@@ -113,9 +108,11 @@ class DocumentManager extends ObjectManager
     }
 
     /**
-     * Persist an object in object manager
+     * Persist object in document manager
      *
-     * @param   mixed       $object     Object to persist
+     * @param   mixed   $object Object to persist
+     * @param   string  $collection Collection where object is persisted
+     * @return  void
      */
     public function persist($object, $collection = null)
     {
@@ -139,8 +136,8 @@ class DocumentManager extends ObjectManager
      * Add a managed object
      *
      * @param   object          $object         Object to manage
-     * @param   Repository      $repository     Repository
      * @param   integer         $state          State of managed object
+     * @param   Repository      $repository     Repository
      */
     public function addObject($object, $state = self::OBJ_NEW, $repository = null)
     {
@@ -273,10 +270,6 @@ class DocumentManager extends ObjectManager
         parent::clear();
         $this->objectsRepository = [];
     }
-
-    /* ------------------------------- */
-    /*        GETTERS / SETTERS        */
-    /* ------------------------------- */
 
     /**
      * Select database from name

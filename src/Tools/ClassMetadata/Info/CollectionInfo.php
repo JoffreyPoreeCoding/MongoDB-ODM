@@ -3,9 +3,7 @@
 namespace JPC\MongoDB\ODM\Tools\ClassMetadata\Info;
 
 /**
- * Description of CollectionInfos
- *
- * @author poree
+ * Store collection info for a class
  */
 class CollectionInfo
 {

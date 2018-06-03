@@ -5,6 +5,9 @@ namespace JPC\MongoDB\ODM\Iterator;
 use JPC\MongoDB\ODM\Iterator\DocumentIterator;
 use JPC\MongoDB\ODM\Repository;
 
+/**
+ * Iterator for GridFS entry
+ */
 class GridFSDocumentIterator extends DocumentIterator
 {
 
@@ -21,6 +24,8 @@ class GridFSDocumentIterator extends DocumentIterator
 
     /**
      * Moves forward to next element.
+     *
+     * @return void
      */
     public function next()
     {

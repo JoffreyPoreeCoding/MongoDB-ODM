@@ -2,6 +2,9 @@
 
 namespace JPC\MongoDB\ODM\Tools\ClassMetadata\Info;
 
+/**
+ * Store infos for given property
+ */
 class PropertyInfo
 {
     private $field;

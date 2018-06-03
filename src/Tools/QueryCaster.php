@@ -3,6 +3,7 @@
 namespace JPC\MongoDB\ODM\Tools;
 
 use JPC\MongoDB\ODM\Factory\ClassMetadataFactory;
+use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
 
 class QueryCaster
 {
@@ -37,7 +38,13 @@ class QueryCaster
      */
     private $classMetadataFactory;
 
-    public function __construct($classMetadata, $classMetadataFactory)
+    /**
+     * Create query caster
+     *
+     * @param   ClassMetadata           $classMetadata
+     * @param   ClassMetadataFactory    $classMetadataFactory
+     */
+    public function __construct(ClassMetadata $classMetadata, ClassMetadataFactory $classMetadataFactory)
     {
         $this->initialMetadata = $classMetadata;
         if (!isset(self::$mongoDbQueryOperators)) {
@@ -49,11 +56,22 @@ class QueryCaster
         $this->classMetadataFactory = $classMetadataFactory;
     }
 
+    /**
+     * Set the query to cast
+     *
+     * @param   array   $query  Query to cast
+     * @return  void
+     */
     public function init($query)
     {
         $this->query = $query;
     }
 
+    /**
+     * Get the caster query
+     *
+     * @return array
+     */
     public function getCastedQuery()
     {
         $newQuery = $this->castArray($this->query, $this->initialMetadata);
@@ -61,11 +79,23 @@ class QueryCaster
         return $newQuery;
     }
 
+    /**
+     * Get uncasted query
+     *
+     * @return array
+     */
     public function getQuery()
     {
         return $this->query;
     }
 
+    /**
+     * Undocumented function
+     *
+     * @param [type] $array
+     * @param [type] $classMetadata
+     * @return void
+     */
     private function castArray($array, $classMetadata)
     {
         $newQuery = [];
@@ -118,7 +148,7 @@ class QueryCaster
                 $result = "metadata." . $result;
             }
             return $result;
-        } else if ($propInfo != false) {
+        } elseif ($propInfo != false) {
             if (!empty($remainingField)) {
                 $remainingField = "." . $remainingField;
             } else {

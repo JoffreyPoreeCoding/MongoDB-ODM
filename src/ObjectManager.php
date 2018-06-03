@@ -3,9 +3,7 @@
 namespace JPC\MongoDB\ODM;
 
 /**
- * Description of ObjectManager
- *
- * @author poree
+ * Manage persisted objects
  */
 class ObjectManager
 {
@@ -23,8 +21,19 @@ class ObjectManager
      */
     protected $objectStates = [];
 
+    /**
+     * Persisted Objects
+     * @var array
+     */
     protected $objects = [];
 
+    /**
+     * Add an object
+     *
+     * @param   mixed   $object     Object to add
+     * @param   int     $state      State of this object
+     * @return  void
+     */
     public function addObject($object, $state = self::OBJ_NEW)
     {
         $oid = spl_object_hash($object);
@@ -35,6 +44,12 @@ class ObjectManager
         }
     }
 
+    /**
+     * Unpersist object
+     *
+     * @param   mixed   $object     Object to unpersist
+     * @return  void
+     */
     public function removeObject($object)
     {
         $oid = spl_object_hash($object);
@@ -47,6 +62,13 @@ class ObjectManager
         unset($this->objects[$oid]);
     }
 
+    /**
+     * Update object state
+     *
+     * @param   mixed   $object     Object to change state
+     * @param   int     $state      New state
+     * @return  void
+     */
     public function setObjectState($object, $state)
     {
         if (is_object($object)) {
@@ -72,6 +94,12 @@ class ObjectManager
         return true;
     }
 
+    /**
+     * Get object state
+     *
+     * @param   mixed   $object
+     * @return  void
+     */
     public function getObjectState($object)
     {
         $oid = spl_object_hash($object);
@@ -83,6 +111,12 @@ class ObjectManager
         return null;
     }
 
+    /**
+     * Get object with specified state
+     *
+     * @param   int     $state  State to search
+     * @return  array
+     */
     public function getObject($state = null)
     {
         if (!isset($state)) {
@@ -99,11 +133,22 @@ class ObjectManager
         return $objectList;
     }
 
+    /**
+     * Check if object is managed
+     *
+     * @param   mixed   $object     Object to search
+     * @return  boolean
+     */
     public function hasObject($object)
     {
         return isset($this->objects[spl_object_hash($object)]);
     }
 
+    /**
+     * Clear all object states
+     *
+     * @return void
+     */
     public function clear()
     {
         $this->objectStates = [];
