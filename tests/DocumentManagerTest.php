@@ -144,6 +144,10 @@ class DocumentManagerTest extends TestCase
         $rep->expects($this->once())
             ->method("deleteOne")
             ->with($obj3);
+        $rep->expects($this->exactly(3))
+            ->method("hasUpdate")
+            ->with($this->equalTo($obj2))
+            ->will($this->onConsecutiveCalls(true, false, false));
         $rep->expects($this->once())
             ->method("updateOne")
             ->with($obj2);

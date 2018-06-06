@@ -639,6 +639,17 @@ class Repository
     }
 
     /**
+     * Check if document has update
+     *
+     * @param mixed $object
+     * @return boolean
+     */
+    public function hasUpdate($object)
+    {
+        return !empty($this->getUpdateQuery($object));
+    }
+
+    /**
      * Get the cached document
      *
      * @param   object  $object     Object to uncache

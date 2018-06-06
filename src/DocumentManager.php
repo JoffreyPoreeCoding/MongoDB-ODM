@@ -2,7 +2,6 @@
 
 namespace JPC\MongoDB\ODM;
 
-use JPC\MongoDB\ODM\Exception\ExtensionException;
 use JPC\MongoDB\ODM\Factory\RepositoryFactory;
 use JPC\MongoDB\ODM\ObjectManager;
 use JPC\MongoDB\ODM\Repository;
@@ -219,27 +218,41 @@ class DocumentManager extends ObjectManager
         }
 
         $removeObjs = $this->getObject(ObjectManager::OBJ_REMOVED);
-        foreach ($removeObjs as $object) {
+        $updateObjs = $this->getObject(ObjectManager::OBJ_MANAGED);
+        $newObjs = $this->getObject(ObjectManager::OBJ_NEW);
+
+        foreach ($updateObjs as $key => $object) {
             $repository = $this->objectsRepository[spl_object_hash($object)];
-            $repository->getClassMetadata()->getEventManager()->execute(EventManager::EVENT_PRE_FLUSH, $object);
-            $repository->deleteOne($object);
-            $this->removeObject($object);
-            $repository->getClassMetadata()->getEventManager()->execute(EventManager::EVENT_POST_FLUSH, $object);
+            if (!$repository->hasUpdate($object)) {
+                unset($updateObjs[$key]);
+            }
         }
 
-        $updateObjs = $this->getObject(ObjectManager::OBJ_MANAGED);
-        foreach ($updateObjs as $object) {
+        if (!empty(array_merge($newObjs, $updateObjs, $removeObjs))) {
+            $this->perfomOperations($newObjs, $updateObjs, $removeObjs);
+        }
+    }
+
+    /**
+     * Perfom operation on collections
+     *
+     * @param   array   $insert     Objects to insert
+     * @param   array   $update     Objects to update
+     * @param   array   $remove     Objects to remove
+     * @return  void
+     */
+    private function perfomOperations($insert, $update, $remove)
+    {
+        foreach ($update as $object) {
             $repository = $this->objectsRepository[spl_object_hash($object)];
             $repository->getClassMetadata()->getEventManager()->execute(EventManager::EVENT_PRE_FLUSH, $object);
             $repository->updateOne($object);
             $repository->getClassMetadata()->getEventManager()->execute(EventManager::EVENT_POST_FLUSH, $object);
         }
 
-        $newObjs = $this->getObject(ObjectManager::OBJ_NEW);
-
         $toInsert = [];
         $repositories = [];
-        foreach ($newObjs as $object) {
+        foreach ($insert as $object) {
             $repository = $this->objectsRepository[spl_object_hash($object)];
             $repository->getClassMetadata()->getEventManager()->execute(EventManager::EVENT_PRE_FLUSH, $object);
             $rid = spl_object_hash($repository);
@@ -255,6 +268,16 @@ class DocumentManager extends ObjectManager
                 $repository->getClassMetadata()->getEventManager()->execute(EventManager::EVENT_POST_FLUSH, $object);
             }
         }
+
+        foreach ($remove as $object) {
+            $repository = $this->objectsRepository[spl_object_hash($object)];
+            $repository->getClassMetadata()->getEventManager()->execute(EventManager::EVENT_PRE_FLUSH, $object);
+            $repository->deleteOne($object);
+            $this->removeObject($object);
+            $repository->getClassMetadata()->getEventManager()->execute(EventManager::EVENT_POST_FLUSH, $object);
+        }
+
+        $this->flush();
     }
 
     /**
