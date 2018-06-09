@@ -277,7 +277,7 @@ class DocumentManager extends ObjectManager
             $repository->getClassMetadata()->getEventManager()->execute(EventManager::EVENT_POST_FLUSH, $object);
         }
 
-        // $this->flush();
+        $this->flush();
     }
 
     /**

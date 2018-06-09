@@ -139,4 +139,62 @@ class UpdateQueryCreatorTest extends TestCase
         $updateQuery = $updateQueryCreator->createUpdateQuery([], $new);
         $this->assertEquals($expected, $updateQuery);
     }
+
+    /**
+     * @test
+     */
+    public function createUpdateQueryUnchangedArray()
+    {
+        $old = [
+            'array' => [],
+            'embedded' => [
+                'array' => [
+                    'array' => [],
+                ],
+            ],
+        ];
+
+        $new = [
+            'array' => [],
+            'embedded' => [
+                'array' => [
+                    'array' => [],
+                ],
+            ],
+        ];
+
+        $updateQueryCreator = new UpdateQueryCreator();
+        $updateQuery = $updateQueryCreator->createUpdateQuery($old, $new);
+        $this->assertEmpty($updateQuery);
+    }
+
+    /**
+     * @test
+     */
+    public function createUpdateQueryWithNull()
+    {
+        $old = [
+            'value' => null,
+            'embedded' => [
+                'array' => [
+                    'value' => null,
+                ],
+                'value' => null
+            ],
+        ];
+
+        $new = [
+            'value' => null,
+            'embedded' => [
+                'array' => [
+                    'value' => null,
+                ],
+                'value' => null
+            ],
+        ];
+
+        $updateQueryCreator = new UpdateQueryCreator();
+        $updateQuery = $updateQueryCreator->createUpdateQuery($old, $new);
+        $this->assertEmpty($updateQuery);
+    }
 }

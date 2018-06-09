@@ -27,20 +27,25 @@ class UpdateQueryCreator
                 } elseif (is_array($value) && is_array($old[$key])) {
                     if (!empty($old[$key])) {
                         $embeddedUpdate = array_merge_recursive($update, $this->createUpdateQuery($old[$key], $value, $prefix . $key . "."));
-
                         foreach ($embeddedUpdate as $updateOperator => $value) {
                             if (!isset($update[$updateOperator])) {
                                 $update[$updateOperator] = [];
                             }
                             $update[$updateOperator] += $value;
                         }
-                    } else {
+                    } else if (!empty($value)) {
                         $update['$set'][$prefix . $key] = $value;
                     }
                 } else {
                     if ($value !== null && $value !== $old[$key]) {
-                        $update['$set'][$prefix . $key] = $value;
-                    } elseif ($value === null) {
+                        if ($value instanceof \MongoDB\BSON\UTCDateTime && $old[$key] instanceof \MongoDB\BSON\UTCDateTime) {
+                            if (serialize($value) != serialize($old[$key])) {
+                                $update['$set'][$prefix . $key] = $value;
+                            }
+                        } else {
+                            $update['$set'][$prefix . $key] = $value;
+                        }
+                    } elseif ($value === null && $old[$key] !== null) {
                         $update['$unset'][$prefix . $key] = 1;
                     }
                 }

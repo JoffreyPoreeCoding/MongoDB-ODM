@@ -604,9 +604,9 @@ class Repository
             $this->documentManager->getLogger()->debug("Drop collection '" . $this->collection->getCollectionName() . "'");
         }
 
-        $result = $this->collection->drop();
+        $result = (array) $this->collection->drop();
 
-        if ($result->ok) {
+        if ($result['ok']) {
             return true;
         } else {
             return false;
