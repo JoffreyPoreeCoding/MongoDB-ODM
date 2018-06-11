@@ -46,13 +46,9 @@ class ObjectManager
         $oid = spl_object_hash($object);
         $id = isset($data['_id']) ? serialize($data['_id']) . $repository->getCollection() : $oid;
 
-        if (!isset($this->objectStates[$id])) {
-            $this->objectStates[$id] = $state;
-            $this->objects[$id] = $object;
-            $this->objectsRepository[$oid] = $repository;
-        } else {
-            throw new \Exception('This object is already peristed');
-        }
+        $this->objectStates[$id] = $state;
+        $this->objects[$id] = $object;
+        $this->objectsRepository[$oid] = $repository;
     }
 
     /**
