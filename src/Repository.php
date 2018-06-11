@@ -569,7 +569,7 @@ class Repository
         if ($data != null) {
             $id = isset($data['_id']) ? serialize($data['_id']) . $this->getCollection() : null;
             $model = $this->getModelName();
-            $object = $this->documentManager->getObject($id) ?? new $this->modelName();
+            $object = isset($this->documentManager->getObject($id)) ? $this->documentManager->getObject($id) : new $this->modelName();
             $this->hydrator->hydrate($object, $data);
             $this->classMetadata->getEventManager()->execute(EventManager::EVENT_POST_LOAD, $object);
             if (!isset($options['readOnly']) || $options['readOnly'] != true) {
