@@ -37,8 +37,16 @@ class Repository extends BaseRepository
      * @param CacheProvider         $objectCache        Cache to store object states
      * @param Bucket                $bucket             GridFS Bucket
      */
-    public function __construct(DocumentManager $documentManager, Collection $collection, ClassMetadata $classMetadata, Hydrator $hydrator, QueryCaster $queryCaster = null, UpdateQueryCreator $uqc = null, CacheProvider $objectCache = null, Bucket $bucket = null)
-    {
+    public function __construct(
+        DocumentManager $documentManager,
+        Collection $collection,
+        ClassMetadata $classMetadata,
+        Hydrator $hydrator,
+        QueryCaster $queryCaster = null,
+        UpdateQueryCreator $uqc = null,
+        CacheProvider $objectCache = null,
+        Bucket $bucket = null
+    ) {
         parent::__construct($documentManager, $collection, $classMetadata, $hydrator, $queryCaster, $uqc, $objectCache);
 
         if ($this->modelName !== Document::class && !is_subclass_of($this->modelName, Document::class)) {
@@ -47,7 +55,9 @@ class Repository extends BaseRepository
 
         $this->bucket = $bucket;
         if (!isset($this->bucket)) {
-            $this->bucket = $documentManager->getDatabase()->selectGridFSBucket(["bucketName" => $this->classMetadata->getBucketName()]);
+            $this->bucket = $documentManager->getDatabase()->selectGridFSBucket([
+                "bucketName" => $this->classMetadata->getBucketName(),
+            ]);
         }
     }
 
