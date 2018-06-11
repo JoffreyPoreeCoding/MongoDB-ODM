@@ -28,19 +28,30 @@ class ObjectManager
     protected $objects = [];
 
     /**
+     * Store repository associated with object (for flush on special collection)
+     * @var array
+     */
+    protected $objectsRepository = [];
+
+    /**
      * Add an object
      *
      * @param   mixed   $object     Object to add
      * @param   int     $state      State of this object
      * @return  void
      */
-    public function addObject($object, $state = self::OBJ_NEW)
+    public function addObject($object, $state, $repository)
     {
+        $data = $repository->getHydrator()->unhydrate($object);
         $oid = spl_object_hash($object);
+        $id = isset($data['_id']) ? serialize($data['_id']) . $repository->getCollection() : $oid;
 
-        if (!isset($this->objectStates[$oid])) {
-            $this->objectStates[$oid] = $state;
-            $this->objects[$oid] = $object;
+        if (!isset($this->objectStates[$id])) {
+            $this->objectStates[$id] = $state;
+            $this->objects[$id] = $object;
+            $this->objectsRepository[$oid] = $repository;
+        } else {
+            throw new \Exception('This object is already peristed');
         }
     }
 
@@ -53,13 +64,23 @@ class ObjectManager
     public function removeObject($object)
     {
         $oid = spl_object_hash($object);
+        $data = [];
+        if (isset($this->objectsRepository[$oid])) {
+            $repository = $this->objectsRepository[$oid];
+            $data = $repository->getHydrator()->unhydrate($object);
+        }
+        $id = isset($data['_id']) ? serialize($data['_id']) . $repository->getCollection() : $oid;
 
-        if (!isset($this->objectStates[$oid])) {
+        if (!isset($this->objectStates[$id])) {
             throw new Exception\StateException("Can't remove object, it does not be managed");
         }
 
+        unset($this->objectStates[$id]);
+        unset($this->objects[$id]);
+        unset($this->objectsRepository[$id]);
         unset($this->objectStates[$oid]);
         unset($this->objects[$oid]);
+        unset($this->objectsRepository[$oid]);
     }
 
     /**
@@ -73,11 +94,14 @@ class ObjectManager
     {
         if (is_object($object)) {
             $oid = spl_object_hash($object);
+            $repository = $this->objectsRepository[$oid];
+            $data = $repository->getHydrator()->unhydrate($object);
+            $id = isset($data['_id']) ? serialize($data['_id']) . $repository->getCollection() : $oid;
         } else {
             return false;
         }
 
-        if (!isset($this->objectStates[$oid])) {
+        if (!isset($this->objectStates[$id]) && !isset($this->objectStates[$oid])) {
             throw new Exception\StateException();
         }
 
@@ -89,7 +113,13 @@ class ObjectManager
             throw new Exception\StateException("Can't change state to removed because object is not managed. Insert it in database before");
         }
 
-        $this->objectStates[$oid] = $state;
+        if (isset($this->objectStates[$oid])) {
+            unset($this->objectStates[$oid]);
+            unset($this->object[$oid]);
+        }
+
+        $this->objectStates[$id] = $state;
+        $this->objects[$id] = $object;
 
         return true;
     }
@@ -103,9 +133,14 @@ class ObjectManager
     public function getObjectState($object)
     {
         $oid = spl_object_hash($object);
+        if (isset($this->objectsRepository[$oid])) {
+            $repository = $this->objectsRepository[$oid];
+            $data = $repository->getHydrator()->unhydrate($object);
+            $id = isset($data['_id']) ? serialize($data['_id']) . $repository->getCollection() : $oid;
 
-        if (isset($this->objectStates[$oid])) {
-            return $this->objectStates[$oid];
+            if (isset($this->objectStates[$id])) {
+                return $this->objectStates[$id];
+            }
         }
 
         return null;
@@ -117,16 +152,16 @@ class ObjectManager
      * @param   int     $state  State to search
      * @return  array
      */
-    public function getObject($state = null)
+    public function getObjects($state = null)
     {
         if (!isset($state)) {
             return $this->objects;
         }
 
         $objectList = [];
-        foreach ($this->objects as $oid => $object) {
-            if ($this->objectStates[$oid] == $state) {
-                $objectList[$oid] = $object;
+        foreach ($this->objects as $id => $object) {
+            if ($this->objectStates[$id] == $state) {
+                $objectList[$id] = $object;
             }
         }
 
@@ -141,7 +176,12 @@ class ObjectManager
      */
     public function hasObject($object)
     {
-        return isset($this->objects[spl_object_hash($object)]);
+        $oid = spl_object_hash($object);
+        $repository = $this->objectsRepository[$oid];
+        $data = $repository->getHydrator()->unhydrate($object);
+        $id = isset($data['_id']) ? serialize($data['_id']) . $repository->getCollection() : $oid;
+
+        return isset($this->objects[$oid]) || isset($this->objects[$id]);
     }
 
     /**

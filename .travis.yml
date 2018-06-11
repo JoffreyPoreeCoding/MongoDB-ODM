@@ -21,8 +21,11 @@ matrix:
     - php : 7.1
       env : APCU_VERSION=4.0.11
 
+services:
+  - mongodb
 
 before_install:
+  -
   - pecl channel-update pecl.php.net
   - pecl install -f mongodb
   - yes '' | pecl install -f apcu-${APCU_VERSION}
@@ -32,3 +35,4 @@ before_script:
 
 script:
   - ./vendor/bin/phpunit --debug
+  

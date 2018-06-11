@@ -2,16 +2,17 @@
 
 namespace JPC\Test\MongoDB\ODM;
 
-use JPC\MongoDB\ODM\DocumentManager;
-use JPC\MongoDB\ODM\Exception\StateException;
-use JPC\MongoDB\ODM\Factory\RepositoryFactory;
-use JPC\MongoDB\ODM\Repository;
-use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
-use JPC\MongoDB\ODM\Tools\EventManager;
-use JPC\MongoDB\ODM\Tools\Logger\LoggerInterface;
-use JPC\Test\MongoDB\ODM\Framework\TestCase;
 use MongoDB\Client;
 use MongoDB\Database;
+use JPC\MongoDB\ODM\Hydrator;
+use JPC\MongoDB\ODM\Repository;
+use JPC\MongoDB\ODM\DocumentManager;
+use JPC\MongoDB\ODM\Tools\EventManager;
+use JPC\Test\MongoDB\ODM\Framework\TestCase;
+use JPC\MongoDB\ODM\Exception\StateException;
+use JPC\MongoDB\ODM\Factory\RepositoryFactory;
+use JPC\MongoDB\ODM\Tools\Logger\LoggerInterface;
+use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
 
 class DocumentManagerTest extends TestCase
 {
@@ -52,16 +53,19 @@ class DocumentManagerTest extends TestCase
         $repositoryMock = $this->createMock(Repository::class);
         $classMetadataMock = $this->createMock(ClassMetadata::class);
         $eventManagerMock = $this->createMock(EventManager::class);
+        $hydratorMock = $this->createMock(Hydrator::class);
+        $repositoryMock->method('getHydrator')->willReturn($hydratorMock);
         $repositoryMock->method('getClassMetadata')->willReturn($classMetadataMock);
         $classMetadataMock->method('getEventManager')->willReturn($eventManagerMock);
+        $hydratorMock->method('unhydrate')->willReturn(['field' => 'value']);
 
         $this->repositoryFactory->method("getRepository")->willReturn($repositoryMock);
         $object = new \stdClass();
         $this->documentManager->persist($object);
 
         $oid = spl_object_hash($object);
-        $this->assertArrayHasKey($oid, $this->documentManager->getObject());
-        $this->assertContains($object, $this->documentManager->getObject());
+        $this->assertArrayHasKey($oid, $this->documentManager->getObjects());
+        $this->assertContains($object, $this->documentManager->getObjects());
 
         $repositories = $this->getPropertyValue($this->documentManager, "objectsRepository");
         $this->assertArrayHasKey($oid, $repositories);
@@ -69,8 +73,8 @@ class DocumentManagerTest extends TestCase
 
         $this->documentManager->unpersist($object);
 
-        $this->assertArrayNotHasKey($oid, $this->documentManager->getObject());
-        $this->assertNotContains($object, $this->documentManager->getObject());
+        $this->assertArrayNotHasKey($oid, $this->documentManager->getObjects());
+        $this->assertNotContains($object, $this->documentManager->getObjects());
 
         $repositories = $this->getPropertyValue($this->documentManager, "objectsRepository");
         $this->assertArrayNotHasKey($oid, $repositories);
@@ -79,21 +83,26 @@ class DocumentManagerTest extends TestCase
 
     public function testAddObjectRemoveObject()
     {
+        $repositoryMock = $this->createMock(Repository::class);
+        $hydratorMock = $this->createMock(Hydrator::class);
+        $repositoryMock->method('getHydrator')->willReturn($hydratorMock);
+        $hydratorMock->method('unhydrate')->willReturn(['field' => 'value']);
+
         $object = new \stdClass();
-        $this->documentManager->addObject($object, DocumentManager::OBJ_NEW, "repository");
+        $this->documentManager->addObject($object, DocumentManager::OBJ_NEW, $repositoryMock);
 
         $oid = spl_object_hash($object);
-        $this->assertArrayHasKey($oid, $this->documentManager->getObject());
-        $this->assertContains($object, $this->documentManager->getObject());
+        $this->assertArrayHasKey($oid, $this->documentManager->getObjects());
+        $this->assertContains($object, $this->documentManager->getObjects());
 
         $repositories = $this->getPropertyValue($this->documentManager, "objectsRepository");
         $this->assertArrayHasKey($oid, $repositories);
-        $this->assertEquals("repository", $repositories[$oid]);
+        $this->assertEquals($repositoryMock, $repositories[$oid]);
 
         $this->documentManager->removeObject($object);
 
-        $this->assertArrayNotHasKey($oid, $this->documentManager->getObject());
-        $this->assertNotContains($object, $this->documentManager->getObject());
+        $this->assertArrayNotHasKey($oid, $this->documentManager->getObjects());
+        $this->assertNotContains($object, $this->documentManager->getObjects());
 
         $repositories = $this->getPropertyValue($this->documentManager, "objectsRepository");
         $this->assertArrayNotHasKey($oid, $repositories);
@@ -102,56 +111,64 @@ class DocumentManagerTest extends TestCase
 
     public function testDeleteClear()
     {
+        $repositoryMock = $this->createMock(Repository::class);
+        $hydratorMock = $this->createMock(Hydrator::class);
+        $repositoryMock->method('getHydrator')->willReturn($hydratorMock);
+        $hydratorMock->method('unhydrate')->willReturn(['field' => 'value']);
+
         $object = new \stdClass();
 
-        $this->documentManager->addObject($object, DocumentManager::OBJ_MANAGED, "repository");
+        $this->documentManager->addObject($object, DocumentManager::OBJ_MANAGED, $repositoryMock);
 
         $oid = spl_object_hash($object);
-        $this->assertArrayHasKey($oid, $this->documentManager->getObject());
-        $this->assertContains($object, $this->documentManager->getObject());
+        $this->assertArrayHasKey($oid, $this->documentManager->getObjects());
+        $this->assertContains($object, $this->documentManager->getObjects());
 
         $repositories = $this->getPropertyValue($this->documentManager, "objectsRepository");
         $this->assertArrayHasKey($oid, $repositories);
-        $this->assertEquals("repository", $repositories[$oid]);
+        $this->assertEquals($repositoryMock, $repositories[$oid]);
 
         $this->documentManager->remove($object);
-        $this->assertArrayHasKey($oid, $this->documentManager->getObject(DocumentManager::OBJ_REMOVED));
-        $this->assertContains($object, $this->documentManager->getObject(DocumentManager::OBJ_REMOVED));
+        $this->assertArrayHasKey($oid, $this->documentManager->getObjects(DocumentManager::OBJ_REMOVED));
+        $this->assertContains($object, $this->documentManager->getObjects(DocumentManager::OBJ_REMOVED));
 
         $this->documentManager->clear();
-        $this->documentManager->addObject($object, DocumentManager::OBJ_NEW, "repository");
+        $this->documentManager->addObject($object, DocumentManager::OBJ_NEW, $repositoryMock);
         $this->expectException(StateException::class);
         $this->documentManager->remove($object);
     }
 
     public function testFlush()
     {
-        $rep = $this->createMock(Repository::class);
+        $repositoryMock = $this->createMock(Repository::class);
+        $hydratorMock = $this->createMock(Hydrator::class);
+        $repositoryMock->method('getHydrator')->willReturn($hydratorMock);
+        $hydratorMock->method('unhydrate')->willReturn(['field' => 'value']);
         $classMetadataMock = $this->createMock(ClassMetadata::class);
         $eventManagerMock = $this->createMock(EventManager::class);
-        $rep->method('getClassMetadata')->willReturn($classMetadataMock);
+        $repositoryMock->method('getClassMetadata')->willReturn($classMetadataMock);
         $classMetadataMock->method('getEventManager')->willReturn($eventManagerMock);
 
         $obj1 = new \stdClass();
-        $this->documentManager->addObject($obj1, DocumentManager::OBJ_NEW, $rep);
+        $this->documentManager->addObject($obj1, DocumentManager::OBJ_NEW, $repositoryMock);
 
         $obj2 = new \stdClass();
-        $this->documentManager->addObject($obj2, DocumentManager::OBJ_MANAGED, $rep);
+        $this->documentManager->addObject($obj2, DocumentManager::OBJ_MANAGED, $repositoryMock);
 
         $obj3 = new \stdClass();
-        $this->documentManager->addObject($obj3, DocumentManager::OBJ_REMOVED, $rep);
+        $this->documentManager->addObject($obj3, DocumentManager::OBJ_REMOVED, $repositoryMock);
 
-        $rep->expects($this->once())
+        $repositoryMock->expects($this->once())
             ->method("deleteOne")
             ->with($obj3);
-        $rep->expects($this->exactly(3))
+        $repositoryMock->expects($this->exactly(3))
             ->method("hasUpdate")
             ->with($this->equalTo($obj2))
             ->will($this->onConsecutiveCalls(true, false, false));
-        $rep->expects($this->once())
+        $repositoryMock->expects($this->once())
             ->method("updateOne")
             ->with($obj2);
-        $rep->expects($this->once())
+        $repositoryMock->expects($this->once())
             ->method("insertMany")
             ->with([$obj1]);
 

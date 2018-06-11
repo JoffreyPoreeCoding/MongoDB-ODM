@@ -37,12 +37,6 @@ class DocumentManager extends ObjectManager
     private $database;
 
     /**
-     * Store repository associated with object (for flush on special collection)
-     * @var array
-     */
-    private $objectsRepository = [];
-
-    /**
      * Factory of repository
      * @var RepositoryFactory
      */
@@ -132,30 +126,6 @@ class DocumentManager extends ObjectManager
     }
 
     /**
-     * Add a managed object
-     *
-     * @param   object          $object         Object to manage
-     * @param   integer         $state          State of managed object
-     * @param   Repository      $repository     Repository
-     */
-    public function addObject($object, $state = self::OBJ_NEW, $repository = null)
-    {
-        parent::addObject($object, $state);
-        $this->objectsRepository[spl_object_hash($object)] = $repository;
-    }
-
-    /**
-     * Remove object from object manager
-     *
-     * @param  object           $object         Object to remove
-     */
-    public function removeObject($object)
-    {
-        parent::removeObject($object);
-        unset($this->objectsRepository[spl_object_hash($object)]);
-    }
-
-    /**
      * Set object to be deleted at next flush
      *
      * @param   mixed       $object     Object to delete
@@ -192,7 +162,9 @@ class DocumentManager extends ObjectManager
         $id = $repository->getHydrator()->unhydrate($object)["_id"];
 
         if ($this->debug) {
-            $this->logger->debug("Refresh datas for object with id " . (string) $id . ' in collection ' . $mongoCollection);
+            $this->logger->debug(
+                "Refresh datas for object with id " . (string) $id . ' in collection ' . $mongoCollection
+            );
         }
 
         $datas = (array) $mongoCollection->findOne(["_id" => $id]);
@@ -211,15 +183,17 @@ class DocumentManager extends ObjectManager
     public function flush()
     {
         if ($this->debug) {
-            $countRemove = count($this->getObject(ObjectManager::OBJ_REMOVED));
-            $countUpdate = count($this->getObject(ObjectManager::OBJ_MANAGED));
-            $countInsert = count($this->getObject(ObjectManager::OBJ_NEW));
-            $this->logger->debug("Flushing datas to database, $countInsert to insert, $countUpdate to update, $countRemove to remove.");
+            $countRemove = count($this->getObjects(ObjectManager::OBJ_REMOVED));
+            $countUpdate = count($this->getObjects(ObjectManager::OBJ_MANAGED));
+            $countInsert = count($this->getObjects(ObjectManager::OBJ_NEW));
+            $this->logger->debug(
+                "Flushing datas to database, $countInsert to insert, $countUpdate to update, $countRemove to remove."
+            );
         }
 
-        $removeObjs = $this->getObject(ObjectManager::OBJ_REMOVED);
-        $updateObjs = $this->getObject(ObjectManager::OBJ_MANAGED);
-        $newObjs = $this->getObject(ObjectManager::OBJ_NEW);
+        $removeObjs = $this->getObjects(ObjectManager::OBJ_REMOVED);
+        $updateObjs = $this->getObjects(ObjectManager::OBJ_MANAGED);
+        $newObjs = $this->getObjects(ObjectManager::OBJ_NEW);
 
         foreach ($updateObjs as $key => $object) {
             $repository = $this->objectsRepository[spl_object_hash($object)];

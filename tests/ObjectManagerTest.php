@@ -2,6 +2,8 @@
 
 namespace JPC\Test\MongoDB\ODM;
 
+use JPC\MongoDB\ODM\Hydrator;
+use JPC\MongoDB\ODM\Repository;
 use JPC\MongoDB\ODM\ObjectManager;
 use JPC\Test\MongoDB\ODM\Framework\TestCase;
 
@@ -17,8 +19,13 @@ class ObjectManagerTest extends TestCase
 
     public function testAddObject()
     {
+        $repositoryMock = $this->createMock(Repository::class);
+        $hydratorMock = $this->createMock(Hydrator::class);
+        $repositoryMock->method('getHydrator')->willReturn($hydratorMock);
+        $hydratorMock->method('unhydrate')->willReturn(['field' => 'value']);
+
         $object = new \stdClass();
-        $this->objectManager->addObject($object);
+        $this->objectManager->addObject($object, ObjectManager::OBJ_NEW, $repositoryMock);
 
         $oid = spl_object_hash($object);
 
@@ -41,8 +48,13 @@ class ObjectManagerTest extends TestCase
 
     public function testRemoveObject()
     {
+        $repositoryMock = $this->createMock(Repository::class);
+        $hydratorMock = $this->createMock(Hydrator::class);
+        $repositoryMock->method('getHydrator')->willReturn($hydratorMock);
+        $hydratorMock->method('unhydrate')->willReturn(['field' => 'value']);
+
         $object = new \stdClass();
-        $this->objectManager->addObject($object);
+        $this->objectManager->addObject($object, ObjectManager::OBJ_NEW, $repositoryMock);
 
         $oid = spl_object_hash($object);
         $this->objectManager->removeObject($object);
@@ -56,8 +68,13 @@ class ObjectManagerTest extends TestCase
 
     public function testSetObjectStateOk()
     {
+        $repositoryMock = $this->createMock(Repository::class);
+        $hydratorMock = $this->createMock(Hydrator::class);
+        $repositoryMock->method('getHydrator')->willReturn($hydratorMock);
+        $hydratorMock->method('unhydrate')->willReturn(['field' => 'value']);
+
         $object = new \stdClass();
-        $this->objectManager->addObject($object);
+        $this->objectManager->addObject($object, ObjectManager::OBJ_NEW, $repositoryMock);
 
         $oid = spl_object_hash($object);
 
@@ -72,8 +89,13 @@ class ObjectManagerTest extends TestCase
 
     public function testSetObjectStateNok()
     {
+        $repositoryMock = $this->createMock(Repository::class);
+        $hydratorMock = $this->createMock(Hydrator::class);
+        $repositoryMock->method('getHydrator')->willReturn($hydratorMock);
+        $hydratorMock->method('unhydrate')->willReturn(['field' => 'value']);
+
         $object = new \stdClass();
-        $this->objectManager->addObject($object);
+        $this->objectManager->addObject($object, ObjectManager::OBJ_NEW, $repositoryMock);
 
         $oid = spl_object_hash($object);
 
@@ -84,49 +106,64 @@ class ObjectManagerTest extends TestCase
 
     public function testGetObjectState()
     {
+        $repositoryMock = $this->createMock(Repository::class);
+        $hydratorMock = $this->createMock(Hydrator::class);
+        $repositoryMock->method('getHydrator')->willReturn($hydratorMock);
+        $hydratorMock->method('unhydrate')->willReturn(['field' => 'value']);
+
         $object = new \stdClass();
         $this->assertNull($this->objectManager->getObjectState($object));
-        $this->objectManager->addObject($object);
+        $this->objectManager->addObject($object, ObjectManager::OBJ_NEW, $repositoryMock);
         $this->assertEquals(ObjectManager::OBJ_NEW, $this->objectManager->getObjectState($object));
     }
 
-    public function testGetObject()
+    public function testGetObjects()
     {
+        $repositoryMock = $this->createMock(Repository::class);
+        $hydratorMock = $this->createMock(Hydrator::class);
+        $repositoryMock->method('getHydrator')->willReturn($hydratorMock);
+        $hydratorMock->method('unhydrate')->willReturn(['field' => 'value']);
+
         $object1 = new \stdClass();
-        $this->objectManager->addObject($object1);
+        $this->objectManager->addObject($object1, ObjectManager::OBJ_NEW, $repositoryMock);
 
         $object2 = new \stdClass();
-        $this->objectManager->addObject($object2, ObjectManager::OBJ_MANAGED);
+        $this->objectManager->addObject($object2, ObjectManager::OBJ_MANAGED, $repositoryMock);
         $object3 = new \stdClass();
-        $this->objectManager->addObject($object3, ObjectManager::OBJ_MANAGED);
+        $this->objectManager->addObject($object3, ObjectManager::OBJ_MANAGED, $repositoryMock);
 
         $object4 = new \stdClass();
-        $this->objectManager->addObject($object4, ObjectManager::OBJ_REMOVED);
+        $this->objectManager->addObject($object4, ObjectManager::OBJ_REMOVED, $repositoryMock);
         $object5 = new \stdClass();
-        $this->objectManager->addObject($object5, ObjectManager::OBJ_REMOVED);
+        $this->objectManager->addObject($object5, ObjectManager::OBJ_REMOVED, $repositoryMock);
         $object6 = new \stdClass();
-        $this->objectManager->addObject($object6, ObjectManager::OBJ_REMOVED);
+        $this->objectManager->addObject($object6, ObjectManager::OBJ_REMOVED, $repositoryMock);
 
-        $this->assertCount(6, $this->objectManager->getObject());
-        $this->assertCount(1, $this->objectManager->getObject(ObjectManager::OBJ_NEW));
-        $this->assertCount(2, $this->objectManager->getObject(ObjectManager::OBJ_MANAGED));
-        $this->assertCount(3, $this->objectManager->getObject(ObjectManager::OBJ_REMOVED));
+        $this->assertCount(6, $this->objectManager->getObjects());
+        $this->assertCount(1, $this->objectManager->getObjects(ObjectManager::OBJ_NEW));
+        $this->assertCount(2, $this->objectManager->getObjects(ObjectManager::OBJ_MANAGED));
+        $this->assertCount(3, $this->objectManager->getObjects(ObjectManager::OBJ_REMOVED));
     }
 
     public function testClear()
     {
+        $repositoryMock = $this->createMock(Repository::class);
+        $hydratorMock = $this->createMock(Hydrator::class);
+        $repositoryMock->method('getHydrator')->willReturn($hydratorMock);
+        $hydratorMock->method('unhydrate')->willReturn(['field' => 'value']);
+
         $object1 = new \stdClass();
-        $this->objectManager->addObject($object1);
+        $this->objectManager->addObject($object1, ObjectManager::OBJ_NEW, $repositoryMock);
         $object2 = new \stdClass();
-        $this->objectManager->addObject($object2, ObjectManager::OBJ_MANAGED);
+        $this->objectManager->addObject($object2, ObjectManager::OBJ_MANAGED, $repositoryMock);
         $object3 = new \stdClass();
-        $this->objectManager->addObject($object3, ObjectManager::OBJ_MANAGED);
+        $this->objectManager->addObject($object3, ObjectManager::OBJ_MANAGED, $repositoryMock);
         $object4 = new \stdClass();
-        $this->objectManager->addObject($object4, ObjectManager::OBJ_REMOVED);
+        $this->objectManager->addObject($object4, ObjectManager::OBJ_REMOVED, $repositoryMock);
         $object5 = new \stdClass();
-        $this->objectManager->addObject($object5, ObjectManager::OBJ_REMOVED);
+        $this->objectManager->addObject($object5, ObjectManager::OBJ_REMOVED, $repositoryMock);
         $object6 = new \stdClass();
-        $this->objectManager->addObject($object6, ObjectManager::OBJ_REMOVED);
+        $this->objectManager->addObject($object6, ObjectManager::OBJ_REMOVED, $repositoryMock);
 
         $this->assertCount(6, $this->getPropertyValue($this->objectManager, "objects"));
         $this->objectManager->clear();
