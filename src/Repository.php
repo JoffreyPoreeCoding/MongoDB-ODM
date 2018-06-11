@@ -421,6 +421,10 @@ class Repository
 
             return true;
         } else {
+            foreach ($documents as $document) {
+                $this->cacheObject($document);
+                // $this->documentManager->removeObject();
+            }
             return false;
         }
     }
@@ -465,6 +469,7 @@ class Repository
                 }
                 return true;
             } else {
+                $this->cacheObject($document);
                 return false;
             }
         }
@@ -562,8 +567,9 @@ class Repository
     {
         $object = null;
         if ($data != null) {
+            $id = isset($data['_id']) ? serialize($data['_id']) . $this->getCollection() : null;
             $model = $this->getModelName();
-            $object = new $this->modelName();
+            $object = $this->documentManager->getObject($id) ?? new $this->modelName();
             $this->hydrator->hydrate($object, $data);
             $this->classMetadata->getEventManager()->execute(EventManager::EVENT_POST_LOAD, $object);
             if (!isset($options['readOnly']) || $options['readOnly'] != true) {
@@ -674,10 +680,6 @@ class Repository
 
         $old = !$old ? [] : $old;
         $query = $this->updateQueryCreator->createUpdateQuery($old, $new);
-
-        if (isset($query['$set']["_id"])) {
-            unset($query['$set']["_id"]);
-        }
 
         return $query;
     }

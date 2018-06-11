@@ -46,7 +46,9 @@ class ObjectManager
         $oid = spl_object_hash($object);
         $id = isset($data['_id']) ? serialize($data['_id']) . $repository->getCollection() : $oid;
 
-        $this->objectStates[$id] = $state;
+        if (!isset($this->objectStates[$id])) {
+            $this->objectStates[$id] = $state;
+        }
         $this->objects[$id] = $object;
         $this->objectsRepository[$oid] = $repository;
     }
@@ -105,13 +107,13 @@ class ObjectManager
             throw new Exception\StateException("Invalid state '$state'");
         }
 
-        if ($state == self::OBJ_REMOVED && $this->objectStates[$oid] == self::OBJ_NEW) {
+        if ($state == self::OBJ_REMOVED && isset($this->objectStates[$oid]) && $this->objectStates[$oid] == self::OBJ_NEW) {
             throw new Exception\StateException("Can't change state to removed because object is not managed. Insert it in database before");
         }
 
         if (isset($this->objectStates[$oid])) {
             unset($this->objectStates[$oid]);
-            unset($this->object[$oid]);
+            unset($this->objects[$oid]);
         }
 
         $this->objectStates[$id] = $state;
@@ -162,6 +164,13 @@ class ObjectManager
         }
 
         return $objectList;
+    }
+
+    public function getObject($id)
+    {
+        if (isset($this->objects[$id])) {
+            return $this->objects[$id];
+        }
     }
 
     /**

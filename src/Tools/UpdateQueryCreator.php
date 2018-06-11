@@ -73,6 +73,16 @@ class UpdateQueryCreator
             }
         }
 
+        if (isset($update['$set']['_id'])) {
+            unset($update['$set']['_id']);
+        }
+
+        foreach ($update as $modifier => $value) {
+            if (empty($value)) {
+                unset($update[$modifier]);
+            }
+        }
+
         return $update;
     }
 }
