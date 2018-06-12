@@ -27,13 +27,17 @@ class UpdateQueryCreator
                 } elseif (is_array($value) && is_array($old[$key])) {
                     if (!empty($old[$key])) {
                         $embeddedUpdate = array_merge_recursive($update, $this->createUpdateQuery($old[$key], $value, $prefix . $key . "."));
-                        foreach ($embeddedUpdate as $updateOperator => $value) {
-                            if (!isset($update[$updateOperator])) {
-                                $update[$updateOperator] = [];
+                        if (isset($embeddedUpdate['$unset']) && array_values($old[$key]) === $old[$key] && $value !== null && count(array_filter(array_keys($value), 'is_string')) == 0) {
+                            $update['$set'][$prefix . $key] = array_values($value);
+                        } else {
+                            foreach ($embeddedUpdate as $updateOperator => $value) {
+                                if (!isset($update[$updateOperator])) {
+                                    $update[$updateOperator] = [];
+                                }
+                                $update[$updateOperator] += $value;
                             }
-                            $update[$updateOperator] += $value;
                         }
-                    } else if (!empty($value)) {
+                    } elseif (!empty($value)) {
                         $update['$set'][$prefix . $key] = $value;
                     }
                 } else {
