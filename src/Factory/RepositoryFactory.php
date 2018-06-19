@@ -82,6 +82,9 @@ class RepositoryFactory
         $collection = $this->createCollection($documentManager, $classMetadata, $collectionName);
 
         $hydratorClass = $classMetadata->getHydratorClass();
+        if (!isset($hydratorClass)) {
+            throw new \Exception($classMetadata->getName() . ' is not a valid model class. Maybe it doesn\'t have a "Document" annotation.');
+        }
         $hydrator = new $hydratorClass($this->classMetadataFactory, $classMetadata, $documentManager, $this);
 
         $queryCaster = new QueryCaster($classMetadata, $this->classMetadataFactory);
