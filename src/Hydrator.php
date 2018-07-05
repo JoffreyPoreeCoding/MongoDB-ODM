@@ -74,6 +74,17 @@ class Hydrator
                 $prop->setAccessible(true);
 
                 if ((($data[$field] instanceof \MongoDB\Model\BSONDocument) || is_array($data[$field])) && $infos->getEmbedded() && null !== ($class = $infos->getEmbeddedClass())) {
+                    if ($infos->isDiscriminable()) {
+                        if (null !== ($discrimatorField = $infos->getDiscriminatorField())
+                            && null !== ($discrimatorMap = $infos->getDiscriminatorMap())) {
+                            $discrimatorValue = $data[$field][$discrimatorField] ?? null;
+                            if (isset($discrimatorValue)) {
+                                $class = $discrimatorMap[$discrimatorValue] ?? $class;
+                            }
+                        } else {
+                            //call_s
+                        }
+                    }
                     if (!class_exists($class)) {
                         $class = $this->classMetadata->getNamespace() . "\\" . $class;
                     }
@@ -83,11 +94,23 @@ class Hydrator
                 }
 
                 if ((($data[$field] instanceof \MongoDB\Model\BSONArray) || ($data[$field] instanceof \MongoDB\Model\BSONDocument) || is_array($data[$field])) && $infos->getMultiEmbedded() && null !== ($class = $infos->getEmbeddedClass())) {
-                    if (!class_exists($class)) {
-                        $class = $this->classMetadata->getNamespace() . "\\" . $class;
-                    }
                     $array = [];
+                    $originalClass = $class;
                     foreach ($data[$field] as $key => $value) {
+                        if ($infos->isDiscriminable()) {
+                            if (null !== ($discrimatorField = $infos->getDiscriminatorField())
+                                && null !== ($discrimatorMap = $infos->getDiscriminatorMap())) {
+                                $discrimatorValue = $data[$field][$key][$discrimatorField] ?? null;
+                                if (isset($discrimatorValue)) {
+                                    $class = $discrimatorMap[$discrimatorValue] ?? $originalClass;
+                                }
+                            } else {
+                                //call_s
+                            }
+                        }
+                        if (!class_exists($class)) {
+                            $class = $this->classMetadata->getNamespace() . "\\" . $class;
+                        }
                         if ($value === null) {
                             continue;
                         }
@@ -186,7 +209,7 @@ class Hydrator
             }
 
             if (is_object($value) && $infos->getEmbedded()) {
-                $class = $infos->getEmbeddedClass();
+                $class = get_class($value);
                 if (!class_exists($class)) {
                     $class = $this->classMetadata->getNamespace() . "\\" . $class;
                 }
@@ -196,7 +219,7 @@ class Hydrator
             if (is_array($value) && $infos->getMultiEmbedded()) {
                 $array = [];
                 foreach ($value as $key => $embeddedValue) {
-                    $class = $infos->getEmbeddedClass();
+                    $class = get_class($embeddedValue);
                     if (!class_exists($class)) {
                         $class = $this->classMetadata->getNamespace() . "\\" . $class;
                     }

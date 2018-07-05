@@ -113,6 +113,8 @@ class DocumentManager extends ObjectManager
         $repository->getClassMetadata()->getEventManager()->execute(EventManager::EVENT_PRE_PERSIST, $object);
         $this->addObject($object, ObjectManager::OBJ_NEW, $repository);
         $repository->getClassMetadata()->getEventManager()->execute(EventManager::EVENT_POST_PERSIST, $object);
+        
+        return $this;
     }
 
     /**

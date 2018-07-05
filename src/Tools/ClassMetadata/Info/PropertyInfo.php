@@ -13,6 +13,9 @@ class PropertyInfo
     private $embeddedClass;
     private $metadata = false;
     private $referenceInfo;
+    private $discriminatorField;
+    private $discriminatorMap;
+    private $discriminatorMethod;
 
     public function getField()
     {
@@ -88,6 +91,74 @@ class PropertyInfo
     public function setReferenceInfo($referenceInfo)
     {
         $this->referenceInfo = $referenceInfo;
+
+        return $this;
+    }
+
+    /**
+     * Check if property is discriminable
+     */
+    public function isDiscriminable()
+    {
+        return isset($this->discriminatorField) || isset($this->discriminatorMethod);
+    }
+
+    /**
+     * Get the value of discriminatorField
+     */
+    public function getDiscriminatorField()
+    {
+        return $this->discriminatorField;
+    }
+
+    /**
+     * Set the value of discriminatorField
+     *
+     * @return  self
+     */
+    public function setDiscriminatorField($discriminatorField)
+    {
+        $this->discriminatorField = $discriminatorField;
+
+        return $this;
+    }
+
+    /**
+     * Get the value of discriminatorMap
+     */
+    public function getDiscriminatorMap()
+    {
+        return $this->discriminatorMap;
+    }
+
+    /**
+     * Set the value of discriminatorMap
+     *
+     * @return  self
+     */
+    public function setDiscriminatorMap($discriminatorMap)
+    {
+        $this->discriminatorMap = $discriminatorMap;
+
+        return $this;
+    }
+
+    /**
+     * Get the value of discriminatorMethod
+     */
+    public function getDiscriminatorMethod()
+    {
+        return $this->discriminatorMethod;
+    }
+
+    /**
+     * Set the value of discriminatorMethod
+     *
+     * @return  self
+     */
+    public function setDiscriminatorMethod($discriminatorMethod)
+    {
+        $this->discriminatorMethod = $discriminatorMethod;
 
         return $this;
     }

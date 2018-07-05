@@ -62,6 +62,20 @@ class HydratorTest extends TestCase
             ],
             "refers_one_field" => "id",
             "refers_many_field" => ["id"],
+            "simple_discriminated_field" => [
+                "type" => 2,
+                "field_disc_2" => "field2",
+            ],
+            "multi_discriminated_field" => [
+                [
+                    "type" => 2,
+                    "field_disc_2" => "field2",
+                ],
+                [
+                    "type" => 1,
+                    "field_disc_1" => "field1",
+                ],
+            ],
         ];
 
         $object = new ObjectMapping();
@@ -84,6 +98,14 @@ class HydratorTest extends TestCase
         $this->assertEquals("reference", $object->getRefersOneField()->getId());
         $this->assertInstanceOf("JPC\Test\MongoDB\ODM\Model\ObjectMapping", $object->getRefersManyField()[0]);
         $this->assertEquals("reference", $object->getRefersManyField()[0]->getId());
+        
+        $this->assertInstanceOf("JPC\Test\MongoDB\ODM\Model\Discriminated2", $object->getSimpleDiscriminatedField());
+        $this->assertEquals("field2", $object->getSimpleDiscriminatedField()->getFieldDisc2());
+        
+        $this->assertInstanceOf("JPC\Test\MongoDB\ODM\Model\Discriminated2", $object->getMultiDiscriminatedField()[0]);
+        $this->assertEquals("field2", $object->getMultiDiscriminatedField()[0]->getFieldDisc2());
+        $this->assertInstanceOf("JPC\Test\MongoDB\ODM\Model\Discriminated1", $object->getMultiDiscriminatedField()[1]);
+        $this->assertEquals("field1", $object->getMultiDiscriminatedField()[1]->getFieldDisc1());
     }
 
     public function fakeHydration($object)

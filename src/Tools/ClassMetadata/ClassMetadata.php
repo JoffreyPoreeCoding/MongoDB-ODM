@@ -497,6 +497,15 @@ class ClassMetadata
                 $referenceInfo->setIsMultiple(true)->setDocument($annotation->document)->setCollection($annotation->collection);
                 $this->propertiesInfos[$name]->setReferenceInfo($referenceInfo);
                 break;
+            case "JPC\MongoDB\ODM\Annotations\Mapping\DiscriminatorField":
+                $this->propertiesInfos[$name]->setDiscriminatorField($annotation->field);
+                break;
+            case "JPC\MongoDB\ODM\Annotations\Mapping\DiscriminatorMap":
+                $this->propertiesInfos[$name]->setDiscriminatorMap($annotation->map);
+                break;
+            case "JPC\MongoDB\ODM\Annotations\Mapping\DiscriminatorMethod":
+                $this->propertiesInfos[$name]->setDiscriminatorMethod($annotation->method);
+                break;
         }
     }
 

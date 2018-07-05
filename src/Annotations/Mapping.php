@@ -171,3 +171,45 @@ class RefersMany
     public $document;
     public $collection;
 }
+
+/**
+ * Field to use for choosing class of embedded document
+ *
+ * @param   string  $field  Field name
+ *
+ * @Annotation
+ * @Target("PROPERTY")
+ */
+class DiscriminatorField
+{
+    public $field;
+}
+
+/**
+ * Array of [value => class] to determine wich value will instance the class
+ *
+ * @param   array  $map  Class map
+ *
+ * @Annotation
+ * @Target("PROPERTY")
+ */
+class DiscriminatorMap
+{
+    public $map;
+}
+
+
+/**
+ * Method to determine wich class will be instanced
+ *
+ * @param   array   $method      Method name
+ *
+ * @Annotation
+ * @Target("PROPERTY")
+ */
+class DiscriminatorMethod
+{
+    public $method;
+}
+
+

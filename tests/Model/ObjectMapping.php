@@ -45,6 +45,22 @@ class ObjectMapping
     private $refersManyField;
 
     /**
+     * @ODM\Field("simple_discriminated_field")
+     * @ODM\EmbeddedDocument("Discriminated1")
+     * @ODM\DiscriminatorField("type")
+     * @ODM\DiscriminatorMap({1="Discriminated1", 2="Discriminated2"})
+     */
+    private $simpleDiscriminatedField;
+
+    /**
+     * @ODM\Field("multi_discriminated_field")
+     * @ODM\MultiEmbeddedDocument("Discriminated1")
+     * @ODM\DiscriminatorField("type")
+     * @ODM\DiscriminatorMap({1="Discriminated1", 2="Discriminated2"})
+     */
+    private $multiDiscriminatedField;
+
+    /**
      * Gets the value of id.
      *
      * @return mixed
@@ -184,6 +200,46 @@ class ObjectMapping
     public function setRefersManyField($refersManyField)
     {
         $this->refersManyField = $refersManyField;
+
+        return $this;
+    }
+
+    /**
+     * Get the value of simpleDiscriminatedField
+     */
+    public function getSimpleDiscriminatedField()
+    {
+        return $this->simpleDiscriminatedField;
+    }
+
+    /**
+     * Set the value of simpleDiscriminatedField
+     *
+     * @return  self
+     */
+    public function setSimpleDiscriminatedField($simpleDiscriminatedField)
+    {
+        $this->simpleDiscriminatedField = $simpleDiscriminatedField;
+
+        return $this;
+    }
+
+    /**
+     * Get the value of multiDiscriminatedField
+     */
+    public function getMultiDiscriminatedField()
+    {
+        return $this->multiDiscriminatedField;
+    }
+
+    /**
+     * Set the value of multiDiscriminatedField
+     *
+     * @return  self
+     */
+    public function setMultiDiscriminatedField($multiDiscriminatedField)
+    {
+        $this->multiDiscriminatedField = $multiDiscriminatedField;
 
         return $this;
     }
