@@ -20,13 +20,13 @@ class Hydrator extends BaseHydrator
      * @param   integer $maxReference   Depth Maximum reference depth
      * @return  void
      */
-    public function hydrate(&$object, $datas, $maxReferenceDepth = 10)
+    public function hydrate(&$object, $datas, $soft = false, $maxReferenceDepth = 10)
     {
         if (isset($datas["metadata"])) {
-            parent::hydrate($object, $datas["metadata"], $maxReferenceDepth);
+            parent::hydrate($object, $datas["metadata"], $soft, $maxReferenceDepth);
             unset($datas["metadata"]);
         }
-        parent::hydrate($object, $datas);
+        parent::hydrate($object, $datas, $soft, $maxReferenceDepth);
     }
 
     /**

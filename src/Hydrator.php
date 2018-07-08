@@ -61,48 +61,40 @@ class Hydrator
      * @param   integer $maxReferenceDepth  Max reference depth
      * @return  void
      */
-    public function hydrate(&$object, $data, $maxReferenceDepth = 10)
+    public function hydrate(&$object, $data, $soft = false, $maxReferenceDepth = 10)
     {
+        $reflectionClass = new \ReflectionClass($this->classMetadata->getName());
         if ($data instanceof \MongoDB\Model\BSONArray || $data instanceof \MongoDB\Model\BSONDocument) {
             $data = (array) $data;
+        }
+        if (!is_array($data)) {
+            throw new \Exception('$data must be an array');
         }
         $properties = $this->classMetadata->getPropertiesInfos();
 
         foreach ($properties as $name => $infos) {
-            if (null !== ($field = $infos->getField()) && is_array($data) && array_key_exists($field, $data) && $data[$field] !== null) {
+            $setter = 'set' . ucfirst($name);
+            if (!$reflectionClass->hasMethod($setter)) {
                 $prop = new \ReflectionProperty($this->classMetadata->getName(), $name);
                 $prop->setAccessible(true);
+            } else {
+                $prop = null;
+            }
 
-                if ((($data[$field] instanceof \MongoDB\Model\BSONDocument) || is_array($data[$field])) && $infos->getEmbedded() && null !== ($class = $infos->getEmbeddedClass())) {
-                    if ($infos->isDiscriminable()) {
-                        if (null !== ($discrimatorField = $infos->getDiscriminatorField())
-                            && null !== ($discrimatorMap = $infos->getDiscriminatorMap())) {
-                            $discrimatorValue = $data[$field][$discrimatorField] ?? null;
-                            if (isset($discrimatorValue)) {
-                                $class = $discrimatorMap[$discrimatorValue] ?? $class;
-                            }
-                        } else {
-                            //call_s
-                        }
+            if (null !== ($field = $infos->getField())) {
+                if (!$soft && !array_key_exists($field, $data)) {
+                    $this->setValue($object, null, $setter, $prop);
+                } elseif (array_key_exists($field, $data)) {
+                    if (!$soft && $data[$field] == null) {
+                        continue;
                     }
-                    if (!class_exists($class)) {
-                        $class = $this->classMetadata->getNamespace() . "\\" . $class;
-                    }
-                    $embedded = new $class();
-                    $this->getHydrator($class)->hydrate($embedded, $data[$field]);
-                    $data[$field] = $embedded;
-                }
-
-                if ((($data[$field] instanceof \MongoDB\Model\BSONArray) || ($data[$field] instanceof \MongoDB\Model\BSONDocument) || is_array($data[$field])) && $infos->getMultiEmbedded() && null !== ($class = $infos->getEmbeddedClass())) {
-                    $array = [];
-                    $originalClass = $class;
-                    foreach ($data[$field] as $key => $value) {
+                    if ((($data[$field] instanceof \MongoDB\Model\BSONDocument) || is_array($data[$field])) && $infos->getEmbedded() && null !== ($class = $infos->getEmbeddedClass())) {
                         if ($infos->isDiscriminable()) {
                             if (null !== ($discrimatorField = $infos->getDiscriminatorField())
                                 && null !== ($discrimatorMap = $infos->getDiscriminatorMap())) {
-                                $discrimatorValue = $data[$field][$key][$discrimatorField] ?? null;
+                                $discrimatorValue = $data[$field][$discrimatorField] ?? null;
                                 if (isset($discrimatorValue)) {
-                                    $class = $discrimatorMap[$discrimatorValue] ?? $originalClass;
+                                    $class = $discrimatorMap[$discrimatorValue] ?? $class;
                                 }
                             } else {
                                 //call_s
@@ -111,52 +103,47 @@ class Hydrator
                         if (!class_exists($class)) {
                             $class = $this->classMetadata->getNamespace() . "\\" . $class;
                         }
-                        if ($value === null) {
-                            continue;
-                        }
-
                         $embedded = new $class();
-                        $this->getHydrator($class)->hydrate($embedded, $value);
-                        $array[$key] = $embedded;
+                        $this->getHydrator($class)->hydrate($embedded, $data[$field]);
+                        $data[$field] = $embedded;
                     }
-                    $data[$field] = $array;
-                }
 
-                if (null !== ($refInfos = $infos->getReferenceInfo()) && !$refInfos->getIsMultiple() && $maxReferenceDepth > 0) {
-                    $repository = $this->repositoryFactory->getRepository($this->documentManager, $refInfos->getDocument(), $refInfos->getCollection());
+                    if ((($data[$field] instanceof \MongoDB\Model\BSONArray) || ($data[$field] instanceof \MongoDB\Model\BSONDocument) || is_array($data[$field])) && $infos->getMultiEmbedded() && null !== ($class = $infos->getEmbeddedClass())) {
+                        $array = [];
+                        $originalClass = $class;
+                        foreach ($data[$field] as $key => $value) {
+                            if ($infos->isDiscriminable()) {
+                                if (null !== ($discrimatorField = $infos->getDiscriminatorField())
+                                    && null !== ($discrimatorMap = $infos->getDiscriminatorMap())) {
+                                    $discrimatorValue = $data[$field][$key][$discrimatorField] ?? null;
+                                    if (isset($discrimatorValue)) {
+                                        $class = $discrimatorMap[$discrimatorValue] ?? $originalClass;
+                                    }
+                                } else {
+                                    //call_s
+                                }
+                            }
+                            if (!class_exists($class)) {
+                                $class = $this->classMetadata->getNamespace() . "\\" . $class;
+                            }
+                            if ($value === null) {
+                                continue;
+                            }
 
-                    $objectDatas = $repository->getCollection()->findOne(["_id" => $data[$field]]);
-                    $referedObject = null;
-
-                    if (isset($objectDatas)) {
-                        $class = $refInfos->getDocument();
-
-                        if (!class_exists($class)) {
-                            $class = $this->classMetadata->getNamespace() . "\\" . $class;
+                            $embedded = new $class();
+                            $this->getHydrator($class)->hydrate($embedded, $value);
+                            $array[$key] = $embedded;
                         }
-
-                        $referedObject = new $class();
-
-                        $hydrator = $repository->getHydrator();
-                        $hydrator->hydrate($referedObject, $objectDatas, $maxReferenceDepth - 1);
-                    }
-                    $data[$field] = $referedObject;
-                }
-
-                if (null !== ($refInfos = $infos->getReferenceInfo()) && $refInfos->getIsMultiple()) {
-                    $repository = $this->repositoryFactory->getRepository($this->documentManager, $refInfos->getDocument(), $refInfos->getCollection());
-
-                    if (!$data[$field] instanceof \MongoDB\Model\BSONArray && !is_array($data[$field])) {
-                        throw new \Exception("RefersMany value must be an array for document with '_id' : " . $data["_id"]);
-                    } else {
-                        $objectsDatas = $repository->getCollection()->find(["_id" => ['$in' => $data[$field]]]);
+                        $data[$field] = $array;
                     }
 
-                    $objectArray = null;
+                    if (null !== ($refInfos = $infos->getReferenceInfo()) && !$refInfos->getIsMultiple() && $maxReferenceDepth > 0) {
+                        $repository = $this->repositoryFactory->getRepository($this->documentManager, $refInfos->getDocument(), $refInfos->getCollection());
 
-                    if (!empty($objectsDatas)) {
-                        $objectArray = [];
-                        foreach ($objectsDatas as $objectDatas) {
+                        $objectDatas = $repository->getCollection()->findOne(["_id" => $data[$field]]);
+                        $referedObject = null;
+
+                        if (isset($objectDatas)) {
                             $class = $refInfos->getDocument();
 
                             if (!class_exists($class)) {
@@ -166,15 +153,44 @@ class Hydrator
                             $referedObject = new $class();
 
                             $hydrator = $repository->getHydrator();
-                            $hydrator->hydrate($referedObject, $objectDatas, $maxReferenceDepth - 1);
-
-                            $objectArray[] = $referedObject;
+                            $hydrator->hydrate($referedObject, $objectDatas, $soft, $maxReferenceDepth - 1);
                         }
+                        $data[$field] = $referedObject;
                     }
-                    $data[$field] = $objectArray;
-                }
 
-                $prop->setValue($object, $data[$field]);
+                    if (null !== ($refInfos = $infos->getReferenceInfo()) && $refInfos->getIsMultiple()) {
+                        $repository = $this->repositoryFactory->getRepository($this->documentManager, $refInfos->getDocument(), $refInfos->getCollection());
+
+                        if (!$data[$field] instanceof \MongoDB\Model\BSONArray && !is_array($data[$field])) {
+                            throw new \Exception("RefersMany value must be an array for document with '_id' : " . $data["_id"]);
+                        } else {
+                            $objectsDatas = $repository->getCollection()->find(["_id" => ['$in' => $data[$field]]]);
+                        }
+
+                        $objectArray = null;
+
+                        if (!empty($objectsDatas)) {
+                            $objectArray = [];
+                            foreach ($objectsDatas as $objectDatas) {
+                                $class = $refInfos->getDocument();
+
+                                if (!class_exists($class)) {
+                                    $class = $this->classMetadata->getNamespace() . "\\" . $class;
+                                }
+
+                                $referedObject = new $class();
+
+                                $hydrator = $repository->getHydrator();
+                                $hydrator->hydrate($referedObject, $objectDatas, $soft, $maxReferenceDepth - 1);
+
+                                $objectArray[] = $referedObject;
+                            }
+                        }
+                        $data[$field] = $objectArray;
+                    }
+
+                    $this->setValue($object, $data[$field], $setter, $prop);
+                }
             }
         }
     }
@@ -297,5 +313,14 @@ class Hydrator
     {
         $metadata = $this->classMetadataFactory->getMetadataForClass($class);
         return new Hydrator($this->classMetadataFactory, $metadata, $this->documentManager, $this->repositoryFactory);
+    }
+
+    private function setValue($object, $value, $setter, \ReflectionProperty $prop = null)
+    {
+        if (isset($prop)) {
+            $prop->setValue($object, $value);
+        } else {
+            $object->$setter($value);
+        }
     }
 }
