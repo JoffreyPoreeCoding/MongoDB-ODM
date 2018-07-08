@@ -92,9 +92,9 @@ class Hydrator
                         if ($infos->isDiscriminable()) {
                             if (null !== ($discrimatorField = $infos->getDiscriminatorField())
                                 && null !== ($discrimatorMap = $infos->getDiscriminatorMap())) {
-                                $discrimatorValue = $data[$field][$discrimatorField] ?? null;
-                                if (isset($discrimatorValue)) {
-                                    $class = $discrimatorMap[$discrimatorValue] ?? $class;
+                                $discriminatorValue = isset($data[$field][$discrimatorField]) ? $data[$field][$discrimatorField] : null;
+                                if (isset($discriminatorValue)) {
+                                    $class = $discrimatorMap[$discriminatorValue] ?? $class;
                                 }
                             } else {
                                 //call_s
@@ -115,9 +115,9 @@ class Hydrator
                             if ($infos->isDiscriminable()) {
                                 if (null !== ($discrimatorField = $infos->getDiscriminatorField())
                                     && null !== ($discrimatorMap = $infos->getDiscriminatorMap())) {
-                                    $discrimatorValue = $data[$field][$key][$discrimatorField] ?? null;
-                                    if (isset($discrimatorValue)) {
-                                        $class = $discrimatorMap[$discrimatorValue] ?? $originalClass;
+                                    $discriminatorValue = isset($data[$field][$key][$discrimatorField]) ? $data[$field][$key][$discrimatorField] : null;
+                                    if (isset($discriminatorValue)) {
+                                        $class = $discrimatorMap[$discriminatorValue] ?? $originalClass;
                                     }
                                 } else {
                                     //call_s
