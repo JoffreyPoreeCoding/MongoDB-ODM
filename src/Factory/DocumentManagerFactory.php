@@ -62,7 +62,7 @@ class DocumentManagerFactory
      *
      * @return DocumentManager      A DocumentManager connected to mongouri specified
      */
-    public function createDocumentManager($mongouri, $dbName, $logger = null, $debug = false, $managerId = "", $newConnection = false)
+    public function createDocumentManager($mongouri, $dbName, $logger = null, $debug = false, $managerId = "", $newConnection = false, $options = [])
     {
 
         if (!isset($this->connexions[$mongouri])) {
@@ -84,6 +84,7 @@ class DocumentManagerFactory
                 $repositoryFactory,
                 $logger,
                 $debug,
+                $options,
                 []
             );
         }

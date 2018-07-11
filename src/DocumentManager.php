@@ -52,6 +52,12 @@ class DocumentManager extends ObjectManager
      * Default options for repositories
      * @var array
      */
+    protected $options = [];
+
+    /**
+     * Default options for repositories
+     * @var array
+     */
     protected $defaultOptions = [];
 
     /**
@@ -61,7 +67,12 @@ class DocumentManager extends ObjectManager
      * @param RepositoryFactory|null    $repositoryFactory  RepositoryFactory object
      * @param LoggerInterface           $logger             A logger that implement the LoggerInterface
      * @param boolean                   $debug              Enable or not the debug mode
+     * @param array                     $options            ODM Options
      * @param array                     $defaultOptions     Default options for commands
+     *
+     * Available options :
+     *  * hydratorStrategy : Hydrator::SETTERS, Hydrator::ATTRIBUTES
+     *
      */
     public function __construct(
         MongoClient $client,
@@ -69,6 +80,7 @@ class DocumentManager extends ObjectManager
         RepositoryFactory $repositoryFactory = null,
         LoggerInterface $logger = null,
         $debug = false,
+        $options = [],
         $defaultOptions = []
     ) {
         $this->debug = $debug;
@@ -80,6 +92,7 @@ class DocumentManager extends ObjectManager
             throw new \Exception("Logger must implements '" . LoggerInterface::class . "'");
         }
 
+        $this->options = $options;
         $this->logger = !isset($logger) ? new MemoryLogger() : $logger;
         $this->client = $client;
         $this->database = $database;
@@ -113,7 +126,7 @@ class DocumentManager extends ObjectManager
         $repository->getClassMetadata()->getEventManager()->execute(EventManager::EVENT_PRE_PERSIST, $object);
         $this->addObject($object, ObjectManager::OBJ_NEW, $repository);
         $repository->getClassMetadata()->getEventManager()->execute(EventManager::EVENT_POST_PERSIST, $object);
-        
+
         return $this;
     }
 
@@ -158,25 +171,8 @@ class DocumentManager extends ObjectManager
             return;
         }
         $repository = $this->objectsRepository[spl_object_hash($object)];
-
-        $mongoCollection = $repository->getCollection();
-
         $id = $repository->getHydrator()->unhydrate($object)["_id"];
-
-        if ($this->debug) {
-            $this->logger->debug(
-                "Refresh datas for object with id " . (string) $id . ' in collection ' . $mongoCollection
-            );
-        }
-
-        $datas = (array) $mongoCollection->findOne(["_id" => $id]);
-
-        if ($datas != null) {
-            $repository->getHydrator()->hydrate($object, $datas);
-            $repository->cacheObject($object);
-        } else {
-            $object = null;
-        }
+        $repository->find($id);
     }
 
     /**
@@ -443,6 +439,26 @@ class DocumentManager extends ObjectManager
     public function setDefaultOptions(array $defaultOptions)
     {
         $this->defaultOptions = $defaultOptions;
+
+        return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function getOptions()
+    {
+        return $this->options;
+    }
+
+    /**
+     * @param array $Options
+     *
+     * @return self
+     */
+    public function setOptions(array $options)
+    {
+        $this->options = $options;
 
         return $this;
     }

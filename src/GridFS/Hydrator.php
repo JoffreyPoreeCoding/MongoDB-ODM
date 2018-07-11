@@ -1,5 +1,4 @@
 <?php
-
 namespace JPC\MongoDB\ODM\GridFS;
 
 use JPC\MongoDB\ODM\Hydrator as BaseHydrator;
@@ -11,7 +10,6 @@ use JPC\MongoDB\ODM\Hydrator as BaseHydrator;
  */
 class Hydrator extends BaseHydrator
 {
-
     /**
      * Hydrate an object from data
      *
@@ -23,12 +21,12 @@ class Hydrator extends BaseHydrator
     public function hydrate(&$object, $datas, $soft = false, $maxReferenceDepth = 10)
     {
         if (isset($datas["metadata"])) {
-            parent::hydrate($object, $datas["metadata"], $soft, $maxReferenceDepth);
+            $metadata = $datas["metadata"];
+            $datas = array_merge((array) $datas, (array) $metadata);
             unset($datas["metadata"]);
         }
         parent::hydrate($object, $datas, $soft, $maxReferenceDepth);
     }
-
     /**
      * Unhydrate object to array
      *
@@ -38,9 +36,7 @@ class Hydrator extends BaseHydrator
     public function unhydrate($object)
     {
         $datas = parent::unhydrate($object);
-
         $properties = $this->classMetadata->getPropertiesInfos();
-
         foreach ($properties as $name => $infos) {
             if ($infos->getMetadata()) {
                 if (isset($datas[$infos->getField()])) {

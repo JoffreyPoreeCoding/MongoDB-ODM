@@ -90,7 +90,7 @@ class Repository extends BaseRepository
             if ($this->getStreamProjection($projections)) {
                 $data["stream"] = $this->bucket->openDownloadStream($object->getId());
             }
-            $this->hydrator->hydrate($object, $data);
+            $this->hydrator->hydrate($object, $data, true);
             return $object;
         }
     }
@@ -118,7 +118,7 @@ class Repository extends BaseRepository
                 if ($this->getStreamProjection($projections)) {
                     $data["stream"] = $this->bucket->openDownloadStream($object->getId());
                 }
-                $this->hydrator->hydrate($object, $data);
+                $this->hydrator->hydrate($object, $data, true);
             }
             return $objects;
         } else {
@@ -154,7 +154,7 @@ class Repository extends BaseRepository
                 if ($this->getStreamProjection($projections)) {
                     $data["stream"] = $this->bucket->openDownloadStream($object->getId());
                 }
-                $this->hydrator->hydrate($object, $data);
+                $this->hydrator->hydrate($object, $data, true);
             }
             return $objects;
         } else {
@@ -188,7 +188,7 @@ class Repository extends BaseRepository
             if ($this->getStreamProjection($projections)) {
                 $data["stream"] = $this->bucket->openDownloadStream($object->getId());
             }
-            $this->hydrator->hydrate($object, $data);
+            $this->hydrator->hydrate($object, $data, true);
             return $object;
         }
     }
@@ -217,7 +217,7 @@ class Repository extends BaseRepository
             if ($this->getStreamProjection($projections)) {
                 $data["stream"] = $this->bucket->openDownloadStream($object->getId());
             }
-            $this->hydrator->hydrate($object, $data);
+            $this->hydrator->hydrate($object, $data, true);
             return $object;
         }
     }
@@ -280,10 +280,11 @@ class Repository extends BaseRepository
 
         unset($objectDatas["filename"]);
 
-        $this->bucket->uploadFromStream($filename, $stream, $objectDatas);
+        $id = $this->bucket->uploadFromStream($filename, $stream, $objectDatas);
+        $data['_id'] = $id;
 
-        $data["stream"] = $this->bucket->openDownloadStream($document->getId());
-        $this->hydrator->hydrate($document, $data);
+        $data["stream"] = $this->bucket->openDownloadStream($data['_id']);
+        $this->hydrator->hydrate($document, $data, true);
 
         $this->cacheObject($document);
 

@@ -13,6 +13,9 @@ use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
 class Hydrator
 {
 
+    const STRAT_SETTERS = 'SETTERS';
+    const STRAT_ATTRIBUTES = 'ATTRIBUTES';
+
     /**
      * Document Manager
      * @var DocumentManager
@@ -63,6 +66,7 @@ class Hydrator
      */
     public function hydrate(&$object, $data, $soft = false, $maxReferenceDepth = 10)
     {
+        $strategy = $this->documentManager->getOptions()['hydratorStrategy'] ?? self::STRAT_SETTERS;
         $reflectionClass = new \ReflectionClass($this->classMetadata->getName());
         if ($data instanceof \MongoDB\Model\BSONArray || $data instanceof \MongoDB\Model\BSONDocument) {
             $data = (array) $data;
@@ -74,7 +78,7 @@ class Hydrator
 
         foreach ($properties as $name => $infos) {
             $setter = 'set' . ucfirst($name);
-            if (!$reflectionClass->hasMethod($setter)) {
+            if (!$reflectionClass->hasMethod($setter) || $strategy === self::STRAT_ATTRIBUTES) {
                 $prop = new \ReflectionProperty($this->classMetadata->getName(), $name);
                 $prop->setAccessible(true);
             } else {
@@ -85,7 +89,7 @@ class Hydrator
                 if (!$soft && !array_key_exists($field, $data)) {
                     $this->setValue($object, null, $setter, $prop);
                 } elseif (array_key_exists($field, $data)) {
-                    if (!$soft && $data[$field] == null) {
+                    if (!$soft && $data[$field] === null) {
                         continue;
                     }
                     if ((($data[$field] instanceof \MongoDB\Model\BSONDocument) || is_array($data[$field])) && $infos->getEmbedded() && null !== ($class = $infos->getEmbeddedClass())) {
@@ -215,7 +219,6 @@ class Hydrator
             $prop->setAccessible(true);
 
             $value = $prop->getValue($object);
-
             if (null === $value) {
                 continue;
             }
