@@ -182,13 +182,13 @@ class Repository extends BaseRepository
     public function findOneBy($filters = array(), $projections = array(), $sorts = array(), $options = array())
     {
         $object = parent::findOneBy($filters, $projections, $sorts, $options);
-
         if (isset($object)) {
             $data = [];
+
             if ($this->getStreamProjection($projections)) {
                 $data["stream"] = $this->bucket->openDownloadStream($object->getId());
+                $this->hydrator->hydrate($object, $data, true);
             }
-            $this->hydrator->hydrate($object, $data, true);
             return $object;
         }
     }

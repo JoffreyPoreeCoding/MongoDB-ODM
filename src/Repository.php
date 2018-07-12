@@ -72,6 +72,12 @@ class Repository
     protected $updateQueryCreator;
 
     /**
+     * Update query creator
+     * @var CacheProvider
+     */
+    protected $lastProjectionCache;
+
+    /**
      * Create a repository
      *
      * @param   DocumentManager     $documentManager    Document manager
@@ -82,7 +88,7 @@ class Repository
      * @param   UpdateQueryCreator  $uqc                Update query Creator
      * @param   CacheProvider       $objectCache        Cache for persisted objects
      */
-    public function __construct(DocumentManager $documentManager, Collection $collection, ClassMetadata $classMetadata, Hydrator $hydrator, QueryCaster $queryCaster, UpdateQueryCreator $uqc = null, CacheProvider $objectCache = null)
+    public function __construct(DocumentManager $documentManager, Collection $collection, ClassMetadata $classMetadata, Hydrator $hydrator, QueryCaster $queryCaster, UpdateQueryCreator $uqc = null, CacheProvider $objectCache = null, CacheProvider $lastProjectionCache = null)
     {
         $this->documentManager = $documentManager;
         $this->collection = $collection;
@@ -91,6 +97,9 @@ class Repository
 
         $this->modelName = $classMetadata->getName();
         $this->objectCache = isset($objectCache) ? $objectCache : new ArrayCache();
+
+        $this->lastProjectionCache = isset($lastProjectionCache) ? $lastProjectionCache : new ArrayCache();
+        $this->lastProjectionCache->setNamespace('obj_projection');
 
         $this->queryCaster = $queryCaster;
         $this->updateQueryCreator = isset($uqc) ? $uqc : new UpdateQueryCreator();
@@ -573,6 +582,11 @@ class Repository
             $this->hydrator->hydrate($object, $data);
             $this->classMetadata->getEventManager()->execute(EventManager::EVENT_POST_LOAD, $object);
             if (!isset($options['readOnly']) || $options['readOnly'] != true) {
+                $oid = spl_object_hash($object);
+                $data = $this->hydrator->unhydrate($object);
+                $id = isset($data['_id']) ? serialize($data['_id']) . $this->getCollection() : $oid;
+                $projection = isset($options['projection']) ? $options['projection'] : [];
+                $this->lastProjectionCache->save($id, $projection);
                 $this->cacheObject($object);
                 $this->documentManager->addObject($object, DocumentManager::OBJ_MANAGED, $this);
             }
@@ -874,5 +888,15 @@ class Repository
         $this->updateQueryCreator = $updateQueryCreator;
 
         return $this;
+    }
+
+    public function getLastProjection($object)
+    {
+        $oid = spl_object_hash($object);
+        $data = $this->hydrator->unhydrate($object);
+        $id = $data["_id"];
+        $cacheId = isset($data['_id']) ? serialize($data['_id']) . $this->getCollection() : $oid;
+        $projection = $this->lastProjectionCache->fetch($cacheId);
+        return $projection !== false ? $projection : [];
     }
 }

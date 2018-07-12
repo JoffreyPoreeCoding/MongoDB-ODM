@@ -71,6 +71,7 @@ class Hydrator
         if ($data instanceof \MongoDB\Model\BSONArray || $data instanceof \MongoDB\Model\BSONDocument) {
             $data = (array) $data;
         }
+
         if (!is_array($data)) {
             throw new \Exception('$data must be an array');
         }
@@ -121,14 +122,14 @@ class Hydrator
                                     && null !== ($discrimatorMap = $infos->getDiscriminatorMap())) {
                                     $discriminatorValue = isset($data[$field][$key][$discrimatorField]) ? $data[$field][$key][$discrimatorField] : null;
                                     if (isset($discriminatorValue)) {
-                                        $class = isset($discrimatorMap[$discriminatorValue]) ? $discrimatorMap[$discriminatorValue] : $class;
+                                        $class = isset($discrimatorMap[$discriminatorValue]) ? $discrimatorMap[$discriminatorValue] : $originalClass;
                                     }
                                 } else {
                                     //call_s
                                 }
                             }
                             if (!class_exists($class)) {
-                                $class = $this->classMetadata->getNamespace() . "\\" . $class;
+                                $class = $this->classMetadata->getNamespace() . "\\" . $originalClass;
                             }
                             if ($value === null) {
                                 continue;
@@ -238,7 +239,10 @@ class Hydrator
             if (is_array($value) && $infos->getMultiEmbedded()) {
                 $array = [];
                 foreach ($value as $key => $embeddedValue) {
-                    $class = get_class($embeddedValue);
+                    $class = $infos->getEmbeddedClass();
+                    if (is_object($embeddedValue) && false !== ($realClass = get_class($embeddedValue))) {
+                        $class = $realClass;
+                    }
                     if (!class_exists($class)) {
                         $class = $this->classMetadata->getNamespace() . "\\" . $class;
                     }
