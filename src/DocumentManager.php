@@ -176,7 +176,7 @@ class DocumentManager extends ObjectManager
         $collection = $repository->getCollection();
         $hydrator = $repository->getHydrator();
 
-        if (false !== ($data = $collection->findOne(['_id' => $id], ['projection' => $projection]))) {
+        if (null !== ($data = $collection->findOne(['_id' => $id], ['projection' => $projection]))) {
             $hydrator->hydrate($object, $data);
             $repository->cacheObject($object);
         } else {
