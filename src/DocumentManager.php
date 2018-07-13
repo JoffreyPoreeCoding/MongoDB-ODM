@@ -173,7 +173,16 @@ class DocumentManager extends ObjectManager
         $repository = $this->objectsRepository[spl_object_hash($object)];
         $id = $repository->getHydrator()->unhydrate($object)["_id"];
         $projection = $repository->getLastProjection($object);
-        $object = $repository->find($id, $projection);
+        $collection = $repository->getCollection();
+        $hydrator = $repository->getHydrator();
+
+        if (false !== ($data = $collection->findOne(['_id' => $id], ['projection' => $projection]))) {
+            $hydrator->hydrate($object, $data);
+            $repository->cacheObject($object);
+        } else {
+            $object = null;
+        }
+        return $object;
     }
 
     /**

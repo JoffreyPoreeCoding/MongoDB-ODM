@@ -20,12 +20,22 @@ class Hydrator extends BaseHydrator
      */
     public function hydrate(&$object, $datas, $soft = false, $maxReferenceDepth = 10)
     {
+        $stream = $object->getStream();
+        if (isset($datas['stream'])) {
+            $stream = $datas['stream'];
+            unset($datas['stream']);
+        }
+
         if (isset($datas["metadata"])) {
             $metadata = $datas["metadata"];
             $datas = array_merge((array) $datas, (array) $metadata);
             unset($datas["metadata"]);
         }
         parent::hydrate($object, $datas, $soft, $maxReferenceDepth);
+
+        if (isset($stream)) {
+            $object->setStream($stream);
+        }
     }
     /**
      * Unhydrate object to array
