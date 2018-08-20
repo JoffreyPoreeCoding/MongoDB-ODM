@@ -343,7 +343,7 @@ class Repository extends BaseRepository
      * @param   object  $document   The document that the update query will match
      * @return  array
      */
-    protected function getUpdateQuery($document)
+    public function getUpdateQuery($document)
     {
         $updateQuery = [];
         $old = $this->uncacheObject($document);

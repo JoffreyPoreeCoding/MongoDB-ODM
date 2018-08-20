@@ -6,9 +6,11 @@ use Doctrine\Common\Cache\ArrayCache;
 use Doctrine\Common\Cache\CacheProvider;
 use Doctrine\Common\Cache\FlushableCache;
 use JPC\MongoDB\ODM\DocumentManager;
-use JPC\MongoDB\ODM\Exception\MappingException;
 use JPC\MongoDB\ODM\Id\AbstractIdGenerator;
 use JPC\MongoDB\ODM\Iterator\DocumentIterator;
+use JPC\MongoDB\ODM\Query\DeleteOne;
+use JPC\MongoDB\ODM\Query\InsertOne;
+use JPC\MongoDB\ODM\Query\UpdateOne;
 use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
 use JPC\MongoDB\ODM\Tools\EventManager;
 use JPC\MongoDB\ODM\Tools\QueryCaster;
@@ -357,33 +359,11 @@ class Repository
      */
     public function insertOne($document, $options = [])
     {
-        $this->classMetadata->getEventManager()->execute(EventManager::EVENT_PRE_INSERT, $document);
-        $insertQuery = $this->hydrator->unhydrate($document);
-
-        $idGen = $this->classMetadata->getIdGenerator();
-        if ($idGen !== null) {
-            if (!class_exists($idGen) || !is_subclass_of($idGen, AbstractIdGenerator::class)) {
-                throw new \Exception('Bad ID generator : class \'' . $idGen . '\' not exists or not extends JPC\MongoDB\ODM\Id\AbstractIdGenerator');
-            }
-            $generator = new $idGen();
-            $insertQuery['_id'] = $generator->generate($this->documentManager, $document);
-        }
-
-        $result = $this->collection->insertOne($insertQuery, $options);
-
-        if ($result->isAcknowledged()) {
-            $id = $result->getInsertedId();
-            if ($id instanceof \stdClass) {
-                $id = (array) $id;
-            }
-            $insertQuery["_id"] = $id;
-            $this->hydrator->hydrate($document, $insertQuery);
-            $this->classMetadata->getEventManager()->execute(EventManager::EVENT_POST_INSERT, $document);
-            $this->cacheObject($document);
-
-            return true;
+        $query = new InsertOne($this->documentManager, $this, $document, $options);
+        if (isset($options['getQuery']) && $options['getQuery']) {
+            return $query;
         } else {
-            return false;
+            return $query->execute();
         }
     }
 
@@ -448,44 +428,12 @@ class Repository
      */
     public function updateOne($document, $update = [], $options = [])
     {
-        if (is_object($document) && $document instanceof $this->modelName) {
-            $unhydratedObject = $this->hydrator->unhydrate($document);
-            $id = $unhydratedObject["_id"];
-            $filters = ["_id" => $id];
-        } elseif (is_object($document)) {
-            throw new MappingException('Document sended to update function must be of type "' . $this->modelName . '"');
+        $query = new UpdateOne($this->documentManager, $this, $document, $update, $options);
+        if (isset($options['getQuery']) && $options['getQuery']) {
+            return $query;
         } else {
-            $filters = $this->castQuery($document);
+            return $query->execute();
         }
-
-        if (empty($update)) {
-            $update = $this->getUpdateQuery($document);
-            if (!empty($update)) {
-                $this->classMetadata->getEventManager()->execute(EventManager::EVENT_PRE_UPDATE, $document);
-                $update = $this->getUpdateQuery($document);
-            }
-        } else {
-            $update = $this->castQuery($update);
-        }
-
-        if (!empty($update)) {
-            $result = $this->collection->updateOne($filters, $update, $options);
-
-            if ($result->isAcknowledged()) {
-                if ($document instanceof $this->modelName) {
-                    $this->documentManager->refresh($document);
-                    $this->classMetadata->getEventManager()->execute(EventManager::EVENT_POST_UPDATE, $document);
-                }
-                return true;
-            } else {
-                $this->cacheObject($document);
-                return false;
-            }
-        }
-
-        $this->cacheObject($document);
-
-        return true;
     }
 
     /**
@@ -516,18 +464,11 @@ class Repository
      */
     public function deleteOne($document, $options = [])
     {
-        $this->classMetadata->getEventManager()->execute(EventManager::EVENT_PRE_DELETE, $document);
-
-        $unhydratedObject = $this->hydrator->unhydrate($document);
-        $id = $unhydratedObject["_id"];
-
-        $result = $this->collection->deleteOne(["_id" => $id], $options);
-
-        if ($result->isAcknowledged()) {
-            $this->classMetadata->getEventManager()->execute(EventManager::EVENT_POST_DELETE, $document);
-            return true;
+        $query = new DeleteOne($this->documentManager, $this, $document, $options);
+        if (isset($options['getQuery']) && $options['getQuery']) {
+            return $query;
         } else {
-            return false;
+            return $query->execute();
         }
     }
 
@@ -686,7 +627,7 @@ class Repository
      * @param   object  $document   The document that the update query will match
      * @return  array
      */
-    protected function getUpdateQuery($document)
+    public function getUpdateQuery($document)
     {
         $updateQuery = [];
         $old = $this->uncacheObject($document);

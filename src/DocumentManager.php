@@ -255,7 +255,6 @@ class DocumentManager extends ObjectManager
             $repository = $this->objectsRepository[spl_object_hash($object)];
             $repository->getClassMetadata()->getEventManager()->execute(EventManager::EVENT_PRE_FLUSH, $object);
             $repository->deleteOne($object);
-            $this->removeObject($object);
             $repository->getClassMetadata()->getEventManager()->execute(EventManager::EVENT_POST_FLUSH, $object);
         }
 
