@@ -173,6 +173,11 @@ class ObjectManager
         }
     }
 
+    public function getObjectRepository($id)
+    {
+        return $this->objectsRepository[$id];
+    }
+
     /**
      * Check if object is managed
      *

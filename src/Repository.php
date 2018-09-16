@@ -8,6 +8,7 @@ use Doctrine\Common\Cache\FlushableCache;
 use JPC\MongoDB\ODM\DocumentManager;
 use JPC\MongoDB\ODM\Id\AbstractIdGenerator;
 use JPC\MongoDB\ODM\Iterator\DocumentIterator;
+use JPC\MongoDB\ODM\Query\BulkWrite;
 use JPC\MongoDB\ODM\Query\DeleteOne;
 use JPC\MongoDB\ODM\Query\InsertOne;
 use JPC\MongoDB\ODM\Query\UpdateOne;
@@ -182,8 +183,6 @@ class Repository
     public function find($id, $projections = [], $options = [])
     {
         $options = $this->createOption($projections, null, $options);
-
-        $this->log("debug", "Find object in collection '" . $this->collection->getCollectionName() . "' with id : '" . (string) $id . "'");
 
         $result = $this->collection->findOne(["_id" => $id], $options);
 
@@ -504,6 +503,11 @@ class Repository
         if ($this->documentManager->getDebug()) {
             $this->documentManager->getLogger()->$level($message, $metadata);
         }
+    }
+
+    public function createBulkWriteQuery()
+    {
+        return new BulkWrite($this->documentManager, $this);
     }
 
     /**

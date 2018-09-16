@@ -450,7 +450,7 @@ class RepositoryTest extends TestCase
         $this->classMetadataMock->method("getName")->willReturn("stdClass");
         $repository = $this->repositoryMockBuilder->setMethods(["castQuery", "getUpdateQuery"])->getMock();
 
-        $this->hydratorMock->expects($this->exactly(2))->method("unhydrate")->willReturn(["_id" => 1]);
+        $this->hydratorMock->expects($this->exactly(1))->method("unhydrate")->willReturn(["_id" => 1]);
 
         $repository->expects($this->once())->method("getUpdateQuery")->willReturn([]);
         $repository->expects($this->any())->method("castQuery");
@@ -474,12 +474,15 @@ class RepositoryTest extends TestCase
         $this->hydratorMock->expects($this->any())->method("unhydrate");
 
         $repository->expects($this->any())->method("getUpdateQuery");
-        $repository->expects($this->exactly(2))->method("castQuery")->will($this->onConsecutiveCalls(["query" => "value"], ["update" => "value"]));
 
         $result = $this->createMock(UpdateResult::class);
         $result->method("isAcknowledged")->willReturn(true);
 
         $this->collectionMock->expects($this->once())->method("updateOne")->with(["query" => "value"], ["update" => "value"], ["option" => "value"])->willReturn($result);
+        $this->queryCasterMock->method('getCastedQuery')->will($this->onConsecutiveCalls(
+            ["query" => "value"],
+            ["update" => "value"]
+        ));
 
         $result = $repository->updateOne(["query" => "value"], ["update" => "value"], ["option" => "value"]);
 

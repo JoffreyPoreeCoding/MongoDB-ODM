@@ -185,20 +185,8 @@ class DocumentManager extends ObjectManager
         return $object;
     }
 
-    /**
-     * Flush all changes and write it in mongoDB
-     */
     public function flush()
     {
-        if ($this->debug) {
-            $countRemove = count($this->getObjects(ObjectManager::OBJ_REMOVED));
-            $countUpdate = count($this->getObjects(ObjectManager::OBJ_MANAGED));
-            $countInsert = count($this->getObjects(ObjectManager::OBJ_NEW));
-            $this->logger->debug(
-                "Flushing datas to database, $countInsert to insert, $countUpdate to update, $countRemove to remove."
-            );
-        }
-
         $removeObjs = $this->getObjects(ObjectManager::OBJ_REMOVED);
         $updateObjs = $this->getObjects(ObjectManager::OBJ_MANAGED);
         $newObjs = $this->getObjects(ObjectManager::OBJ_NEW);
@@ -225,41 +213,113 @@ class DocumentManager extends ObjectManager
      */
     private function perfomOperations($insert, $update, $remove)
     {
-        foreach ($update as $object) {
-            $repository = $this->objectsRepository[spl_object_hash($object)];
-            $repository->getClassMetadata()->getEventManager()->execute(EventManager::EVENT_PRE_FLUSH, $object);
-            $repository->updateOne($object);
-            $repository->getClassMetadata()->getEventManager()->execute(EventManager::EVENT_POST_FLUSH, $object);
+        $bulkOperations = [];
+        foreach ($insert as $id => $document) {
+            $repository = $this->getObjectRepository($id);
+            $query = $repository->insertOne($document, ['getQuery' => true]);
+            $repositoryId = spl_object_hash($repository);
+            $bulkOperations[$repositoryId] = $bulkOperations[$repositoryId] ?? $repository->createBulkWriteQuery();
+            $bulkOperations[$repositoryId]->addQuery($query);
         }
 
-        $toInsert = [];
-        $repositories = [];
-        foreach ($insert as $object) {
-            $repository = $this->objectsRepository[spl_object_hash($object)];
-            $repository->getClassMetadata()->getEventManager()->execute(EventManager::EVENT_PRE_FLUSH, $object);
-            $rid = spl_object_hash($repository);
-            $toInsert[$rid][] = $object;
-            isset($repositories[$rid]) ?: $repositories[$rid] = $repository;
+        foreach ($update as $id => $document) {
+            $repository = $this->getObjectRepository($id);
+            $query = $repository->updateOne($document, [], ['getQuery' => true]);
+            $repositoryId = spl_object_hash($repository);
+            $bulkOperations[$repositoryId] = $bulkOperations[$repositoryId] ?? $repository->createBulkWriteQuery();
+            $bulkOperations[$repositoryId]->addQuery($query);
         }
 
-        foreach ($toInsert as $repository => $objects) {
-            $repository = $repositories[$repository];
-            $repository->insertMany($objects);
-            foreach ($objects as $object) {
-                $this->setObjectState($object, self::OBJ_MANAGED);
-                $repository->getClassMetadata()->getEventManager()->execute(EventManager::EVENT_POST_FLUSH, $object);
-            }
+        foreach ($remove as $id => $document) {
+            $repository = $this->getObjectRepository($id);
+            $query = $repository->deleteOne($document, ['getQuery' => true]);
+            $repositoryId = spl_object_hash($repository);
+            $bulkOperations[$repositoryId] = $bulkOperations[$repositoryId] ?? $repository->createBulkWriteQuery();
+            $bulkOperations[$repositoryId]->addQuery($query);
         }
 
-        foreach ($remove as $object) {
-            $repository = $this->objectsRepository[spl_object_hash($object)];
-            $repository->getClassMetadata()->getEventManager()->execute(EventManager::EVENT_PRE_FLUSH, $object);
-            $repository->deleteOne($object);
-            $repository->getClassMetadata()->getEventManager()->execute(EventManager::EVENT_POST_FLUSH, $object);
+        foreach ($bulkOperations as $bulkOperation) {
+            $bulkOperation->execute();
         }
 
         $this->flush();
     }
+
+    /**
+     * Flush all changes and write it in mongoDB
+     */
+    // public function flush()
+    // {
+    //     if ($this->debug) {
+    //         $countRemove = count($this->getObjects(ObjectManager::OBJ_REMOVED));
+    //         $countUpdate = count($this->getObjects(ObjectManager::OBJ_MANAGED));
+    //         $countInsert = count($this->getObjects(ObjectManager::OBJ_NEW));
+    //         $this->logger->debug(
+    //             "Flushing datas to database, $countInsert to insert, $countUpdate to update, $countRemove to remove."
+    //         );
+    //     }
+
+    //     $removeObjs = $this->getObjects(ObjectManager::OBJ_REMOVED);
+    //     $updateObjs = $this->getObjects(ObjectManager::OBJ_MANAGED);
+    //     $newObjs = $this->getObjects(ObjectManager::OBJ_NEW);
+
+    //     foreach ($updateObjs as $key => $object) {
+    //         $repository = $this->objectsRepository[spl_object_hash($object)];
+    //         if (!$repository->hasUpdate($object)) {
+    //             unset($updateObjs[$key]);
+    //         }
+    //     }
+
+    //     if (!empty(array_merge($newObjs, $updateObjs, $removeObjs))) {
+    //         $this->perfomOperations($newObjs, $updateObjs, $removeObjs);
+    //     }
+    // }
+
+    /**
+     * Perfom operation on collections
+     *
+     * @param   array   $insert     Objects to insert
+     * @param   array   $update     Objects to update
+     * @param   array   $remove     Objects to remove
+     * @return  void
+     */
+    // private function perfomOperations($insert, $update, $remove)
+    // {
+    //     foreach ($update as $object) {
+    //         $repository = $this->objectsRepository[spl_object_hash($object)];
+    //         $repository->getClassMetadata()->getEventManager()->execute(EventManager::EVENT_PRE_FLUSH, $object);
+    //         $repository->updateOne($object);
+    //         $repository->getClassMetadata()->getEventManager()->execute(EventManager::EVENT_POST_FLUSH, $object);
+    //     }
+
+    //     $toInsert = [];
+    //     $repositories = [];
+    //     foreach ($insert as $object) {
+    //         $repository = $this->objectsRepository[spl_object_hash($object)];
+    //         $repository->getClassMetadata()->getEventManager()->execute(EventManager::EVENT_PRE_FLUSH, $object);
+    //         $rid = spl_object_hash($repository);
+    //         $toInsert[$rid][] = $object;
+    //         isset($repositories[$rid]) ?: $repositories[$rid] = $repository;
+    //     }
+
+    //     foreach ($toInsert as $repository => $objects) {
+    //         $repository = $repositories[$repository];
+    //         $repository->insertMany($objects);
+    //         foreach ($objects as $object) {
+    //             $this->setObjectState($object, self::OBJ_MANAGED);
+    //             $repository->getClassMetadata()->getEventManager()->execute(EventManager::EVENT_POST_FLUSH, $object);
+    //         }
+    //     }
+
+    //     foreach ($remove as $object) {
+    //         $repository = $this->objectsRepository[spl_object_hash($object)];
+    //         $repository->getClassMetadata()->getEventManager()->execute(EventManager::EVENT_PRE_FLUSH, $object);
+    //         $repository->deleteOne($object);
+    //         $repository->getClassMetadata()->getEventManager()->execute(EventManager::EVENT_POST_FLUSH, $object);
+    //     }
+
+    //     $this->flush();
+    // }
 
     /**
      * Unmanaged (unpersist) all object

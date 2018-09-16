@@ -2,17 +2,19 @@
 
 namespace JPC\Test\MongoDB\ODM;
 
-use MongoDB\Client;
-use MongoDB\Database;
-use JPC\MongoDB\ODM\Hydrator;
-use JPC\MongoDB\ODM\Repository;
 use JPC\MongoDB\ODM\DocumentManager;
-use JPC\MongoDB\ODM\Tools\EventManager;
-use JPC\Test\MongoDB\ODM\Framework\TestCase;
 use JPC\MongoDB\ODM\Exception\StateException;
 use JPC\MongoDB\ODM\Factory\RepositoryFactory;
-use JPC\MongoDB\ODM\Tools\Logger\LoggerInterface;
+use JPC\MongoDB\ODM\Hydrator;
+use JPC\MongoDB\ODM\ObjectManager;
+use JPC\MongoDB\ODM\Query\BulkWrite;
+use JPC\MongoDB\ODM\Repository;
 use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
+use JPC\MongoDB\ODM\Tools\EventManager;
+use JPC\MongoDB\ODM\Tools\Logger\LoggerInterface;
+use JPC\Test\MongoDB\ODM\Framework\TestCase;
+use MongoDB\Client;
+use MongoDB\Database;
 
 class DocumentManagerTest extends TestCase
 {
@@ -158,19 +160,26 @@ class DocumentManagerTest extends TestCase
         $obj3 = new \stdClass();
         $this->documentManager->addObject($obj3, DocumentManager::OBJ_REMOVED, $repositoryMock);
 
-        $repositoryMock->expects($this->once())
-            ->method("deleteOne")
-            ->with($obj3);
+        $repositoryMock->expects($this->once())->method('insertOne')->with($obj1, ['getQuery' => true])->willReturn(new \JPC\MongoDB\ODM\Query\InsertOne($this->documentManager, $repositoryMock, $obj1));
+        $repositoryMock->expects($this->once())->method('updateOne')->with($obj1, [], ['getQuery' => true])->willReturn(new \JPC\MongoDB\ODM\Query\UpdateOne($this->documentManager, $repositoryMock, $obj2));
+        $repositoryMock->expects($this->once())->method('deleteOne')->with($obj1, ['getQuery' => true])->willReturn(new \JPC\MongoDB\ODM\Query\DeleteOne($this->documentManager, $repositoryMock, $obj3));
+
+        $bulkWriteQueryMock = $this->createMock(BulkWrite::class);
+
+        $repositoryMock->method('createBulkWriteQuery')->willReturn($bulkWriteQueryMock);
+
+        $dm = $this->documentManager;
+        $bulkWriteQueryMock->method('execute')->will(
+            $this->returnCallback(function () use ($dm, $obj1, $obj2, $obj3) {
+                $dm->removeObject($obj3);
+                $dm->setObjectState($obj1, ObjectManager::OBJ_MANAGED);
+            })
+        );
+
         $repositoryMock->expects($this->exactly(3))
             ->method("hasUpdate")
             ->with($this->equalTo($obj2))
             ->will($this->onConsecutiveCalls(true, false, false));
-        $repositoryMock->expects($this->once())
-            ->method("updateOne")
-            ->with($obj2);
-        $repositoryMock->expects($this->once())
-            ->method("insertMany")
-            ->with([$obj1]);
 
         $this->documentManager->flush();
     }
