@@ -238,8 +238,18 @@ class DocumentManager extends ObjectManager
             $bulkOperations[$repositoryId]->addQuery($query);
         }
 
+        foreach (array_merge($insert, $update, $remove) as $id => $object) {
+            $repository = $this->getObjectRepository($id);
+            $repository->getClassMetadata()->getEventManager()->execute(EventManager::EVENT_PRE_FLUSH, $this->document);
+        }
+
         foreach ($bulkOperations as $bulkOperation) {
             $bulkOperation->execute();
+        }
+
+        foreach (array_merge($insert, $update) as $id => $object) {
+            $repository = $this->getObjectRepository($id);
+            $repository->getClassMetadata()->getEventManager()->execute(EventManager::EVENT_POST_FLUSH, $this->document);
         }
 
         $this->flush();
