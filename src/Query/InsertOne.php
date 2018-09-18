@@ -55,10 +55,11 @@ class InsertOne extends Query
     {
         $insertQuery = $this->getDocument();
 
-        $result = $this->repository->getCollection()->insertOne($insertQuery, $this->options);
+        $queryResult = $this->repository->getCollection()->insertOne($insertQuery, $this->options);
+        $result = $queryResult;
 
-        if ($result->isAcknowledged()) {
-            $id = $result->getInsertedId();
+        if ($queryResult->isAcknowledged()) {
+            $id = $queryResult->getInsertedId();
             if ($id instanceof \stdClass) {
                 $id = (array) $id;
             }
@@ -66,7 +67,7 @@ class InsertOne extends Query
             $result = ['id' => $id];
         }
 
-        return $result->isAcknowledge() || $this->repository->getCollection()->getWriteConcern()->getW() === 0;
+        return $queryResult->isAcknowledged() || $this->repository->getCollection()->getWriteConcern()->getW() === 0;
     }
 
     public function afterQuery($result)

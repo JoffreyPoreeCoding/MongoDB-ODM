@@ -188,6 +188,9 @@ class ObjectManager
     public function hasObject($object)
     {
         $oid = spl_object_hash($object);
+        if (!isset($this->objectsRepository[$oid])) {
+            return false;
+        }
         $repository = $this->objectsRepository[$oid];
         $data = $repository->getHydrator()->unhydrate($object);
         $id = isset($data['_id']) ? serialize($data['_id']) . $repository->getCollection() : $oid;
