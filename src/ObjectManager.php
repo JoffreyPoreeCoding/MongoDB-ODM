@@ -173,9 +173,10 @@ class ObjectManager
         }
     }
 
-    public function getObjectRepository($id)
+    public function getObjectRepository($object)
     {
-        return $this->objectsRepository[$id];
+        $oid = spl_object_hash($object);
+        return $this->objectsRepository[$oid];
     }
 
     /**

@@ -13,12 +13,17 @@ class BulkWrite extends Query
 
     public function __construct(DocumentManager $dm, Repository $repository, array $queries = [])
     {
-        parent::__construct($dm, $repository);
+        parent::__construct($dm, $repository, null);
         $this->queries = $queries;
     }
 
     public function addQuery(Query $query)
     {
+        if (defined('BLA')) {
+            dump($this->repository->getCollection()->getCollectionName());
+            dump(get_class($query));
+            dump($query->getDocument()['_id']);
+        }
         $this->queries[] = $query;
     }
 
@@ -54,7 +59,7 @@ class BulkWrite extends Query
         }
 
         $result = $this->repository->getCollection()->bulkWrite($operations);
-        return $result->isAcknowledged();
+        return $result->isAcknowledged() || $this->repository->getCollection()->getWriteConcern()->getW() === 0;
     }
 
     public function afterQuery($result)

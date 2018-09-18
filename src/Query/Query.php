@@ -26,10 +26,18 @@ abstract class Query
      */
     protected $repository;
 
-    public function __construct(DocumentManager $dm, Repository $repository)
+    /**
+     * Document where to perfom
+     *
+     * @var object
+     */
+    protected $document;
+
+    public function __construct(DocumentManager $dm, Repository $repository, $document)
     {
         $this->dm = $dm;
         $this->repository = $repository;
+        $this->document = $document;
     }
 
     abstract public function getType();

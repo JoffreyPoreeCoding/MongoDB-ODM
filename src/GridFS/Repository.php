@@ -6,6 +6,7 @@ use JPC\MongoDB\ODM\DocumentManager;
 use JPC\MongoDB\ODM\Exception\MappingException;
 use JPC\MongoDB\ODM\GridFS\Hydrator;
 use JPC\MongoDB\ODM\Iterator\GridFSDocumentIterator;
+use JPC\MongoDB\ODM\ObjectManager;
 use JPC\MongoDB\ODM\Repository as BaseRepository;
 use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
 use JPC\MongoDB\ODM\Tools\QueryCaster;
@@ -286,6 +287,7 @@ class Repository extends BaseRepository
         $data["stream"] = $this->bucket->openDownloadStream($data['_id']);
         $this->hydrator->hydrate($document, $data, true);
 
+        $this->documentManager->setObjectState($document, ObjectManager::OBJ_MANAGED);
         $this->cacheObject($document);
 
         return true;
@@ -323,6 +325,7 @@ class Repository extends BaseRepository
         $id = $unhydratedObject["_id"];
 
         $this->bucket->delete($id);
+        $this->documentManager->removeObject($document);
     }
 
     /**

@@ -3,6 +3,7 @@
 namespace JPC\MongoDB\ODM\Query;
 
 use JPC\MongoDB\ODM\DocumentManager;
+use JPC\MongoDB\ODM\ObjectManager;
 use JPC\MongoDB\ODM\Query\Query;
 use JPC\MongoDB\ODM\Repository;
 use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
@@ -26,8 +27,7 @@ class InsertOne extends Query
 
     public function __construct(DocumentManager $dm, Repository $repository, $document, $options = [])
     {
-        parent::__construct($dm, $repository);
-        $this->document = $document;
+        parent::__construct($dm, $repository, $document);
         $this->options = $options;
         $this->classMetadata = $repository->getClassMetadata();
     }
@@ -64,20 +64,25 @@ class InsertOne extends Query
             }
 
             $result = ['id' => $id];
-
-            return true;
-        } else {
-            return false;
         }
+
+        return $result->isAcknowledge() || $this->repository->getCollection()->getWriteConcern()->getW() === 0;
     }
 
     public function afterQuery($result)
     {
         $modelName = $this->repository->getModelName();
         if ($this->document instanceof $modelName) {
+            if ($result['id'] instanceof \stdClass) {
+                $result['id'] = (array) $result['id'];
+            }
+
             $this->repository->getHydrator()->hydrate($this->document, ['_id' => $result['id']], true);
             $this->classMetadata->getEventManager()->execute(EventManager::EVENT_POST_INSERT, $this->document);
             $this->repository->cacheObject($this->document);
+            if ($this->dm->hasObject($this->document)) {
+                $this->dm->setObjectState($this->document, ObjectManager::OBJ_MANAGED);
+            }
         }
     }
 

@@ -3,6 +3,7 @@
 namespace JPC\MongoDB\ODM;
 
 use JPC\MongoDB\ODM\Factory\RepositoryFactory;
+use JPC\MongoDB\ODM\GridFS\Repository as GridFSRepository;
 use JPC\MongoDB\ODM\ObjectManager;
 use JPC\MongoDB\ODM\Repository;
 use JPC\MongoDB\ODM\Tools\EventManager;
@@ -215,15 +216,20 @@ class DocumentManager extends ObjectManager
     {
         $bulkOperations = [];
         foreach ($insert as $id => $document) {
-            $repository = $this->getObjectRepository($id);
-            $query = $repository->insertOne($document, ['getQuery' => true]);
-            $repositoryId = spl_object_hash($repository);
-            $bulkOperations[$repositoryId] = $bulkOperations[$repositoryId] ?? $repository->createBulkWriteQuery();
-            $bulkOperations[$repositoryId]->addQuery($query);
+            $repository = $this->getObjectRepository($document);
+            if ($repository instanceof GridFSRepository) {
+                $repository->insertOne($document);
+                unset($insert[$id]);
+            } else {
+                $query = $repository->insertOne($document, ['getQuery' => true]);
+                $repositoryId = spl_object_hash($repository);
+                $bulkOperations[$repositoryId] = $bulkOperations[$repositoryId] ?? $repository->createBulkWriteQuery();
+                $bulkOperations[$repositoryId]->addQuery($query);
+            }
         }
 
         foreach ($update as $id => $document) {
-            $repository = $this->getObjectRepository($id);
+            $repository = $this->getObjectRepository($document);
             $query = $repository->updateOne($document, [], ['getQuery' => true]);
             $repositoryId = spl_object_hash($repository);
             $bulkOperations[$repositoryId] = $bulkOperations[$repositoryId] ?? $repository->createBulkWriteQuery();
@@ -231,25 +237,31 @@ class DocumentManager extends ObjectManager
         }
 
         foreach ($remove as $id => $document) {
-            $repository = $this->getObjectRepository($id);
-            $query = $repository->deleteOne($document, ['getQuery' => true]);
-            $repositoryId = spl_object_hash($repository);
-            $bulkOperations[$repositoryId] = $bulkOperations[$repositoryId] ?? $repository->createBulkWriteQuery();
-            $bulkOperations[$repositoryId]->addQuery($query);
+            $repository = $this->getObjectRepository($document);
+            if ($repository instanceof GridFSRepository) {
+                $repository->deleteOne($document);
+                unset($remove[$id]);
+            } else {
+                $query = $repository->deleteOne($document, ['getQuery' => true]);
+                $repositoryId = spl_object_hash($repository);
+                $bulkOperations[$repositoryId] = $bulkOperations[$repositoryId] ?? $repository->createBulkWriteQuery();
+                $bulkOperations[$repositoryId]->addQuery($query);
+            }
         }
 
-        foreach (array_merge($insert, $update, $remove) as $id => $object) {
-            $repository = $this->getObjectRepository($id);
-            $repository->getClassMetadata()->getEventManager()->execute(EventManager::EVENT_PRE_FLUSH, $this->document);
+        foreach (array_merge($insert, $update, $remove) as $id => $document) {
+            $repository = $this->getObjectRepository($document);
+            $repository->getClassMetadata()->getEventManager()->execute(EventManager::EVENT_PRE_FLUSH, $document);
         }
 
         foreach ($bulkOperations as $bulkOperation) {
             $bulkOperation->execute();
         }
 
-        foreach (array_merge($insert, $update) as $id => $object) {
-            $repository = $this->getObjectRepository($id);
-            $repository->getClassMetadata()->getEventManager()->execute(EventManager::EVENT_POST_FLUSH, $this->document);
+        foreach (array_merge($insert, $update) as $id => $document) {
+            $repository = $this->getObjectRepository($document);
+            $repository->getClassMetadata()->getEventManager()->execute(EventManager::EVENT_POST_FLUSH, $document);
+            $repository->cacheObject($document);
         }
 
         $this->flush();

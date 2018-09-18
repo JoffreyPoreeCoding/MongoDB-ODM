@@ -11,8 +11,6 @@ use JPC\MongoDB\ODM\Tools\EventManager;
 class DeleteOne extends Query
 {
 
-    protected $document;
-
     protected $options;
 
     protected $id;
@@ -26,8 +24,7 @@ class DeleteOne extends Query
 
     public function __construct(DocumentManager $dm, Repository $repository, $document, $options = [])
     {
-        parent::__construct($dm, $repository);
-        $this->document = $document;
+        parent::__construct($dm, $repository, $document);
         $this->options = $options;
         $this->classMetadata = $repository->getClassMetadata();
     }
@@ -48,17 +45,15 @@ class DeleteOne extends Query
 
         $result = $this->repository->getCollection()->deleteOne($filters, $this->options);
 
-        if ($result->isAcknowledged()) {
-            return true;
-        } else {
-            return false;
-        }
+        return $result->isAcknowledged() || $this->repository->getCollection()->getWriteConcern()->getW() === 0;
     }
 
     public function afterQuery($result)
     {
         $this->classMetadata->getEventManager()->execute(EventManager::EVENT_POST_DELETE, $this->document);
-        $this->dm->removeObject($this->document);
+        if ($this->dm->hasObject($this->document)) {
+            $this->dm->removeObject($this->document);
+        }
     }
 
     public function getFilters()

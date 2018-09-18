@@ -31,8 +31,7 @@ class UpdateOne extends Query
 
     public function __construct(DocumentManager $dm, Repository $repository, $document, $update = [], $options = [])
     {
-        parent::__construct($dm, $repository);
-        $this->document = $document;
+        parent::__construct($dm, $repository, $document);
         $this->update = $update;
         $this->options = $options;
         $this->classMetadata = $repository->getClassMetadata();
@@ -75,15 +74,10 @@ class UpdateOne extends Query
     {
         if (!empty($this->update)) {
             $result = $this->repository->getCollection()->updateOne($this->filters, $this->update, $this->options);
-
-            if ($result->isAcknowledged()) {
-                return true;
-            } else {
-                $this->repository->cacheObject($this->document);
-                return false;
-            }
+        } else {
+            return true;
         }
-        return true;
+        return $result->isAcknowledged() || $this->repository->getCollection()->getWriteConcern()->getW() === 0;
     }
 
     public function afterQuery($result)
@@ -93,6 +87,7 @@ class UpdateOne extends Query
             if ($this->document instanceof $modelName) {
                 $this->dm->refresh($this->document);
                 $this->classMetadata->getEventManager()->execute(EventManager::EVENT_POST_UPDATE, $this->document);
+                $this->repository->cacheObject($this->document);
             }
         }
     }
