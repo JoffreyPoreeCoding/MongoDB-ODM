@@ -19,11 +19,6 @@ class BulkWrite extends Query
 
     public function addQuery(Query $query)
     {
-        if (defined('BLA')) {
-            dump($this->repository->getCollection()->getCollectionName());
-            dump(get_class($query));
-            dump($query->getDocument()['_id']);
-        }
         $this->queries[] = $query;
     }
 
@@ -56,6 +51,10 @@ class BulkWrite extends Query
                 default:
                     throw new \Exception('Not supported operation type \'' . $query->getType() . '\'');
             }
+        }
+
+        if (empty($operations)) {
+            return true;
         }
 
         $result = $this->repository->getCollection()->bulkWrite($operations);
