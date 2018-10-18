@@ -352,14 +352,15 @@ class RepositoryTest extends TestCase
 
     public function testInsertOne()
     {
+        $this->classMetadataMock->method('getName')->willReturn('stdClass');
         $repository = $this->repositoryMockBuilder->setMethods(["cacheObject"])->getMock();
 
         $document = new \stdClass();
+        $document->field = 'value';
 
         $this->hydratorMock->expects($this->once())->method("unhydrate")->with($document)->willReturn(["field" => "value"]);
-        $this->hydratorMock->expects($this->once())->method("hydrate")->with($document, ["_id" => 1, "field" => "value"])->will($this->returnCallback(function ($doc, $data) use ($document) {
+        $this->hydratorMock->expects($this->once())->method("hydrate")->with($document, ["_id" => 1])->will($this->returnCallback(function ($doc, $data) use ($document) {
             $doc->id = $data["_id"];
-            $doc->field = $data["field"];
         }));
 
         $insertOneResult = $this->createMock(InsertOneResult::class);
@@ -416,7 +417,7 @@ class RepositoryTest extends TestCase
         $this->classMetadataMock->method("getName")->willReturn("stdClass");
         $repository = $this->repositoryMockBuilder->setMethods(["castQuery", "getUpdateQuery"])->getMock();
 
-        $this->hydratorMock->expects($this->exactly(1))->method("unhydrate")->willReturn(["_id" => 1]);
+        $this->hydratorMock->expects($this->exactly(2))->method("unhydrate")->willReturn(["_id" => 1]);
 
         $repository->expects($this->exactly(2))->method("getUpdateQuery")->willReturn(["update" => "value"]);
         $repository->expects($this->any())->method("castQuery");

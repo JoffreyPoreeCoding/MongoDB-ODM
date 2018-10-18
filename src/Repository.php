@@ -523,8 +523,17 @@ class Repository
         if ($data != null) {
             $id = isset($data['_id']) ? serialize($data['_id']) . $this->getCollection() : null;
             $model = $this->getModelName();
-            $object = null !== $this->documentManager->getObject($id) ? $this->documentManager->getObject($id) : new $this->modelName();
-            $this->hydrator->hydrate($object, $data);
+
+            $softHydrate = false;
+            if (null !== $this->documentManager->getObject($id)) {
+                $softHydrate = true;
+                $object = $this->documentManager->getObject($id);
+            } else {
+                $object = new $this->modelName();
+            }
+
+            $this->hydrator->hydrate($object, $data, $softHydrate);
+
             $this->classMetadata->getEventManager()->execute(EventManager::EVENT_POST_LOAD, $object);
             if (!isset($options['readOnly']) || $options['readOnly'] != true) {
                 $oid = spl_object_hash($object);
