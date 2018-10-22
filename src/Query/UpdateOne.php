@@ -50,7 +50,7 @@ class UpdateOne extends Query
             $id = $unhydratedObject["_id"];
             $this->filters = ["_id" => $id];
         } elseif (is_object($this->document)) {
-            throw new MappingException('Document sended to update function must be of type "' . $this->modelName . '"');
+            throw new MappingException('Document sended to update function must be of type "' . $modelName . '"');
         } else {
             $queryCaster = $this->repository->getQueryCaster();
             $queryCaster->init($this->document);
