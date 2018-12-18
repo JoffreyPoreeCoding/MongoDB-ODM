@@ -2,12 +2,13 @@
 
 namespace JPC\MongoDB\ODM\Query;
 
-use JPC\MongoDB\ODM\DocumentManager;
-use JPC\MongoDB\ODM\ObjectManager;
-use JPC\MongoDB\ODM\Query\Query;
 use JPC\MongoDB\ODM\Repository;
-use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
+use JPC\MongoDB\ODM\Query\Query;
+use JPC\MongoDB\ODM\ObjectManager;
+use JPC\MongoDB\ODM\DocumentManager;
 use JPC\MongoDB\ODM\Tools\EventManager;
+use JPC\MongoDB\ODM\Id\AbstractIdGenerator;
+use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
 
 class InsertOne extends Query
 {
@@ -47,7 +48,7 @@ class InsertOne extends Query
                 throw new \Exception('Bad ID generator : class \'' . $idGen . '\' not exists or not extends JPC\MongoDB\ODM\Id\AbstractIdGenerator');
             }
             $generator = new $idGen();
-            $this->id = $generator->generate($this->documentManager, $this->document);
+            $this->id = $generator->generate($this->dm, $this->document);
         }
     }
 
