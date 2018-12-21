@@ -108,8 +108,12 @@ class Hydrator
                         if (!class_exists($class)) {
                             $class = $this->classMetadata->getNamespace() . "\\" . $class;
                         }
-                        $embedded = new $class();
-                        $this->getHydrator($class)->hydrate($embedded, $data[$field]);
+                        if ($data[$field] instanceof $class) {
+                            $embedded = $data[$field];
+                        } else {
+                            $embedded = new $class();
+                            $this->getHydrator($class)->hydrate($embedded, $data[$field]);
+                        }
                         $data[$field] = $embedded;
                     } elseif ((($data[$field] instanceof \MongoDB\Model\BSONArray) || ($data[$field] instanceof \MongoDB\Model\BSONDocument) || is_array($data[$field])) && $infos->getMultiEmbedded() && null !== ($class = $infos->getEmbeddedClass())) {
                         $array = [];
@@ -136,8 +140,12 @@ class Hydrator
                                 continue;
                             }
 
-                            $embedded = new $class();
-                            $this->getHydrator($class)->hydrate($embedded, $value);
+                            if ($value instanceof $class) {
+                                $embedded = $value;
+                            } else {
+                                $embedded = new $class();
+                                $this->getHydrator($class)->hydrate($embedded, $value);
+                            }
                             $array[$key] = $embedded;
                         }
                         $data[$field] = $array;
