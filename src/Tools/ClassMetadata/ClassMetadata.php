@@ -106,7 +106,6 @@ class ClassMetadata
             $reflectionClass = new \ReflectionClass($this->name);
             $this->namespace = $reflectionClass->getNamespaceName();
         }
-        dump($this->namespace);
         return $this->namespace;
     }
 
