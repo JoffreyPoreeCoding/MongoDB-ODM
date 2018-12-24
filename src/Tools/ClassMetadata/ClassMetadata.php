@@ -2,14 +2,14 @@
 
 namespace JPC\MongoDB\ODM\Tools\ClassMetadata;
 
-use Doctrine\Common\Cache\ApcuCache;
-use JPC\MongoDB\ODM\Tools\EventManager;
 use Doctrine\Common\Annotations\Annotation;
-use Doctrine\Common\Annotations\CachedReader;
 use Doctrine\Common\Annotations\AnnotationReader;
+use Doctrine\Common\Annotations\CachedReader;
+use Doctrine\Common\Cache\ApcuCache;
+use JPC\MongoDB\ODM\Tools\ClassMetadata\Info\CollectionInfo;
 use JPC\MongoDB\ODM\Tools\ClassMetadata\Info\PropertyInfo;
 use JPC\MongoDB\ODM\Tools\ClassMetadata\Info\ReferenceInfo;
-use JPC\MongoDB\ODM\Tools\ClassMetadata\Info\CollectionInfo;
+use JPC\MongoDB\ODM\Tools\EventManager;
 
 /**
  * Parse and store all info about a class to map
@@ -106,6 +106,7 @@ class ClassMetadata
             $reflectionClass = new \ReflectionClass($this->name);
             $this->namespace = $reflectionClass->getNamespaceName();
         }
+        dump($this->namespace);
         return $this->namespace;
     }
 
@@ -367,7 +368,11 @@ class ClassMetadata
                 if (null !== ($rep = $annotation->repositoryClass)) {
                     $this->collectionInfo->setRepository($annotation->repositoryClass);
                 } else {
-                    $this->collectionInfo->setRepository("JPC\MongoDB\ODM\Repository");
+                    if (class_exists($this->getName() . 'Repository')) {
+                        $this->collectionInfo->setRepository($this->getName() . 'Repository');
+                    } else {
+                        $this->collectionInfo->setRepository("JPC\MongoDB\ODM\Repository");
+                    }
                 }
 
                 if (null !== ($rep = $annotation->hydratorClass)) {
@@ -423,7 +428,7 @@ class ClassMetadata
         if (isset($annotation->readPreference)) {
             $options["readPreference"] = $annotation->readPreference->getReadPreference();
         }
-        
+
         if (isset($annotation->typeMap)) {
             $options["typeMap"] = $annotation->typeMap;
         }
