@@ -83,4 +83,24 @@ class BulkWrite extends Query
             }
         }
     }
+
+    /**
+     * Get the value of options
+     */
+    public function getOptions()
+    {
+        return $this->options;
+    }
+
+    /**
+     * Set the value of options
+     *
+     * @return  self
+     */
+    public function setOptions($options)
+    {
+        $this->options = $options;
+
+        return $this;
+    }
 }
