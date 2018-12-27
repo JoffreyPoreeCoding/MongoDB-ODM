@@ -9,6 +9,7 @@ abstract class Query
 {
     const TYPE_INSERT_ONE = 'insertOne';
     const TYPE_UPDATE_ONE = 'updateOne';
+    const TYPE_REPLACE_ONE = 'replaceOne';
     const TYPE_DELETE_ONE = 'deleteOne';
     const TYPE_BULK_WRITE = 'bulkWrite';
 

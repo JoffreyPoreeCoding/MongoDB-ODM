@@ -51,6 +51,9 @@ class BulkWrite extends Query
                 case self::TYPE_DELETE_ONE:
                     $operations[] = [$query->getType() => [$query->getFilters(), $query->getOptions()]];
                     break;
+                case self::TYPE_REPLACE_ONE:
+                    $operations[] = [$query->getType() => [$query->getFilters(), $query->getReplacement(), $query->getOptions()]];
+                    break;
                 default:
                     throw new \Exception('Not supported operation type \'' . $query->getType() . '\'');
             }

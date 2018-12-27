@@ -17,6 +17,7 @@ use JPC\MongoDB\ODM\Tools\EventManager;
 use JPC\MongoDB\ODM\Tools\QueryCaster;
 use JPC\MongoDB\ODM\Tools\UpdateQueryCreator;
 use MongoDB\Collection;
+use JPC\MongoDB\ODM\Query\ReplaceOne;
 
 /**
  * Allow to find, delete, document in MongoDB
@@ -451,6 +452,24 @@ class Repository
             return true;
         } else {
             return false;
+        }
+    }
+
+    /**
+     * Update a document in mongoDB
+     *
+     * @param   mixed   $document   Document or query to update
+     * @param   array   $update     Update query, let empty to update document based on object changes
+     * @param   array   $options    Options
+     * @return  void
+     */
+    public function replaceOne($document, $replacement, $options = [])
+    {
+        $query = new ReplaceOne($this->documentManager, $this, $document, $replacement, $options);
+        if (isset($options['getQuery']) && $options['getQuery']) {
+            return $query;
+        } else {
+            return $query->execute();
         }
     }
 
