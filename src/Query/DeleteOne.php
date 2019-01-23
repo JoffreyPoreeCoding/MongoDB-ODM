@@ -36,7 +36,9 @@ class DeleteOne extends Query
 
     public function beforeQuery()
     {
-        $this->classMetadata->getEventManager()->execute(EventManager::EVENT_PRE_DELETE, $this->document);
+        if (is_subclass_of($this->document, $this->repository->getModelName())) {
+            $this->classMetadata->getEventManager()->execute(EventManager::EVENT_PRE_DELETE, $this->document);
+        }
     }
 
     public function perfomQuery(&$result)
@@ -50,9 +52,11 @@ class DeleteOne extends Query
 
     public function afterQuery($result)
     {
-        $this->classMetadata->getEventManager()->execute(EventManager::EVENT_POST_DELETE, $this->document);
-        if (is_object($this->document) && $this->dm->hasObject($this->document)) {
-            $this->dm->removeObject($this->document);
+        if (is_subclass_of($this->document, $this->repository->getModelName())) {
+            $this->classMetadata->getEventManager()->execute(EventManager::EVENT_POST_DELETE, $this->document);
+            if (is_object($this->document) && $this->dm->hasObject($this->document)) {
+                $this->dm->removeObject($this->document);
+            }
         }
     }
 
