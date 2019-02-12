@@ -7,8 +7,6 @@ use JPC\MongoDB\ODM\GridFS\Repository as GridFSRepository;
 use JPC\MongoDB\ODM\ObjectManager;
 use JPC\MongoDB\ODM\Repository;
 use JPC\MongoDB\ODM\Tools\EventManager;
-use JPC\MongoDB\ODM\Tools\Logger\LoggerInterface;
-use JPC\MongoDB\ODM\Tools\Logger\MemoryLogger;
 use MongoDB\Client as MongoClient;
 use MongoDB\Database as MongoDatabase;
 
@@ -44,12 +42,6 @@ class DocumentManager extends ObjectManager
     private $repositoryFactory;
 
     /**
-     * Logger object
-     * @var LoggerInterface
-     */
-    protected $logger;
-
-    /**
      * Default options for repositories
      * @var array
      */
@@ -66,7 +58,6 @@ class DocumentManager extends ObjectManager
      * @param MongoClient               $client             MongoClient for connection
      * @param MongoDatabase             $database           MongoDatabase object
      * @param RepositoryFactory|null    $repositoryFactory  RepositoryFactory object
-     * @param LoggerInterface           $logger             A logger that implement the LoggerInterface
      * @param boolean                   $debug              Enable or not the debug mode
      * @param array                     $options            ODM Options
      * @param array                     $defaultOptions     Default options for commands
@@ -79,7 +70,6 @@ class DocumentManager extends ObjectManager
         MongoClient $client,
         MongoDatabase $database,
         RepositoryFactory $repositoryFactory = null,
-        LoggerInterface $logger = null,
         $debug = false,
         $options = [],
         $defaultOptions = []
@@ -89,12 +79,7 @@ class DocumentManager extends ObjectManager
             apcu_clear_cache();
         }
 
-        if (isset($logger) && !$logger instanceof LoggerInterface) {
-            throw new \Exception("Logger must implements '" . LoggerInterface::class . "'");
-        }
-
         $this->options = $options;
-        $this->logger = !isset($logger) ? new MemoryLogger() : $logger;
         $this->client = $client;
         $this->database = $database;
         $this->repositoryFactory = isset($repositoryFactory) ? $repositoryFactory : new RepositoryFactory();
@@ -223,7 +208,7 @@ class DocumentManager extends ObjectManager
             } else {
                 $query = $repository->insertOne($document, ['getQuery' => true]);
                 $repositoryId = spl_object_hash($repository);
-                $bulkOperations[$repositoryId] = $bulkOperations[$repositoryId] ?? $repository->createBulkWriteQuery();
+                $bulkOperations[$repositoryId] = isset($bulkOperations[$repositoryId]) ? $bulkOperations[$repositoryId] : $repository->createBulkWriteQuery();
                 $bulkOperations[$repositoryId]->addQuery($query);
             }
         }
@@ -232,7 +217,7 @@ class DocumentManager extends ObjectManager
             $repository = $this->getObjectRepository($document);
             $query = $repository->updateOne($document, [], ['getQuery' => true]);
             $repositoryId = spl_object_hash($repository);
-            $bulkOperations[$repositoryId] = $bulkOperations[$repositoryId] ?? $repository->createBulkWriteQuery();
+            $bulkOperations[$repositoryId] = isset($bulkOperations[$repositoryId]) ? $bulkOperations[$repositoryId] : $repository->createBulkWriteQuery();
             $bulkOperations[$repositoryId]->addQuery($query);
         }
 
@@ -268,82 +253,6 @@ class DocumentManager extends ObjectManager
     }
 
     /**
-     * Flush all changes and write it in mongoDB
-     */
-    // public function flush()
-    // {
-    //     if ($this->debug) {
-    //         $countRemove = count($this->getObjects(ObjectManager::OBJ_REMOVED));
-    //         $countUpdate = count($this->getObjects(ObjectManager::OBJ_MANAGED));
-    //         $countInsert = count($this->getObjects(ObjectManager::OBJ_NEW));
-    //         $this->logger->debug(
-    //             "Flushing datas to database, $countInsert to insert, $countUpdate to update, $countRemove to remove."
-    //         );
-    //     }
-
-    //     $removeObjs = $this->getObjects(ObjectManager::OBJ_REMOVED);
-    //     $updateObjs = $this->getObjects(ObjectManager::OBJ_MANAGED);
-    //     $newObjs = $this->getObjects(ObjectManager::OBJ_NEW);
-
-    //     foreach ($updateObjs as $key => $object) {
-    //         $repository = $this->objectsRepository[spl_object_hash($object)];
-    //         if (!$repository->hasUpdate($object)) {
-    //             unset($updateObjs[$key]);
-    //         }
-    //     }
-
-    //     if (!empty(array_merge($newObjs, $updateObjs, $removeObjs))) {
-    //         $this->perfomOperations($newObjs, $updateObjs, $removeObjs);
-    //     }
-    // }
-
-    /**
-     * Perfom operation on collections
-     *
-     * @param   array   $insert     Objects to insert
-     * @param   array   $update     Objects to update
-     * @param   array   $remove     Objects to remove
-     * @return  void
-     */
-    // private function perfomOperations($insert, $update, $remove)
-    // {
-    //     foreach ($update as $object) {
-    //         $repository = $this->objectsRepository[spl_object_hash($object)];
-    //         $repository->getClassMetadata()->getEventManager()->execute(EventManager::EVENT_PRE_FLUSH, $object);
-    //         $repository->updateOne($object);
-    //         $repository->getClassMetadata()->getEventManager()->execute(EventManager::EVENT_POST_FLUSH, $object);
-    //     }
-
-    //     $toInsert = [];
-    //     $repositories = [];
-    //     foreach ($insert as $object) {
-    //         $repository = $this->objectsRepository[spl_object_hash($object)];
-    //         $repository->getClassMetadata()->getEventManager()->execute(EventManager::EVENT_PRE_FLUSH, $object);
-    //         $rid = spl_object_hash($repository);
-    //         $toInsert[$rid][] = $object;
-    //         isset($repositories[$rid]) ?: $repositories[$rid] = $repository;
-    //     }
-
-    //     foreach ($toInsert as $repository => $objects) {
-    //         $repository = $repositories[$repository];
-    //         $repository->insertMany($objects);
-    //         foreach ($objects as $object) {
-    //             $this->setObjectState($object, self::OBJ_MANAGED);
-    //             $repository->getClassMetadata()->getEventManager()->execute(EventManager::EVENT_POST_FLUSH, $object);
-    //         }
-    //     }
-
-    //     foreach ($remove as $object) {
-    //         $repository = $this->objectsRepository[spl_object_hash($object)];
-    //         $repository->getClassMetadata()->getEventManager()->execute(EventManager::EVENT_PRE_FLUSH, $object);
-    //         $repository->deleteOne($object);
-    //         $repository->getClassMetadata()->getEventManager()->execute(EventManager::EVENT_POST_FLUSH, $object);
-    //     }
-
-    //     $this->flush();
-    // }
-
-    /**
      * Unmanaged (unpersist) all object
      */
     public function clear()
@@ -367,30 +276,6 @@ class DocumentManager extends ObjectManager
     public function selectDatabase($name)
     {
         $this->database = $this->client->selectDatabase($name);
-        return $this;
-    }
-
-    /**
-     * Gets the Logger object.
-     *
-     * @return LoggerInterface
-     */
-    public function getLogger()
-    {
-        return $this->logger;
-    }
-
-    /**
-     * Sets the Logger object.
-     *
-     * @param LoggerInterface $logger the logger
-     *
-     * @return self
-     */
-    public function setLogger(LoggerInterface $logger)
-    {
-        $this->logger = $logger;
-
         return $this;
     }
 

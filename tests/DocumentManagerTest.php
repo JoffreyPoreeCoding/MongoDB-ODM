@@ -11,7 +11,6 @@ use JPC\MongoDB\ODM\Query\BulkWrite;
 use JPC\MongoDB\ODM\Repository;
 use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
 use JPC\MongoDB\ODM\Tools\EventManager;
-use JPC\MongoDB\ODM\Tools\Logger\LoggerInterface;
 use JPC\Test\MongoDB\ODM\Framework\TestCase;
 use MongoDB\Client;
 use MongoDB\Database;
@@ -25,16 +24,14 @@ class DocumentManagerTest extends TestCase
     private $mongoDatabase;
     private $classMetadataFactory;
     private $repositoryFactory;
-    private $logger;
 
     public function setUp()
     {
         $this->mongoClient = $this->createMock(Client::class);
         $this->mongoDatabase = $this->createMock(Database::class);
         $this->repositoryFactory = $this->createMock(RepositoryFactory::class);
-        $this->logger = $this->createMock(LoggerInterface::class);
 
-        $this->documentManager = new DocumentManager($this->mongoClient, $this->mongoDatabase, $this->repositoryFactory, $this->logger, true);
+        $this->documentManager = new DocumentManager($this->mongoClient, $this->mongoDatabase, $this->repositoryFactory, true);
     }
 
     public function testGetRepository()

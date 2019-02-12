@@ -160,11 +160,6 @@ class Repository
 
         $filters = $this->castQuery($filters);
 
-        $this->log("debug", "Get distinct value of field '$field' in '" . $this->collection->getCollectionName() . "', see metadata for more details", [
-            "filters" => $filters,
-            "options" => $options,
-        ]);
-
         $result = $this->collection->distinct($field, $filters, $options);
         return $result;
     }
@@ -207,7 +202,6 @@ class Repository
     {
         $options = $this->createOption($projections, $sorts, $options);
 
-        $this->log("debug", "Find all document in collection '" . $this->collection->getCollectionName() . "'");
         $result = $this->collection->find([], $options);
 
         if (!isset($options['iterator']) || $options['iterator'] === false) {
@@ -249,11 +243,6 @@ class Repository
 
         $filters = $this->castQuery($filters);
 
-        $this->log("debug", "Find documents in collection '" . $this->collection->getCollectionName() . "', see metadata for more details", [
-            "filters" => $filters,
-            "options" => $options,
-        ]);
-
         $result = $this->collection->find($filters, $options);
         if (!isset($options['iterator']) || $options['iterator'] == false) {
             $objects = [];
@@ -292,10 +281,6 @@ class Repository
         $options = $this->createOption($projections, $sorts, $options);
 
         $filters = $this->castQuery($filters);
-        $this->log("debug", "Find one document in collection '" . $this->collection->getCollectionName() . "', see metadata for more details", [
-            "filters" => $filters,
-            "options" => $options,
-        ]);
 
         $result = $this->collection->findOne($filters, $options);
 
@@ -324,12 +309,6 @@ class Repository
 
         $filters = $this->castQuery($filters);
         $update = $this->castQuery($update);
-
-        $this->log("debug", "Find and update one document in collection '" . $this->collection->getCollectionName() . "', see metadata for more details", [
-            "filters" => $filters,
-            "update" => $update,
-            "options" => $options,
-        ]);
 
         $result = (array) $this->collection->findOneAndUpdate($filters, $update, $options);
 
@@ -509,21 +488,6 @@ class Repository
         }
     }
 
-    /**
-     * Write log in logger
-     *
-     * @param   string  $level      Level of log
-     * @param   string  $message    Message of log
-     * @param   array   $metadata   Metadata
-     * @return  void
-     */
-    protected function log($level, $message, $metadata = [])
-    {
-        if ($this->documentManager->getDebug()) {
-            $this->documentManager->getLogger()->$level($message, $metadata);
-        }
-    }
-
     public function createBulkWriteQuery()
     {
         return new BulkWrite($this->documentManager, $this);
@@ -593,10 +557,6 @@ class Repository
      */
     public function drop()
     {
-        if ($this->documentManager->getDebug()) {
-            $this->documentManager->getLogger()->debug("Drop collection '" . $this->collection->getCollectionName() . "'");
-        }
-
         $result = (array) $this->collection->drop();
 
         if ($result['ok']) {
