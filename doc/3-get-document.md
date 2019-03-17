@@ -1,18 +1,10 @@
 # Get document
 
-## Create document manager
+## Get a document manager
 
-The document manager is the part of mongoDB ODM that allow you to connect to mongoDB.
+You can easily create a document manager with the factory available in the library.
 
-Constructor of the document manager accept three parameters :
-
-```php
-public function __construct($mongouri, $db, $debug = false);
-```
-
-First is a mongoUri like : `mongodb://user:password@myserver.com:27017/authdb`. 
-Second parameters is the DB where to document manager will be connected. 
-Thrid is a debug param, if is set to true cache functions and other thing will not be activated (This parameter is for development, don't set it to true in production)
+The factory has a method `createDocumentManager` that take mongo uri in first argument, and database name in second.
 
 Now, create a document manager : 
 

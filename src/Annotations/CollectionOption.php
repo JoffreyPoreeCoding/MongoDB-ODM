@@ -1,6 +1,6 @@
 <?php
 
-namespace JPC\MongoDB\ODM\Annotations\Mapping\CollectionOption;
+namespace JPC\MongoDB\ODM\Annotations\CollectionOption;
 
 /**
  * Write concern option for collection

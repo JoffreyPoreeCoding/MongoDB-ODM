@@ -5,7 +5,7 @@
 In your console terminal :
 
 ```bash
-php composer.phar require jpc/mongodb-odm:^1.1
+php composer.phar require jpc/mongodb-odm:^1.3
 ```
 
 Or in your ```composer.json``` :
@@ -13,7 +13,7 @@ Or in your ```composer.json``` :
 ```json
 {
     "require" : {
-        "jpc/mongodb-odm" : "^1.2"
+        "jpc/mongodb-odm" : "^1.3"
     }
 }
 ```

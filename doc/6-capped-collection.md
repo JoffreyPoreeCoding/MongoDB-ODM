@@ -1,4 +1,0 @@
-# Collections Options
-
-## Availabe events
-

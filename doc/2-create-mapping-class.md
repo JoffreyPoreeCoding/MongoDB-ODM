@@ -30,7 +30,7 @@ Ok, you have your class. Now you have to tell to MongoDB-ODM which property matc
 
 ## Mapping
 
-For this, MongoDB-ODM use annotations. There is basics annotations to make a mapping that are in `JPC\MongoDB\ODM\Mapping`:
+For this, MongoDB-ODM use annotations. There is basics annotations to make a mapping that are in `JPC\MongoDB\ODM\Annotations\Mapping`:
  - `Document` : define the collection infos
  - `Id` : define the property that will match mongoDb `_id` field
  - `Field` : define a field mapping
@@ -42,7 +42,7 @@ For this, MongoDB-ODM use annotations. There is basics annotations to make a map
 
 namespace ACME\Model;
 
-use JPC\MongoDB\ODM\Mapping as ODM;
+use JPC\MongoDB\ODM\Annotations\Mapping as ODM;
 
 /**
  * @ODM\Document("my_collection")
@@ -80,7 +80,7 @@ Create your embedded class like the previous one :
 
 namespace ACME\Model;
 
-use JPC\MongoDB\ODM\Mapping as ODM;
+use JPC\MongoDB\ODM\Annotations\Mapping as ODM;
 
 class MyEmbedded {
 
@@ -109,7 +109,7 @@ Modify the class `MyDoc` like this :
 
 namespace ACME\Model;
 
-use JPC\MongoDB\ODM\Mapping as ODM;
+use JPC\MongoDB\ODM\Annotations\Mapping as ODM;
 
 /**
  * @ODM\Document("my_collection")
