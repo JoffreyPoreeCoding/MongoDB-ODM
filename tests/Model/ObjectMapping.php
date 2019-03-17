@@ -61,6 +61,13 @@ class ObjectMapping
     private $multiDiscriminatedField;
 
     /**
+     * @ODM\Field("method_discriminated_field")
+     * @ODM\EmbeddedDocument("Discriminated1")
+     * @ODM\DiscriminatorMethod("discrimateMethod")
+     */
+    private $methodDiscriminatedField;
+
+    /**
      * Gets the value of id.
      *
      * @return mixed
@@ -242,5 +249,30 @@ class ObjectMapping
         $this->multiDiscriminatedField = $multiDiscriminatedField;
 
         return $this;
+    }
+
+    /**
+     * Get the value of methodDiscriminatedField
+     */
+    public function getMethodDiscriminatedField()
+    {
+        return $this->methodDiscriminatedField;
+    }
+
+    /**
+     * Set the value of methodDiscriminatedField
+     *
+     * @return  self
+     */
+    public function setMethodDiscriminatedField($methodDiscriminatedField)
+    {
+        $this->methodDiscriminatedField = $methodDiscriminatedField;
+
+        return $this;
+    }
+
+    public function discrimateMethod($data)
+    {
+        return $data['type'] % 2 == 1 ? 'Discriminated1' : 'Discriminated2';
     }
 }

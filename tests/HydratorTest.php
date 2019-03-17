@@ -76,6 +76,10 @@ class HydratorTest extends TestCase
                     "field_disc_1" => "field1",
                 ],
             ],
+            "method_discriminated_field" => [
+                "type" => 3,
+                "field_disc_1" => "field1",
+            ],
         ];
 
         $object = new ObjectMapping();
@@ -106,6 +110,9 @@ class HydratorTest extends TestCase
         $this->assertEquals("field2", $object->getMultiDiscriminatedField()[0]->getFieldDisc2());
         $this->assertInstanceOf("JPC\Test\MongoDB\ODM\Model\Discriminated1", $object->getMultiDiscriminatedField()[1]);
         $this->assertEquals("field1", $object->getMultiDiscriminatedField()[1]->getFieldDisc1());
+        
+        $this->assertInstanceOf("JPC\Test\MongoDB\ODM\Model\Discriminated1", $object->getMethodDiscriminatedField());
+        $this->assertEquals("field1", $object->getMethodDiscriminatedField()->getFieldDisc1());
     }
 
     public function fakeHydration($object)

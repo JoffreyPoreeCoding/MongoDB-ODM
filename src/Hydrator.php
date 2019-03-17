@@ -102,7 +102,9 @@ class Hydrator
                                     $class = isset($discrimatorMap[$discriminatorValue]) ? $discrimatorMap[$discriminatorValue] : $class;
                                 }
                             } else {
-                                //call_s
+                                $discriminatorValue = isset($data[$field]) ? $data[$field] : null;
+                                $method = $infos->getDiscriminatorMethod();
+                                $class = $object->$method($discriminatorValue);
                             }
                         }
                         if (!class_exists($class)) {
