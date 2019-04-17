@@ -613,6 +613,10 @@ class Repository
         return $this->objectCache->fetch(spl_object_hash($object));
     }
 
+    public function removeObjectCache($object){
+        return $this->objectCache->delete(spl_object_hash($object))
+    }
+
     /**
      * Create the update query from object diff
      *

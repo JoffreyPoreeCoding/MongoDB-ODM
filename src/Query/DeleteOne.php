@@ -56,6 +56,7 @@ class DeleteOne extends Query
             $this->classMetadata->getEventManager()->execute(EventManager::EVENT_POST_DELETE, $this->document);
             if (is_object($this->document) && $this->dm->hasObject($this->document)) {
                 $this->dm->removeObject($this->document);
+                $this->repository->removeObjectCache($this->document);
             }
         }
     }

@@ -84,9 +84,13 @@ class ReplaceOne extends Query
         if (!empty($this->replacement)) {
             $modelName = $this->repository->getModelName();
             if ($this->document instanceof $modelName) {
-                $this->dm->refresh($this->document);
+                if ($this->dm->hasObject($this->document)) {
+                    $this->dm->refresh($this->document);
+                }
                 $this->classMetadata->getEventManager()->execute(EventManager::EVENT_POST_UPDATE, $this->document);
-                $this->repository->cacheObject($this->document);
+                if ($this->dm->hasObject($this->document)) {
+                    $this->repository->cacheObject($this->document);
+                }
             }
         }
     }

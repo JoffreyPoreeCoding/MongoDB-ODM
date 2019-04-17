@@ -2,13 +2,13 @@
 
 namespace JPC\MongoDB\ODM\Query;
 
-use JPC\MongoDB\ODM\Repository;
-use JPC\MongoDB\ODM\Query\Query;
-use JPC\MongoDB\ODM\ObjectManager;
 use JPC\MongoDB\ODM\DocumentManager;
-use JPC\MongoDB\ODM\Tools\EventManager;
 use JPC\MongoDB\ODM\Id\AbstractIdGenerator;
+use JPC\MongoDB\ODM\ObjectManager;
+use JPC\MongoDB\ODM\Query\Query;
+use JPC\MongoDB\ODM\Repository;
 use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
+use JPC\MongoDB\ODM\Tools\EventManager;
 
 class InsertOne extends Query
 {
@@ -81,8 +81,8 @@ class InsertOne extends Query
 
             $this->repository->getHydrator()->hydrate($this->document, ['_id' => $result['id']], true);
             $this->classMetadata->getEventManager()->execute(EventManager::EVENT_POST_INSERT, $this->document);
-            $this->repository->cacheObject($this->document);
             if ($this->dm->hasObject($this->document)) {
+                $this->repository->cacheObject($this->document);
                 $this->dm->setObjectState($this->document, ObjectManager::OBJ_MANAGED);
             }
         }
