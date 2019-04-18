@@ -11,13 +11,13 @@ use JPC\MongoDB\ODM\Iterator\DocumentIterator;
 use JPC\MongoDB\ODM\Query\BulkWrite;
 use JPC\MongoDB\ODM\Query\DeleteOne;
 use JPC\MongoDB\ODM\Query\InsertOne;
+use JPC\MongoDB\ODM\Query\ReplaceOne;
 use JPC\MongoDB\ODM\Query\UpdateOne;
 use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
 use JPC\MongoDB\ODM\Tools\EventManager;
 use JPC\MongoDB\ODM\Tools\QueryCaster;
 use JPC\MongoDB\ODM\Tools\UpdateQueryCreator;
 use MongoDB\Collection;
-use JPC\MongoDB\ODM\Query\ReplaceOne;
 
 /**
  * Allow to find, delete, document in MongoDB
@@ -613,8 +613,9 @@ class Repository
         return $this->objectCache->fetch(spl_object_hash($object));
     }
 
-    public function removeObjectCache($object){
-        return $this->objectCache->delete(spl_object_hash($object))
+    public function removeObjectCache($object)
+    {
+        return $this->objectCache->delete(spl_object_hash($object));
     }
 
     /**
