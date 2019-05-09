@@ -88,9 +88,11 @@ class UpdateOne extends Query
                 if ($this->dm->hasObject($this->document)) {
                     $this->dm->refresh($this->document);
                 }
-                $this->classMetadata->getEventManager()->execute(EventManager::EVENT_POST_UPDATE, $this->document);
-                if ($this->dm->hasObject($this->document)) {
-                    $this->repository->cacheObject($this->document);
+                if (null !== $this->document) {
+                    $this->classMetadata->getEventManager()->execute(EventManager::EVENT_POST_UPDATE, $this->document);
+                    if ($this->dm->hasObject($this->document)) {
+                        $this->repository->cacheObject($this->document);
+                    }
                 }
             }
         }
