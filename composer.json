@@ -1,7 +1,7 @@
 {
     "name": "jpc/mongodb-odm",
     "description": "A small MongoDB ODM",
-    "version": "1.3.1",
+    "version": "1.4.0",
     "type": "library",
     "keywords" : [
         "MongoDB",
@@ -15,11 +15,12 @@
         "php": ">=5.5",
         "doctrine/annotations": "^1.4|^1.6",
         "doctrine/cache": "^1.6|^1.7|^1.8",
-        "mongodb/mongodb": "^1.4"
+        "mongodb/mongodb": "^1.4",
+        "symfony/event-dispatcher": "^4.2"
     },
     "require-dev": {
-        "symfony/var-dumper": "^3.4|^4.1",
-        "phpunit/phpunit": "^5.7|^7.4"
+        "symfony/var-dumper": "^3.4|^4.2",
+        "phpunit/phpunit": "^5.7|^8.1"
     },
     "authors": [
         {

@@ -1,11 +1,13 @@
 <?php
 
-namespace JPC\MongoDB\ODM\Tools;
+namespace JPC\MongoDB\ODM\GridFS\Tools;
+
+use JPC\MongoDB\ODM\Tools\UpdateQueryCreator as BaseUpdateQueryCreator;
 
 /**
  * Create MongoDB Update queries
  */
-class UpdateQueryCreator
+class UpdateQueryCreator extends BaseUpdateQueryCreator
 {
 
     /**
@@ -14,7 +16,8 @@ class UpdateQueryCreator
      * @param   array   $old        Old values of document
      * @param   array   $new        New values of document
      * @param   string  $prefix
-     * @return  void
+     * 
+     * @return  array
      */
     public function createUpdateQuery($old, $new, $prefix = "")
     {
@@ -24,8 +27,8 @@ class UpdateQueryCreator
             if (is_array($old) && array_key_exists($key, $old)) {
                 if (is_array($value) && strstr(key($value), '$') !== false) {
                     $update[key($value)][$prefix . $key] = $value[key($value)];
-                } elseif (is_array($value) && is_array($old[$key])) {
-                    if (!empty($old[$key])) {
+                } elseif ((is_array($value) && is_array($old[$key])) || (is_array($value) && $key == 'metadata')) {
+                    if (!empty($old[$key]) || $key == 'metadata') {
                         $embeddedUpdate = array_merge_recursive($update, $this->createUpdateQuery($old[$key], $value, $prefix . $key . "."));
                         if (isset($embeddedUpdate['$unset']) && array_values($old[$key]) === $old[$key] && $value !== null && count(array_filter(array_keys($value), 'is_string')) == 0) {
                             $update['$set'][$prefix . $key] = array_values($value);
@@ -56,7 +59,7 @@ class UpdateQueryCreator
             } else {
                 if (is_array($value) && strstr(key($value), '$') === false) {
                     $embeddedQuery = $this->createUpdateQuery([], $value, $prefix . $key . ".");
-                    if (count($embeddedQuery) == 1 && key($embeddedQuery) == '$set') {
+                    if (count($embeddedQuery) == 1 && key($embeddedQuery) == '$set' && $key !== 'metadata') {
                         $update['$set'][$prefix . $key] = $value;
                     } else {
                         $update = array_merge_recursive($update, $embeddedQuery);

@@ -13,6 +13,7 @@ use JPC\MongoDB\ODM\Tools\QueryCaster;
 use JPC\MongoDB\ODM\Tools\UpdateQueryCreator;
 use MongoDB\Collection;
 use MongoDB\GridFS\Bucket;
+use JPC\MongoDB\ODM\GridFS\Tools\UpdateQueryCreator as GridFSUpdateQueryCreator;
 
 /**
  * Repository to make action on gridfs bucket
@@ -48,6 +49,7 @@ class Repository extends BaseRepository
         CacheProvider $objectCache = null,
         Bucket $bucket = null
     ) {
+        $uqc = $uqc ?? new GridFSUpdateQueryCreator();
         parent::__construct($documentManager, $collection, $classMetadata, $hydrator, $queryCaster, $uqc, $objectCache);
 
         if ($this->modelName !== Document::class && !is_subclass_of($this->modelName, Document::class)) {
@@ -352,8 +354,8 @@ class Repository extends BaseRepository
         $old = $this->uncacheObject($document);
         $new = $this->hydrator->unhydrate($document);
         unset($new["stream"]);
-
-        return $this->updateQueryCreator->createUpdateQuery($old, $new);
+        $update = $this->updateQueryCreator->createUpdateQuery($old, $new);
+        return $update;
     }
 
     /**
