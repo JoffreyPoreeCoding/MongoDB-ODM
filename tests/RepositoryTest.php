@@ -417,7 +417,7 @@ class RepositoryTest extends TestCase
         $this->classMetadataMock->method("getName")->willReturn("stdClass");
         $repository = $this->repositoryMockBuilder->setMethods(["castQuery", "getUpdateQuery"])->getMock();
 
-        $this->hydratorMock->expects($this->exactly(2))->method("unhydrate")->willReturn(["_id" => 1]);
+        $this->hydratorMock->expects($this->exactly(1))->method("unhydrate")->willReturn(["_id" => 1]);
 
         $repository->expects($this->exactly(2))->method("getUpdateQuery")->willReturn(["update" => "value"]);
         $repository->expects($this->any())->method("castQuery");

@@ -13,6 +13,7 @@ use JPC\Test\MongoDB\ODM\Framework\TestCase;
 use JPC\Test\MongoDB\ODM\GridFS\Model\GridFSObjectMapping;
 use MongoDB\Collection;
 use MongoDB\GridFS\Bucket;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 
 class RepositoryTest extends TestCase
 {
@@ -44,7 +45,7 @@ class RepositoryTest extends TestCase
         $this->classMetadata->method("getName")->willReturn("JPC\Test\MongoDB\ODM\GridFS\Model\GridFSObjectMapping");
         $this->classMetadata->method("getBucketName")->willReturn("test");
 
-        $this->repository = new Repository($this->documentManager, $this->collection, $this->classMetadata, $this->hydrator, $this->queryCaster, $this->updateQueryCreator, null, $this->bucket);
+        $this->repository = new Repository($this->documentManager, $this->collection, $this->classMetadata, $this->hydrator, $this->queryCaster, $this->updateQueryCreator, null, null, new EventDispatcher(), $this->bucket);
     }
 
     public function testGetBucket()

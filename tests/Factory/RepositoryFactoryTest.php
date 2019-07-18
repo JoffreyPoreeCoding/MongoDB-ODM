@@ -12,6 +12,7 @@ use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
 use JPC\Test\MongoDB\ODM\Framework\TestCase;
 use MongoDB\Collection;
 use MongoDB\Database;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 
 class RepositoryFactoryTest extends TestCase
 {
@@ -36,7 +37,7 @@ class RepositoryFactoryTest extends TestCase
 
         $classMetadataFactory->method("getMetadataForClass")->willReturn($classMetadata);
 
-        $repositoryFactory = new RepositoryFactory(new ArrayCache(), $classMetadataFactory);
+        $repositoryFactory = new RepositoryFactory(new EventDispatcher(), new ArrayCache(), $classMetadataFactory);
         $repository = $repositoryFactory->getRepository($documentManager, "MyModel", "collection");
 
         $this->assertInstanceOf(Repository::class, $repository);

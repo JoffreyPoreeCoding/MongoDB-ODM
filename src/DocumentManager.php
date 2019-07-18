@@ -9,6 +9,7 @@ use JPC\MongoDB\ODM\Repository;
 use JPC\MongoDB\ODM\Tools\EventManager;
 use MongoDB\Client as MongoClient;
 use MongoDB\Database as MongoDatabase;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 
 /**
  * MongoDB Documents manager
@@ -52,6 +53,12 @@ class DocumentManager extends ObjectManager
      * @var array
      */
     protected $defaultOptions = [];
+    
+    /**
+     * Dispatcher for customizable events
+     * @var EventDispatcher
+     */
+    protected $eventDispatcher;
 
     /**
      * Create new DocumentManager
@@ -61,6 +68,7 @@ class DocumentManager extends ObjectManager
      * @param boolean                   $debug              Enable or not the debug mode
      * @param array                     $options            ODM Options
      * @param array                     $defaultOptions     Default options for commands
+     * @param EventDispatcher           $eventDispatcher    Dispatcher for customizable events
      *
      * Available options :
      *  * hydratorStrategy : Hydrator::SETTERS, Hydrator::ATTRIBUTES
@@ -72,7 +80,8 @@ class DocumentManager extends ObjectManager
         RepositoryFactory $repositoryFactory = null,
         $debug = false,
         $options = [],
-        $defaultOptions = []
+        $defaultOptions = [],
+        EventDispatcher $eventDispatcher = null
     ) {
         $this->debug = $debug;
         if ($this->debug) {
@@ -80,10 +89,11 @@ class DocumentManager extends ObjectManager
         }
 
         $this->options = $options;
+        $this->eventDispatcher = $eventDispatcher ?? new EventDispatcher();
         $this->client = $client;
         $this->database = $database;
-        $this->repositoryFactory = isset($repositoryFactory) ? $repositoryFactory : new RepositoryFactory();
-        $this->objectManager = isset($objectManager) ? $objectManager : new ObjectManager();
+        $this->repositoryFactory = isset($repositoryFactory) ? $repositoryFactory : new RepositoryFactory($this->eventDispatcher);
+        $this->objectManager = new ObjectManager();
     }
 
     /**
@@ -437,5 +447,15 @@ class DocumentManager extends ObjectManager
         $this->options = $options;
 
         return $this;
+    }
+
+    /**
+     * Get dispatcher for customizable events
+     *
+     * @return  EventDispatcher
+     */ 
+    public function getEventDispatcher()
+    {
+        return $this->eventDispatcher;
     }
 }

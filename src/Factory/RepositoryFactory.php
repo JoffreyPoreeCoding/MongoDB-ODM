@@ -10,6 +10,8 @@ use JPC\MongoDB\ODM\Factory\ClassMetadataFactory;
 use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
 use JPC\MongoDB\ODM\Tools\QueryCaster;
 use MongoDB\Collection;
+use Symfony\Component\EventDispatcher\EventDispatcher;
+use JPC\MongoDB\ODM\Event\BeforeQueryEvent;
 
 /**
  * Repository factory
@@ -17,6 +19,13 @@ use MongoDB\Collection;
 class RepositoryFactory
 {
 
+    /**
+     * Dispatcher for event
+     *
+     * @var EventDispatcher
+     */
+    protected $eventDispatcher;
+    
     /**
      * Already created repositories
      *
@@ -37,8 +46,9 @@ class RepositoryFactory
      * @param Cache|null                $cache                Cache used to store repositories
      * @param ClassMetadataFactory|null $classMetadataFactory Factory that will create class Metadata
      */
-    public function __construct(Cache $cache = null, ClassMetadataFactory $classMetadataFactory = null)
+    public function __construct(EventDispatcher $eventDispatcher, Cache $cache = null, ClassMetadataFactory $classMetadataFactory = null)
     {
+        $this->eventDispatcher = $eventDispatcher;
         $this->cache = isset($cache) ? $cache : new ArrayCache();
         $this->classMetadataFactory = isset($classMetadataFactory) ? $classMetadataFactory : new ClassMetadataFactory();
     }
@@ -92,9 +102,9 @@ class RepositoryFactory
         if (isset($bucketName)) {
             $bucket = $documentManager->getDatabase()->selectGridFSBucket(["bucketName" => $bucketName]);
 
-            $repository = new $repositoryClass($documentManager, $collection, $classMetadata, $hydrator, $queryCaster, null, $repositoryCache, $bucket);
+            $repository = new $repositoryClass($documentManager, $collection, $classMetadata, $hydrator, $queryCaster, null, $repositoryCache, null, $this->eventDispatcher, $bucket);
         } else {
-            $repository = new $repositoryClass($documentManager, $collection, $classMetadata, $hydrator, $queryCaster, null, $repositoryCache);
+            $repository = new $repositoryClass($documentManager, $collection, $classMetadata, $hydrator, $queryCaster, null, $repositoryCache, null, $this->eventDispatcher);
         }
         $this->cache->save($repIndex, $repository, 120);
 

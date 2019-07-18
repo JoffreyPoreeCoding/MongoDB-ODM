@@ -5,6 +5,7 @@ namespace JPC\MongoDB\ODM\Factory;
 use JPC\MongoDB\ODM\DocumentManager;
 use MongoDB\Client;
 use MongoDB\Database;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 
 /**
  * Factory to create document manager easily
@@ -70,8 +71,8 @@ class DocumentManagerFactory
             $database = new Database($client->getManager(), $dbName);
 
             $class = $this->repositoryFactoryClass;
-
-            $repositoryFactory = new $class(null, $this->classMetadataFactory);
+            $eventDispatcher = new EventDispatcher();
+            $repositoryFactory = new $class($eventDispatcher, null, $this->classMetadataFactory);
 
             $this->managers[$managerId] = new DocumentManager(
                 $client,
@@ -79,7 +80,8 @@ class DocumentManagerFactory
                 $repositoryFactory,
                 $debug,
                 $options,
-                []
+                [],
+                $eventDispatcher
             );
         }
 

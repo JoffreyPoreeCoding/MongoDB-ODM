@@ -18,6 +18,8 @@ use JPC\MongoDB\ODM\Tools\EventManager;
 use JPC\MongoDB\ODM\Tools\QueryCaster;
 use JPC\MongoDB\ODM\Tools\UpdateQueryCreator;
 use MongoDB\Collection;
+use Symfony\Component\EventDispatcher\EventDispatcher;
+use JPC\MongoDB\ODM\Event\BeforeQueryEvent;
 
 /**
  * Allow to find, delete, document in MongoDB
@@ -82,17 +84,25 @@ class Repository
     protected $lastProjectionCache;
 
     /**
+     * Dispatcher for customizable events
+     * @var EventDispatcher
+     */
+    protected $eventDispatcher;
+
+    /**
      * Create a repository
      *
-     * @param   DocumentManager     $documentManager    Document manager
-     * @param   Collection          $collection         MongoDB Collection
-     * @param   ClassMetadata       $classMetadata      Class metadata
-     * @param   Hydrator            $hydrator           Object hydrator
-     * @param   QueryCaster         $queryCaster        Query caster
-     * @param   UpdateQueryCreator  $uqc                Update query Creator
-     * @param   CacheProvider       $objectCache        Cache for persisted objects
+     * @param   DocumentManager     $documentManager     Document manager
+     * @param   Collection          $collection          MongoDB Collection
+     * @param   ClassMetadata       $classMetadata       Class metadata
+     * @param   Hydrator            $hydrator            Object hydrator
+     * @param   QueryCaster         $queryCaster         Query caster
+     * @param   UpdateQueryCreator  $uqc                 Update query Creator
+     * @param   CacheProvider       $objectCache         Cache for persisted objects
+     * @param   CacheProvider       $lastProjectionCache Cache to store last projection on object
+     * @param   CacheProvider       $objectCache         Cache for persisted objects
      */
-    public function __construct(DocumentManager $documentManager, Collection $collection, ClassMetadata $classMetadata, Hydrator $hydrator, QueryCaster $queryCaster, UpdateQueryCreator $uqc = null, CacheProvider $objectCache = null, CacheProvider $lastProjectionCache = null)
+    public function __construct(DocumentManager $documentManager, Collection $collection, ClassMetadata $classMetadata, Hydrator $hydrator, QueryCaster $queryCaster, UpdateQueryCreator $uqc = null, CacheProvider $objectCache = null, CacheProvider $lastProjectionCache = null, EventDispatcher $eventDispatcher = null)
     {
         $this->documentManager = $documentManager;
         $this->collection = $collection;
@@ -107,6 +117,8 @@ class Repository
 
         $this->queryCaster = $queryCaster;
         $this->updateQueryCreator = isset($uqc) ? $uqc : new UpdateQueryCreator();
+
+        $this->eventDispatcher = $eventDispatcher;
     }
 
     /**
@@ -130,6 +142,9 @@ class Repository
      */
     public function count($filters = [], $options = [])
     {
+        $event = new BeforeQueryEvent($this->documentManager, $this, null);
+        $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+
         return $this->collection->count($this->castQuery($filters), $options);
     }
 
@@ -160,6 +175,9 @@ class Repository
 
         $filters = $this->castQuery($filters);
 
+        $event = new BeforeQueryEvent($this->documentManager, $this, null);
+        $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+
         $result = $this->collection->distinct($field, $filters, $options);
         return $result;
     }
@@ -179,6 +197,9 @@ class Repository
     public function find($id, $projections = [], $options = [])
     {
         $options = $this->createOption($projections, null, $options);
+
+        $event = new BeforeQueryEvent($this->documentManager, $this, null);
+        $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
 
         $result = $this->collection->findOne(["_id" => $id], $options);
 
@@ -201,6 +222,9 @@ class Repository
     public function findAll($projections = [], $sorts = [], $options = [])
     {
         $options = $this->createOption($projections, $sorts, $options);
+
+        $event = new BeforeQueryEvent($this->documentManager, $this, null);
+        $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
 
         $result = $this->collection->find([], $options);
 
@@ -243,6 +267,9 @@ class Repository
 
         $filters = $this->castQuery($filters);
 
+        $event = new BeforeQueryEvent($this->documentManager, $this, null);
+        $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+
         $result = $this->collection->find($filters, $options);
         if (!isset($options['iterator']) || $options['iterator'] == false) {
             $objects = [];
@@ -282,6 +309,9 @@ class Repository
 
         $filters = $this->castQuery($filters);
 
+        $event = new BeforeQueryEvent($this->documentManager, $this, null);
+        $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+
         $result = $this->collection->findOne($filters, $options);
 
         return $this->createObject($result, $options);
@@ -310,6 +340,9 @@ class Repository
         $filters = $this->castQuery($filters);
         $update = $this->castQuery($update);
 
+        $event = new BeforeQueryEvent($this->documentManager, $this, null);
+        $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+
         $result = (array) $this->collection->findOneAndUpdate($filters, $update, $options);
 
         return $this->createObject($result, $options);
@@ -326,6 +359,9 @@ class Repository
     {
         $options['cursorType'] = \MongoDB\Operation\Find::TAILABLE_AWAIT;
 
+        $event = new BeforeQueryEvent($this->documentManager, $this, null);
+        $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+
         return $this->collection->find($this->castQuery($filters), $options);
     }
 
@@ -339,6 +375,10 @@ class Repository
     public function insertOne($document, $options = [])
     {
         $query = new InsertOne($this->documentManager, $this, $document, $options);
+
+        $event = new BeforeQueryEvent($this->documentManager, $this, $query);
+        $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+
         if (isset($options['getQuery']) && $options['getQuery']) {
             return $query;
         } else {
@@ -371,6 +411,9 @@ class Repository
 
             $insertQuery[] = $query;
         }
+
+        $event = new BeforeQueryEvent($this->documentManager, $this, null);
+        $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
 
         $result = $this->collection->insertMany($insertQuery, $options);
 
@@ -408,6 +451,10 @@ class Repository
     public function updateOne($document, $update = [], $options = [])
     {
         $query = new UpdateOne($this->documentManager, $this, $document, $update, $options);
+
+        $event = new BeforeQueryEvent($this->documentManager, $this, $query);
+        $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+
         if (isset($options['getQuery']) && $options['getQuery']) {
             return $query;
         } else {
@@ -425,6 +472,9 @@ class Repository
      */
     public function updateMany($filters, $update, $options = [])
     {
+        $event = new BeforeQueryEvent($this->documentManager, $this, null);
+        $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+
         $result = $this->collection->updateMany($this->castQuery($filters), $update, $options);
 
         if ($result->isAcknowledged()) {
@@ -445,6 +495,10 @@ class Repository
     public function replaceOne($document, $replacement, $options = [])
     {
         $query = new ReplaceOne($this->documentManager, $this, $document, $replacement, $options);
+
+        $event = new BeforeQueryEvent($this->documentManager, $this, $query);
+        $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+
         if (isset($options['getQuery']) && $options['getQuery']) {
             return $query;
         } else {
@@ -462,6 +516,10 @@ class Repository
     public function deleteOne($document, $options = [])
     {
         $query = new DeleteOne($this->documentManager, $this, $document, $options);
+
+        $event = new BeforeQueryEvent($this->documentManager, $this, $query);
+        $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+
         if (isset($options['getQuery']) && $options['getQuery']) {
             return $query;
         } else {
@@ -478,6 +536,9 @@ class Repository
      */
     public function deleteMany($filter, $options = [])
     {
+        $event = new BeforeQueryEvent($this->documentManager, $this, null);
+        $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+
         $filter = $this->castQuery($filter);
         $result = $this->collection->deleteMany($filter, $options);
 

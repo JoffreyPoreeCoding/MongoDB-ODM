@@ -14,6 +14,7 @@ use JPC\MongoDB\ODM\Tools\UpdateQueryCreator;
 use MongoDB\Collection;
 use MongoDB\GridFS\Bucket;
 use JPC\MongoDB\ODM\GridFS\Tools\UpdateQueryCreator as GridFSUpdateQueryCreator;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 
 /**
  * Repository to make action on gridfs bucket
@@ -47,10 +48,12 @@ class Repository extends BaseRepository
         QueryCaster $queryCaster = null,
         UpdateQueryCreator $uqc = null,
         CacheProvider $objectCache = null,
+        CacheProvider $lastProjectionCache = null,
+        EventDispatcher $eventDispatcher,
         Bucket $bucket = null
     ) {
         $uqc = $uqc ?? new GridFSUpdateQueryCreator();
-        parent::__construct($documentManager, $collection, $classMetadata, $hydrator, $queryCaster, $uqc, $objectCache);
+        parent::__construct($documentManager, $collection, $classMetadata, $hydrator, $queryCaster, $uqc, $objectCache, $lastProjectionCache, $eventDispatcher);
 
         if ($this->modelName !== Document::class && !is_subclass_of($this->modelName, Document::class)) {
             throw new MappingException("Model must extends '" . Document::class . "'.");
@@ -88,6 +91,9 @@ class Repository extends BaseRepository
      */
     public function find($id, $projections = array(), $options = array())
     {
+        $event = new BeforeQueryEvent($this->documentManager, $this, null);
+        $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+
         if (null !== ($object = parent::find($id, $projections, $options))) {
             $data = [];
             if ($this->getStreamProjection($projections)) {
@@ -116,6 +122,9 @@ class Repository extends BaseRepository
     {
         $options = $this->createOption($projections, $sorts, $options);
         if (!isset($options['iterator']) || $options['iterator'] === false) {
+            $event = new BeforeQueryEvent($this->documentManager, $this, null);
+            $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+
             $objects = parent::findAll($projections, $sorts, $options);
             foreach ($objects as $object) {
                 if ($this->getStreamProjection($projections)) {
@@ -126,6 +135,9 @@ class Repository extends BaseRepository
             return $objects;
         } else {
             if (!is_string($options['iterator'])) {
+                $event = new BeforeQueryEvent($this->documentManager, $this, null);
+                $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+
                 $options['iterator'] = GridFSDocumentIterator::class;
             }
             return parent::findAll($projections, $sorts, $options);
@@ -151,6 +163,9 @@ class Repository extends BaseRepository
     {
         $options = $this->createOption($projections, $sorts, $options);
         if (!isset($options['iterator']) || $options['iterator'] === false) {
+            $event = new BeforeQueryEvent($this->documentManager, $this, null);
+            $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+
             $objects = parent::findBy($filters, $projections, $sorts, $options);
             foreach ($objects as $object) {
                 $data = [];
@@ -164,6 +179,10 @@ class Repository extends BaseRepository
             if (!is_string($options['iterator'])) {
                 $options['iterator'] = GridFSDocumentIterator::class;
             }
+
+            $event = new BeforeQueryEvent($this->documentManager, $this, null);
+            $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+
             return parent::findBy($filters, $projections, $sorts, $options);
         }
     }
@@ -184,6 +203,9 @@ class Repository extends BaseRepository
      */
     public function findOneBy($filters = array(), $projections = array(), $sorts = array(), $options = array())
     {
+        $event = new BeforeQueryEvent($this->documentManager, $this, null);
+        $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+
         $object = parent::findOneBy($filters, $projections, $sorts, $options);
         if (isset($object)) {
             $data = [];
@@ -213,6 +235,9 @@ class Repository extends BaseRepository
      */
     public function findAndModifyOneBy($filters = [], $update = [], $projections = [], $sorts = [], $options = [])
     {
+        $event = new BeforeQueryEvent($this->documentManager, $this, null);
+        $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+
         $object = parent::findAndModifyOneBy($filters, $update, $projections, $sorts, $options);
 
         if (isset($object)) {
@@ -283,6 +308,9 @@ class Repository extends BaseRepository
 
         unset($objectDatas["filename"]);
 
+        $event = new BeforeQueryEvent($this->documentManager, $this, null);
+        $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+
         $id = $this->bucket->uploadFromStream($filename, $stream, $objectDatas);
         $data['_id'] = $id;
 
@@ -326,6 +354,9 @@ class Repository extends BaseRepository
 
         $id = $unhydratedObject["_id"];
 
+        $event = new BeforeQueryEvent($this->documentManager, $this, null);
+        $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+        
         $this->bucket->delete($id);
         $this->documentManager->removeObject($document);
     }
@@ -350,7 +381,6 @@ class Repository extends BaseRepository
      */
     public function getUpdateQuery($document)
     {
-        $updateQuery = [];
         $old = $this->uncacheObject($document);
         $new = $this->hydrator->unhydrate($document);
         unset($new["stream"]);
