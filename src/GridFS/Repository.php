@@ -3,8 +3,10 @@
 namespace JPC\MongoDB\ODM\GridFS;
 
 use JPC\MongoDB\ODM\DocumentManager;
+use JPC\MongoDB\ODM\Event\BeforeQueryEvent;
 use JPC\MongoDB\ODM\Exception\MappingException;
 use JPC\MongoDB\ODM\GridFS\Hydrator;
+use JPC\MongoDB\ODM\GridFS\Tools\UpdateQueryCreator as GridFSUpdateQueryCreator;
 use JPC\MongoDB\ODM\Iterator\GridFSDocumentIterator;
 use JPC\MongoDB\ODM\ObjectManager;
 use JPC\MongoDB\ODM\Repository as BaseRepository;
@@ -13,7 +15,6 @@ use JPC\MongoDB\ODM\Tools\QueryCaster;
 use JPC\MongoDB\ODM\Tools\UpdateQueryCreator;
 use MongoDB\Collection;
 use MongoDB\GridFS\Bucket;
-use JPC\MongoDB\ODM\GridFS\Tools\UpdateQueryCreator as GridFSUpdateQueryCreator;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
 /**
