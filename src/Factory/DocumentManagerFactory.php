@@ -17,25 +17,25 @@ class DocumentManagerFactory
      * Repository factory class
      * @var string
      */
-    private $repositoryFactoryClass;
+    protected $repositoryFactoryClass;
 
     /**
      * Already opened connexions
      * @var Client
      */
-    private $connexions = [];
+    protected $connexions = [];
 
     /**
      * Already created document managers
      * @var DocumentManager
      */
-    private $managers = [];
+    protected $managers = [];
 
     /**
      * Class metadata factory
      * @var ClassMetadataFactory
      */
-    private $classMetadataFactory;
+    protected $classMetadataFactory;
 
     /**
      * Create a document manager factory
