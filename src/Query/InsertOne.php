@@ -92,7 +92,7 @@ class InsertOne extends Query
     {
         $document = $this->repository->getHydrator()->unhydrate($this->document);
 
-        if ($this->id !== null) {
+        if ($this->id !== null && !isset($document['_id'])) {
             $document['_id'] = $this->id;
         }
 
