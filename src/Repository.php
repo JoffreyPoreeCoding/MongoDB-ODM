@@ -6,6 +6,7 @@ use Doctrine\Common\Cache\ArrayCache;
 use Doctrine\Common\Cache\CacheProvider;
 use Doctrine\Common\Cache\FlushableCache;
 use JPC\MongoDB\ODM\DocumentManager;
+use JPC\MongoDB\ODM\Event\BeforeQueryEvent;
 use JPC\MongoDB\ODM\Id\AbstractIdGenerator;
 use JPC\MongoDB\ODM\Iterator\DocumentIterator;
 use JPC\MongoDB\ODM\Query\BulkWrite;
@@ -19,7 +20,6 @@ use JPC\MongoDB\ODM\Tools\QueryCaster;
 use JPC\MongoDB\ODM\Tools\UpdateQueryCreator;
 use MongoDB\Collection;
 use Symfony\Component\EventDispatcher\EventDispatcher;
-use JPC\MongoDB\ODM\Event\BeforeQueryEvent;
 
 /**
  * Allow to find, delete, document in MongoDB
@@ -606,6 +606,10 @@ class Repository
         $options = [];
         isset($projections) ? $options["projection"] = $this->castQuery($projections) : null;
         isset($sort) ? $options["sort"] = $this->castQuery($sort) : null;
+
+        if (isset($projections) && isset($projections['_id']) && false == $projections['_id']) {
+            $otherOptions['readOnly'] = true;
+        }
 
         $options = array_merge($this->documentManager->getDefaultOptions(), $otherOptions, $options);
         return $options;
