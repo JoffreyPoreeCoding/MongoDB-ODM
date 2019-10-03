@@ -359,7 +359,9 @@ class Repository extends BaseRepository
         $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
         
         $this->bucket->delete($id);
-        $this->documentManager->removeObject($document);
+        if(is_object($document)){
+            $this->documentManager->removeObject($document);
+        }
     }
 
     /**
