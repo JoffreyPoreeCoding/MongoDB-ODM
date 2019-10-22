@@ -3,11 +3,11 @@
 namespace JPC\MongoDB\ODM\Query;
 
 use JPC\MongoDB\ODM\DocumentManager;
+use JPC\MongoDB\ODM\Event\ModelEvent\PostUpdateEvent;
 use JPC\MongoDB\ODM\Exception\MappingException;
 use JPC\MongoDB\ODM\Query\Query;
 use JPC\MongoDB\ODM\Repository;
 use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
-use JPC\MongoDB\ODM\Tools\EventManager;
 
 class ReplaceOne extends Query
 {
@@ -29,9 +29,9 @@ class ReplaceOne extends Query
      */
     protected $classMetadata;
 
-    public function __construct(DocumentManager $dm, Repository $repository, $document, $replacement = [], $options = [])
+    public function __construct(DocumentManager $documentManager, Repository $repository, $document, $replacement = [], $options = [])
     {
-        parent::__construct($dm, $repository, $document);
+        parent::__construct($documentManager, $repository, $document);
         $this->replacement = $replacement;
         $this->options = $options;
         $this->classMetadata = $repository->getClassMetadata();
@@ -84,11 +84,12 @@ class ReplaceOne extends Query
         if (!empty($this->replacement)) {
             $modelName = $this->repository->getModelName();
             if ($this->document instanceof $modelName) {
-                if ($this->dm->hasObject($this->document)) {
-                    $this->dm->refresh($this->document);
+                if ($this->documentManager->hasObject($this->document)) {
+                    $this->documentManager->refresh($this->document);
                 }
-                $this->classMetadata->getEventManager()->execute(EventManager::EVENT_POST_UPDATE, $this->document);
-                if ($this->dm->hasObject($this->document)) {
+                $event = new PostUpdateEvent($this->documentManager, $this->repository, $this->document);
+                $this->documentManager->getEventDispatcher()->dispatch($event, $event::NAME);
+                if ($this->documentManager->hasObject($this->document)) {
                     $this->repository->cacheObject($this->document);
                 }
             }

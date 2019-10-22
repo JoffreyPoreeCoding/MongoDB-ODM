@@ -3,11 +3,11 @@
 namespace JPC\MongoDB\ODM\Query;
 
 use JPC\MongoDB\ODM\DocumentManager;
+use JPC\MongoDB\ODM\Event\ModelEvent\PostUpdateEvent;
 use JPC\MongoDB\ODM\Exception\MappingException;
 use JPC\MongoDB\ODM\Query\Query;
 use JPC\MongoDB\ODM\Repository;
 use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
-use JPC\MongoDB\ODM\Tools\EventManager;
 
 class UpdateOne extends Query
 {
@@ -29,9 +29,9 @@ class UpdateOne extends Query
      */
     protected $classMetadata;
 
-    public function __construct(DocumentManager $dm, Repository $repository, $document, $update = [], $options = [])
+    public function __construct(DocumentManager $documentManager, Repository $repository, $document, $update = [], $options = [])
     {
-        parent::__construct($dm, $repository, $document);
+        parent::__construct($documentManager, $repository, $document);
         $this->update = $update;
         $this->options = $options;
         $this->classMetadata = $repository->getClassMetadata();
@@ -58,11 +58,10 @@ class UpdateOne extends Query
         }
 
         if (empty($this->update)) {
+            $event = new PostUpdateEvent($this->documentManager, $this->repository, $this->document);
+            $this->documentManager->getEventDispatcher()->dispatch($event, $event::NAME);
+            
             $this->update = $this->repository->getUpdateQuery($this->document);
-            if (!empty($this->update)) {
-                $this->classMetadata->getEventManager()->execute(EventManager::EVENT_PRE_UPDATE, $this->document);
-                $this->update = $this->repository->getUpdateQuery($this->document);
-            }
         } else {
             $queryCaster = $this->repository->getQueryCaster();
             $queryCaster->init($this->update);
@@ -85,12 +84,13 @@ class UpdateOne extends Query
         if (!empty($this->update)) {
             $modelName = $this->repository->getModelName();
             if ($this->document instanceof $modelName) {
-                if ($this->dm->hasObject($this->document)) {
-                    $this->dm->refresh($this->document);
+                if ($this->documentManager->hasObject($this->document)) {
+                    $this->documentManager->refresh($this->document);
                 }
                 if (null !== $this->document) {
-                    $this->classMetadata->getEventManager()->execute(EventManager::EVENT_POST_UPDATE, $this->document);
-                    if ($this->dm->hasObject($this->document)) {
+                    $event = new PostUpdateEvent($this->documentManager, $this->repository, $this->document);
+                    $this->documentManager->getEventDispatcher()->dispatch($event, $event::NAME);
+                    if ($this->documentManager->hasObject($this->document)) {
                         $this->repository->cacheObject($this->document);
                     }
                 }

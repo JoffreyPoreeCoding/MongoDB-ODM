@@ -10,7 +10,6 @@ use JPC\MongoDB\ODM\ObjectManager;
 use JPC\MongoDB\ODM\Query\BulkWrite;
 use JPC\MongoDB\ODM\Repository;
 use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
-use JPC\MongoDB\ODM\Tools\EventManager;
 use JPC\Test\MongoDB\ODM\Framework\TestCase;
 use MongoDB\Client;
 use MongoDB\Database;
@@ -51,11 +50,9 @@ class DocumentManagerTest extends TestCase
     {
         $repositoryMock = $this->createMock(Repository::class);
         $classMetadataMock = $this->createMock(ClassMetadata::class);
-        $eventManagerMock = $this->createMock(EventManager::class);
         $hydratorMock = $this->createMock(Hydrator::class);
         $repositoryMock->method('getHydrator')->willReturn($hydratorMock);
         $repositoryMock->method('getClassMetadata')->willReturn($classMetadataMock);
-        $classMetadataMock->method('getEventManager')->willReturn($eventManagerMock);
         $hydratorMock->method('unhydrate')->willReturn(['field' => 'value']);
 
         $this->repositoryFactory->method("getRepository")->willReturn($repositoryMock);
@@ -144,9 +141,7 @@ class DocumentManagerTest extends TestCase
         $repositoryMock->method('getHydrator')->willReturn($hydratorMock);
         $hydratorMock->method('unhydrate')->willReturn(['field' => 'value']);
         $classMetadataMock = $this->createMock(ClassMetadata::class);
-        $eventManagerMock = $this->createMock(EventManager::class);
         $repositoryMock->method('getClassMetadata')->willReturn($classMetadataMock);
-        $classMetadataMock->method('getEventManager')->willReturn($eventManagerMock);
 
         $obj1 = new \stdClass();
         $this->documentManager->addObject($obj1, DocumentManager::OBJ_NEW, $repositoryMock);

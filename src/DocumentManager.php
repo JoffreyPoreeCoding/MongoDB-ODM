@@ -2,14 +2,17 @@
 
 namespace JPC\MongoDB\ODM;
 
-use JPC\MongoDB\ODM\Factory\RepositoryFactory;
-use JPC\MongoDB\ODM\GridFS\Repository as GridFSRepository;
-use JPC\MongoDB\ODM\ObjectManager;
 use JPC\MongoDB\ODM\Repository;
-use JPC\MongoDB\ODM\Tools\EventManager;
+use JPC\MongoDB\ODM\ObjectManager;
 use MongoDB\Client as MongoClient;
 use MongoDB\Database as MongoDatabase;
+use JPC\MongoDB\ODM\Factory\RepositoryFactory;
+use JPC\MongoDB\ODM\Event\ModelEvent\PreFlushEvent;
+use JPC\MongoDB\ODM\Event\ModelEvent\PostFlushEvent;
+use JPC\MongoDB\ODM\Event\ModelEvent\PrePersistEvent;
+use JPC\MongoDB\ODM\Event\ModelEvent\PostPersistEvent;
 use Symfony\Component\EventDispatcher\EventDispatcher;
+use JPC\MongoDB\ODM\GridFS\Repository as GridFSRepository;
 
 /**
  * MongoDB Documents manager
@@ -119,9 +122,11 @@ class DocumentManager extends ObjectManager
     public function persist($object, $collection = null)
     {
         $repository = $this->getRepository(get_class($object), $collection);
-        $repository->getClassMetadata()->getEventManager()->execute(EventManager::EVENT_PRE_PERSIST, $object);
+        $event = new PrePersistEvent($this, $repository, $object);
+        $this->eventDispatcher->dispatch($event, $event::NAME);
         $this->addObject($object, ObjectManager::OBJ_NEW, $repository);
-        $repository->getClassMetadata()->getEventManager()->execute(EventManager::EVENT_POST_PERSIST, $object);
+        $event = new PostPersistEvent($this, $repository, $object);
+        $this->eventDispatcher->dispatch($event, $event::NAME);
 
         return $this;
     }
@@ -246,7 +251,8 @@ class DocumentManager extends ObjectManager
 
         foreach (array_merge($insert, $update, $remove) as $id => $document) {
             $repository = $this->getObjectRepository($document);
-            $repository->getClassMetadata()->getEventManager()->execute(EventManager::EVENT_PRE_FLUSH, $document);
+            $event = new PreFlushEvent($this, $repository, $document);
+            $this->eventDispatcher->dispatch($event, $event::NAME);
         }
 
         foreach ($bulkOperations as $bulkOperation) {
@@ -255,7 +261,8 @@ class DocumentManager extends ObjectManager
 
         foreach (array_merge($insert, $update) as $id => $document) {
             $repository = $this->getObjectRepository($document);
-            $repository->getClassMetadata()->getEventManager()->execute(EventManager::EVENT_POST_FLUSH, $document);
+            $event = new PostFlushEvent($this, $repository, $document);
+            $this->eventDispatcher->dispatch($event, $event::NAME);
             $repository->cacheObject($document);
         }
 

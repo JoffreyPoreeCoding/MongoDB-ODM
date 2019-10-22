@@ -2,11 +2,12 @@
 
 namespace JPC\MongoDB\ODM\Query;
 
-use JPC\MongoDB\ODM\DocumentManager;
-use JPC\MongoDB\ODM\Query\Query;
 use JPC\MongoDB\ODM\Repository;
+use JPC\MongoDB\ODM\Query\Query;
+use JPC\MongoDB\ODM\DocumentManager;
+use JPC\MongoDB\ODM\Event\ModelEvent\PreDeleteEvent;
+use JPC\MongoDB\ODM\Event\ModelEvent\PostDeleteEvent;
 use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
-use JPC\MongoDB\ODM\Tools\EventManager;
 
 class DeleteOne extends Query
 {
@@ -22,9 +23,9 @@ class DeleteOne extends Query
      */
     protected $classMetadata;
 
-    public function __construct(DocumentManager $dm, Repository $repository, $document, $options = [])
+    public function __construct(DocumentManager $documentManager, Repository $repository, $document, $options = [])
     {
-        parent::__construct($dm, $repository, $document);
+        parent::__construct($documentManager, $repository, $document);
         $this->options = $options;
         $this->classMetadata = $repository->getClassMetadata();
     }
@@ -37,7 +38,8 @@ class DeleteOne extends Query
     public function beforeQuery()
     {
         if (is_a($this->document, $this->repository->getModelName())) {
-            $this->classMetadata->getEventManager()->execute(EventManager::EVENT_PRE_DELETE, $this->document);
+            $event = new PreDeleteEvent($this->documentManager, $this->repository, $this->document);
+            $this->documentManager->getEventDispatcher()->dispatch($event, $event::NAME);
         }
     }
 
@@ -53,9 +55,10 @@ class DeleteOne extends Query
     public function afterQuery($result)
     {
         if (is_a($this->document, $this->repository->getModelName())) {
-            $this->classMetadata->getEventManager()->execute(EventManager::EVENT_POST_DELETE, $this->document);
-            if (is_object($this->document) && $this->dm->hasObject($this->document)) {
-                $this->dm->removeObject($this->document);
+            $event = new PostDeleteEvent($this->documentManager, $this->repository, $this->document);
+            $this->documentManager->getEventDispatcher()->dispatch($event, $event::NAME);
+            if (is_object($this->document) && $this->documentManager->hasObject($this->document)) {
+                $this->documentManager->removeObject($this->document);
                 $this->repository->removeObjectCache($this->document);
             }
         }

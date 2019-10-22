@@ -9,7 +9,6 @@ use Doctrine\Common\Cache\ApcuCache;
 use JPC\MongoDB\ODM\Tools\ClassMetadata\Info\CollectionInfo;
 use JPC\MongoDB\ODM\Tools\ClassMetadata\Info\PropertyInfo;
 use JPC\MongoDB\ODM\Tools\ClassMetadata\Info\ReferenceInfo;
-use JPC\MongoDB\ODM\Tools\EventManager;
 
 /**
  * Parse and store all info about a class to map
@@ -65,9 +64,9 @@ class ClassMetadata
 
     /**
      * Event information
-     * @var EventInfo
+     * @var array
      */
-    private $eventManager;
+    private $events;
 
     /**
      * Generator class for ids
@@ -287,15 +286,15 @@ class ClassMetadata
     /**
      * Get the event manager
      *
-     * @return EventManager
+     * @return array
      */
-    public function getEventManager()
+    public function getEvents()
     {
         if (!$this->loaded) {
             $this->load();
         }
 
-        return $this->eventManager;
+        return $this->events;
     }
 
     /**
@@ -333,7 +332,7 @@ class ClassMetadata
             }
         }
 
-        $this->eventManager = new EventManager();
+        $this->events = [];
         if ($this->hasEvent) {
             $methods = $reflectionClass->getMethods();
             foreach ($methods as $method) {
@@ -341,7 +340,7 @@ class ClassMetadata
                 if (!empty($annotations)) {
                     foreach ($annotations as $annotation) {
                         if (in_array('JPC\MongoDB\ODM\Annotations\Event\Event', class_implements($annotation))) {
-                            $this->eventManager->add($annotation, $method->getName());
+                            $this->events['model.' . $annotation->getName()][] = $method->getName();
                         }
                     }
                 }

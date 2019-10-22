@@ -3,6 +3,7 @@
 namespace JPC\MongoDB\ODM\Factory;
 
 use JPC\MongoDB\ODM\DocumentManager;
+use JPC\MongoDB\ODM\Subscriber\ModelEventSubscriber;
 use MongoDB\Client;
 use MongoDB\Database;
 use Symfony\Component\EventDispatcher\EventDispatcher;
@@ -71,7 +72,17 @@ class DocumentManagerFactory
             $database = new Database($client->getManager(), $dbName);
 
             $class = $this->repositoryFactoryClass;
+
             $eventDispatcher = new EventDispatcher();
+            if(isset($options['event_subscribers'])){
+                foreach($options['event_subscribers'] as $subscriber){
+                    $eventDispatcher->addSubscriber($subscriber);
+                }
+            }
+            $modelEventSubscriber = new ModelEventSubscriber();
+            $eventDispatcher->addSubscriber($modelEventSubscriber);
+
+
             $repositoryFactory = new $class($eventDispatcher, null, $this->classMetadataFactory);
 
             $this->managers[$managerId] = new DocumentManager(

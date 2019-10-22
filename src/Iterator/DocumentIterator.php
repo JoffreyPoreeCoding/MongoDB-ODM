@@ -7,7 +7,7 @@ use Traversable;
 use JPC\MongoDB\ODM\Hydrator;
 use JPC\MongoDB\ODM\Repository;
 use JPC\MongoDB\ODM\DocumentManager;
-use JPC\MongoDB\ODM\Tools\EventManager;
+use JPC\MongoDB\ODM\Event\ModelEvent\PostLoadEvent;
 
 /**
  * Iterator for MongoDB cursor
@@ -199,7 +199,8 @@ class DocumentIterator implements Iterator, \Countable
             $class = $this->objectClass;
             $object = new $class();
             $this->hydrator->hydrate($object, $this->currentData);
-            $this->classMetadata->getEventManager()->execute(EventManager::EVENT_POST_LOAD, $object);
+            $event = new PostLoadEvent($this->documentManager, $this->repository, $object);
+            $this->documentManager->getEventDispatcher()->dispatch($event, $event::NAME);
             if (!$this->readOnly) {
                 $this->repository->cacheObject($object);
                 $this->documentManager->addObject($object, DocumentManager::OBJ_MANAGED, $this->repository);

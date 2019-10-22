@@ -2,23 +2,25 @@
 
 namespace JPC\MongoDB\ODM;
 
-use Doctrine\Common\Cache\ArrayCache;
-use Doctrine\Common\Cache\CacheProvider;
-use Doctrine\Common\Cache\FlushableCache;
+use MongoDB\Collection;
 use JPC\MongoDB\ODM\DocumentManager;
-use JPC\MongoDB\ODM\Event\BeforeQueryEvent;
-use JPC\MongoDB\ODM\Id\AbstractIdGenerator;
-use JPC\MongoDB\ODM\Iterator\DocumentIterator;
 use JPC\MongoDB\ODM\Query\BulkWrite;
 use JPC\MongoDB\ODM\Query\DeleteOne;
 use JPC\MongoDB\ODM\Query\InsertOne;
-use JPC\MongoDB\ODM\Query\ReplaceOne;
 use JPC\MongoDB\ODM\Query\UpdateOne;
-use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
-use JPC\MongoDB\ODM\Tools\EventManager;
+use Doctrine\Common\Cache\ArrayCache;
+use JPC\MongoDB\ODM\Query\ReplaceOne;
 use JPC\MongoDB\ODM\Tools\QueryCaster;
+use Doctrine\Common\Cache\CacheProvider;
+use Doctrine\Common\Cache\FlushableCache;
+use JPC\MongoDB\ODM\Event\BeforeQueryEvent;
+use JPC\MongoDB\ODM\Event\ModelEvent\PostInsertEvent;
+use JPC\MongoDB\ODM\Id\AbstractIdGenerator;
 use JPC\MongoDB\ODM\Tools\UpdateQueryCreator;
-use MongoDB\Collection;
+use JPC\MongoDB\ODM\Iterator\DocumentIterator;
+use JPC\MongoDB\ODM\Event\ModelEvent\PostLoadEvent;
+use JPC\MongoDB\ODM\Event\ModelEvent\PreInsertEvent;
+use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
 /**
@@ -397,7 +399,9 @@ class Repository
     {
         $insertQuery = [];
         foreach ($documents as $document) {
-            $this->classMetadata->getEventManager()->execute(EventManager::EVENT_PRE_INSERT, $document);
+            $event = new PreInsertEvent($this->documentManager, $this, $document);
+            $this->documentManager->getEventDispatcher()->dispatch($event, $event::NAME);
+
             $query = $this->hydrator->unhydrate($document);
 
             $idGen = $this->classMetadata->getIdGenerator();
@@ -425,7 +429,8 @@ class Repository
                 $insertQuery[$key]["_id"] = $id;
                 $this->hydrator->hydrate($documents[$key], $insertQuery[$key]);
 
-                $this->classMetadata->getEventManager()->execute(EventManager::EVENT_POST_INSERT, $documents[$key]);
+                $event = new PostInsertEvent($this->documentManager, $this, $documents[$key]);
+                $this->documentManager->getEventDispatcher()->dispatch($event, $event::NAME);
 
                 $this->cacheObject($documents[$key]);
             }
@@ -578,7 +583,8 @@ class Repository
 
             $this->hydrator->hydrate($object, $data, $softHydrate);
 
-            $this->classMetadata->getEventManager()->execute(EventManager::EVENT_POST_LOAD, $object);
+            $event = new PostLoadEvent($this->documentManager, $this, $object);
+            $this->documentManager->getEventDispatcher()->dispatch($event, $event::NAME);
             if (!isset($options['readOnly']) || $options['readOnly'] != true) {
                 $oid = spl_object_hash($object);
                 $data = $this->hydrator->unhydrate($object);
