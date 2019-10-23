@@ -2,11 +2,12 @@
 
 namespace JPC\MongoDB\ODM\Query;
 
-use JPC\MongoDB\ODM\DocumentManager;
-use JPC\MongoDB\ODM\Event\ModelEvent\PostUpdateEvent;
-use JPC\MongoDB\ODM\Exception\MappingException;
-use JPC\MongoDB\ODM\Query\Query;
 use JPC\MongoDB\ODM\Repository;
+use JPC\MongoDB\ODM\Query\Query;
+use JPC\MongoDB\ODM\DocumentManager;
+use JPC\MongoDB\ODM\Exception\MappingException;
+use JPC\MongoDB\ODM\Event\ModelEvent\PreUpdateEvent;
+use JPC\MongoDB\ODM\Event\ModelEvent\PostUpdateEvent;
 use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
 
 class UpdateOne extends Query
