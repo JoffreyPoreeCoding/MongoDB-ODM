@@ -58,7 +58,7 @@ class UpdateOne extends Query
         }
 
         if (empty($this->update)) {
-            $event = new PostUpdateEvent($this->documentManager, $this->repository, $this->document);
+            $event = new PreUpdateEvent($this->documentManager, $this->repository, $this->document);
             $this->documentManager->getEventDispatcher()->dispatch($event, $event::NAME);
             
             $this->update = $this->repository->getUpdateQuery($this->document);
