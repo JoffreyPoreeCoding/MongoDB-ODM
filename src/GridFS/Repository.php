@@ -4,6 +4,7 @@ namespace JPC\MongoDB\ODM\GridFS;
 
 use JPC\MongoDB\ODM\DocumentManager;
 use JPC\MongoDB\ODM\Event\BeforeQueryEvent;
+use JPC\MongoDB\ODM\Event\ModelEvent\PostDeleteEvent;
 use JPC\MongoDB\ODM\Event\ModelEvent\PostInsertEvent;
 use JPC\MongoDB\ODM\Event\ModelEvent\PreDeleteEvent;
 use JPC\MongoDB\ODM\Event\ModelEvent\PreInsertEvent;
@@ -19,9 +20,6 @@ use JPC\MongoDB\ODM\Tools\QueryCaster;
 use JPC\MongoDB\ODM\Tools\UpdateQueryCreator;
 use MongoDB\Collection;
 use MongoDB\GridFS\Bucket;
-use MongoDB\Operation\Find;
-use MongoDB\Operation\FindAndModify;
-use MongoDB\Operation\FindOne;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
 /**
@@ -376,7 +374,7 @@ class Repository extends BaseRepository
 
         $this->bucket->delete($id);
 
-        $event = new PostDelete($this->documentManager, $this, $document);
+        $event = new PostDeleteEvent($this->documentManager, $this, $document);
         $this->eventDispatcher->dispatch($event);
 
         if (is_object($document)) {
