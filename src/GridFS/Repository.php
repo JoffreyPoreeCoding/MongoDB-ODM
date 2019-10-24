@@ -4,7 +4,11 @@ namespace JPC\MongoDB\ODM\GridFS;
 
 use JPC\MongoDB\ODM\DocumentManager;
 use JPC\MongoDB\ODM\Event\BeforeQueryEvent;
+use JPC\MongoDB\ODM\Event\ModelEvent\PostInsertEvent;
+use JPC\MongoDB\ODM\Event\ModelEvent\PreDeleteEvent;
+use JPC\MongoDB\ODM\Event\ModelEvent\PreInsertEvent;
 use JPC\MongoDB\ODM\Exception\MappingException;
+use JPC\MongoDB\ODM\GridFS\Document;
 use JPC\MongoDB\ODM\GridFS\Hydrator;
 use JPC\MongoDB\ODM\GridFS\Tools\UpdateQueryCreator as GridFSUpdateQueryCreator;
 use JPC\MongoDB\ODM\Iterator\GridFSDocumentIterator;
@@ -15,6 +19,9 @@ use JPC\MongoDB\ODM\Tools\QueryCaster;
 use JPC\MongoDB\ODM\Tools\UpdateQueryCreator;
 use MongoDB\Collection;
 use MongoDB\GridFS\Bucket;
+use MongoDB\Operation\Find;
+use MongoDB\Operation\FindAndModify;
+use MongoDB\Operation\FindOne;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
 /**
@@ -296,6 +303,9 @@ class Repository extends BaseRepository
      */
     public function insertOne($document, $options = [])
     {
+        $event = new PreInsertEvent($this->documentManager, $this, $document);
+        $this->eventDispatcher->dispatch($event);
+
         $objectDatas = $this->hydrator->unhydrate($document);
 
         $stream = $objectDatas["stream"];
@@ -317,6 +327,9 @@ class Repository extends BaseRepository
 
         $data["stream"] = $this->bucket->openDownloadStream($data['_id']);
         $this->hydrator->hydrate($document, $data, true);
+
+        $event = new PostInsertEvent($this->documentManager, $this, $document);
+        $this->eventDispatcher->dispatch($event);
 
         $this->documentManager->setObjectState($document, ObjectManager::OBJ_MANAGED);
         $this->cacheObject($document);
@@ -351,15 +364,22 @@ class Repository extends BaseRepository
      */
     public function deleteOne($document, $options = [])
     {
+        $event = new PreDeleteEvent($this->documentManager, $this, $document);
+        $this->eventDispatcher->dispatch($event);
+
         $unhydratedObject = $this->hydrator->unhydrate($document);
 
         $id = $unhydratedObject["_id"];
 
         $event = new BeforeQueryEvent($this->documentManager, $this, null);
         $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
-        
+
         $this->bucket->delete($id);
-        if(is_object($document)){
+
+        $event = new PostDelete($this->documentManager, $this, $document);
+        $this->eventDispatcher->dispatch($event);
+
+        if (is_object($document)) {
             $this->documentManager->removeObject($document);
         }
     }
