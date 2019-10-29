@@ -11,7 +11,6 @@ use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
 use JPC\MongoDB\ODM\Tools\QueryCaster;
 use MongoDB\Collection;
 use Symfony\Component\EventDispatcher\EventDispatcher;
-use JPC\MongoDB\ODM\Event\BeforeQueryEvent;
 
 /**
  * Repository factory
@@ -25,7 +24,7 @@ class RepositoryFactory
      * @var EventDispatcher
      */
     protected $eventDispatcher;
-    
+
     /**
      * Already created repositories
      *
@@ -124,16 +123,18 @@ class RepositoryFactory
 
         $database = $documentManager->getDatabase();
 
-        $exists = false;
-        foreach ($database->listCollections() as $collection) {
-            if ($collection->getName() == $collectionName) {
-                $exists = true;
-            }
-        }
-
         $creationOptions = $classMetadata->getCollectionCreationOptions();
-        if (!empty($creationOptions) && !$exists) {
-            $database->createCollection($collectionName, $creationOptions);
+        if (!empty($creationOptions)) {
+            $exists = false;
+
+            foreach ($database->listCollections() as $collection) {
+                if ($collection->getName() == $collectionName) {
+                    $exists = true;
+                }
+            }
+            if (!$exists) {
+                $database->createCollection($collectionName, $creationOptions);
+            }
         }
 
         $collectionOptions = $classMetadata->getCollectionOptions();
