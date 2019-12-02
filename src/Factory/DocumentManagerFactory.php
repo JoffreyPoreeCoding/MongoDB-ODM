@@ -69,19 +69,18 @@ class DocumentManagerFactory
         }
 
         if (!isset($this->managers[$managerId])) {
-            $database = new Database($client->getManager(), $dbName);
+            $database = new Database($client->getManager(), $dbName, $options);
 
             $class = $this->repositoryFactoryClass;
 
             $eventDispatcher = new EventDispatcher();
-            if(isset($options['event_subscribers'])){
-                foreach($options['event_subscribers'] as $subscriber){
+            if (isset($options['event_subscribers'])) {
+                foreach ($options['event_subscribers'] as $subscriber) {
                     $eventDispatcher->addSubscriber($subscriber);
                 }
             }
             $modelEventSubscriber = new ModelEventSubscriber();
             $eventDispatcher->addSubscriber($modelEventSubscriber);
-
 
             $repositoryFactory = new $class($eventDispatcher, null, $this->classMetadataFactory);
 

@@ -118,7 +118,7 @@ class RepositoryFactory
      * @param   string              $collectionName     Name of collection
      * @return  Collection
      */
-    private function createCollection(DocumentManager $documentManager, ClassMetadata $classMetadata, $collectionName)
+    protected function createCollection(DocumentManager $documentManager, ClassMetadata $classMetadata, $collectionName)
     {
 
         $database = $documentManager->getDatabase();
