@@ -2,17 +2,17 @@
 
 namespace JPC\MongoDB\ODM;
 
-use JPC\MongoDB\ODM\Repository;
+use JPC\MongoDB\ODM\Event\ModelEvent\PostFlushEvent;
+use JPC\MongoDB\ODM\Event\ModelEvent\PostPersistEvent;
+use JPC\MongoDB\ODM\Event\ModelEvent\PreFlushEvent;
+use JPC\MongoDB\ODM\Event\ModelEvent\PrePersistEvent;
+use JPC\MongoDB\ODM\Factory\RepositoryFactory;
+use JPC\MongoDB\ODM\GridFS\Repository as GridFSRepository;
 use JPC\MongoDB\ODM\ObjectManager;
+use JPC\MongoDB\ODM\Repository;
 use MongoDB\Client as MongoClient;
 use MongoDB\Database as MongoDatabase;
-use JPC\MongoDB\ODM\Factory\RepositoryFactory;
-use JPC\MongoDB\ODM\Event\ModelEvent\PreFlushEvent;
-use JPC\MongoDB\ODM\Event\ModelEvent\PostFlushEvent;
-use JPC\MongoDB\ODM\Event\ModelEvent\PrePersistEvent;
-use JPC\MongoDB\ODM\Event\ModelEvent\PostPersistEvent;
 use Symfony\Component\EventDispatcher\EventDispatcher;
-use JPC\MongoDB\ODM\GridFS\Repository as GridFSRepository;
 
 /**
  * MongoDB Documents manager
@@ -56,7 +56,7 @@ class DocumentManager extends ObjectManager
      * @var array
      */
     protected $defaultOptions = [];
-    
+
     /**
      * Dispatcher for customizable events
      * @var EventDispatcher
@@ -244,7 +244,7 @@ class DocumentManager extends ObjectManager
             } else {
                 $query = $repository->deleteOne($document, ['getQuery' => true]);
                 $repositoryId = spl_object_hash($repository);
-                $bulkOperations[$repositoryId] = $bulkOperations[$repositoryId] ?? $repository->createBulkWriteQuery();
+                $bulkOperations[$repositoryId] = isset($bulkOperations[$repositoryId]) ? $bulkOperations[$repositoryId] : $repository->createBulkWriteQuery();
                 $bulkOperations[$repositoryId]->addQuery($query);
             }
         }
@@ -460,7 +460,7 @@ class DocumentManager extends ObjectManager
      * Get dispatcher for customizable events
      *
      * @return  EventDispatcher
-     */ 
+     */
     public function getEventDispatcher()
     {
         return $this->eventDispatcher;

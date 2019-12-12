@@ -2,12 +2,12 @@
 
 namespace JPC\MongoDB\ODM\Query;
 
-use JPC\MongoDB\ODM\Repository;
-use JPC\MongoDB\ODM\Query\Query;
 use JPC\MongoDB\ODM\DocumentManager;
-use JPC\MongoDB\ODM\Exception\MappingException;
-use JPC\MongoDB\ODM\Event\ModelEvent\PreUpdateEvent;
 use JPC\MongoDB\ODM\Event\ModelEvent\PostUpdateEvent;
+use JPC\MongoDB\ODM\Event\ModelEvent\PreUpdateEvent;
+use JPC\MongoDB\ODM\Exception\MappingException;
+use JPC\MongoDB\ODM\Query\Query;
+use JPC\MongoDB\ODM\Repository;
 use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
 
 class UpdateOne extends Query
@@ -61,9 +61,15 @@ class UpdateOne extends Query
         if (empty($this->update)) {
             $event = new PreUpdateEvent($this->documentManager, $this->repository, $this->document);
             $this->documentManager->getEventDispatcher()->dispatch($event, $event::NAME);
-            
+
             $this->update = $this->repository->getUpdateQuery($this->document);
         } else {
+            $modelName = $this->repository->getModelName();
+            if ($this->update instanceof $modelName) {
+                $unhydrated = $this->repository->getHydrator()->unhydrate($this->update);
+                unset($unhydrated['_id']);
+                $this->update = ['$set' => $unhydrated];
+            }
             $queryCaster = $this->repository->getQueryCaster();
             $queryCaster->init($this->update);
             $this->update = $queryCaster->getCastedQuery();
