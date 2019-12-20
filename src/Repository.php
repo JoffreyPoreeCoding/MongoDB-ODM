@@ -2,25 +2,25 @@
 
 namespace JPC\MongoDB\ODM;
 
-use MongoDB\Collection;
+use Doctrine\Common\Cache\ArrayCache;
+use Doctrine\Common\Cache\CacheProvider;
+use Doctrine\Common\Cache\FlushableCache;
 use JPC\MongoDB\ODM\DocumentManager;
+use JPC\MongoDB\ODM\Event\BeforeQueryEvent;
+use JPC\MongoDB\ODM\Event\ModelEvent\PostInsertEvent;
+use JPC\MongoDB\ODM\Event\ModelEvent\PostLoadEvent;
+use JPC\MongoDB\ODM\Event\ModelEvent\PreInsertEvent;
+use JPC\MongoDB\ODM\Id\AbstractIdGenerator;
+use JPC\MongoDB\ODM\Iterator\DocumentIterator;
 use JPC\MongoDB\ODM\Query\BulkWrite;
 use JPC\MongoDB\ODM\Query\DeleteOne;
 use JPC\MongoDB\ODM\Query\InsertOne;
-use JPC\MongoDB\ODM\Query\UpdateOne;
-use Doctrine\Common\Cache\ArrayCache;
 use JPC\MongoDB\ODM\Query\ReplaceOne;
-use JPC\MongoDB\ODM\Tools\QueryCaster;
-use Doctrine\Common\Cache\CacheProvider;
-use Doctrine\Common\Cache\FlushableCache;
-use JPC\MongoDB\ODM\Event\BeforeQueryEvent;
-use JPC\MongoDB\ODM\Event\ModelEvent\PostInsertEvent;
-use JPC\MongoDB\ODM\Id\AbstractIdGenerator;
-use JPC\MongoDB\ODM\Tools\UpdateQueryCreator;
-use JPC\MongoDB\ODM\Iterator\DocumentIterator;
-use JPC\MongoDB\ODM\Event\ModelEvent\PostLoadEvent;
-use JPC\MongoDB\ODM\Event\ModelEvent\PreInsertEvent;
+use JPC\MongoDB\ODM\Query\UpdateOne;
 use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
+use JPC\MongoDB\ODM\Tools\QueryCaster;
+use JPC\MongoDB\ODM\Tools\UpdateQueryCreator;
+use MongoDB\Collection;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
 /**
@@ -570,11 +570,12 @@ class Repository
     {
         $object = null;
         if ($data != null) {
+            $isReadOnly = (isset($options['readOnly']) && $options['readOnly'] == true);
             $id = isset($data['_id']) ? serialize($data['_id']) . $this->getCollection() : null;
             $model = $this->getModelName();
 
             $softHydrate = false;
-            if (null !== $this->documentManager->getObject($id)) {
+            if (!$isReadOnly && null !== $this->documentManager->getObject($id)) {
                 $softHydrate = true;
                 $object = $this->documentManager->getObject($id);
             } else {
@@ -585,7 +586,7 @@ class Repository
 
             $event = new PostLoadEvent($this->documentManager, $this, $object);
             $this->documentManager->getEventDispatcher()->dispatch($event, $event::NAME);
-            if (!isset($options['readOnly']) || $options['readOnly'] != true) {
+            if (!$isReadOnly) {
                 $oid = spl_object_hash($object);
                 $data = $this->hydrator->unhydrate($object);
                 $id = isset($data['_id']) ? serialize($data['_id']) . $this->getCollection() : $oid;
