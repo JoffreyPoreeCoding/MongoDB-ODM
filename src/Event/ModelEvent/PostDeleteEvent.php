@@ -6,5 +6,5 @@ use JPC\MongoDB\ODM\Event\ModelEvent\ModelEvent;
 
 class PostDeleteEvent extends ModelEvent
 {
-    public const NAME = 'model.post_delete';
+    const NAME = 'model.post_delete';
 }

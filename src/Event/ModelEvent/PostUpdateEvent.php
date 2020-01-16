@@ -6,5 +6,5 @@ use JPC\MongoDB\ODM\Event\ModelEvent\ModelEvent;
 
 class PostUpdateEvent extends ModelEvent
 {
-    public const NAME = 'model.post_update';
+    const NAME = 'model.post_update';
 }

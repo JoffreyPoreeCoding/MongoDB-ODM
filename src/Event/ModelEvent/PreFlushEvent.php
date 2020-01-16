@@ -6,5 +6,5 @@ use JPC\MongoDB\ODM\Event\ModelEvent\ModelEvent;
 
 class PreFlushEvent extends ModelEvent
 {
-    public const NAME = 'model.pre_flush';
+    const NAME = 'model.pre_flush';
 }

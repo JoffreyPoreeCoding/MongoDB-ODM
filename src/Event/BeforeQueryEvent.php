@@ -9,7 +9,7 @@ use Symfony\Contracts\EventDispatcher\Event;
 
 class BeforeQueryEvent extends Event
 {
-    public const NAME = 'query.before';
+    const NAME = 'query.before';
 
     /**
      * @var Query
@@ -37,7 +37,7 @@ class BeforeQueryEvent extends Event
      * Get the value of query
      *
      * @return  Query
-     */ 
+     */
     public function getQuery()
     {
         return $this->query;
@@ -47,7 +47,7 @@ class BeforeQueryEvent extends Event
      * Get the value of documentManager
      *
      * @return  DocumentManager
-     */ 
+     */
     public function getDocumentManager()
     {
         return $this->documentManager;
@@ -57,7 +57,7 @@ class BeforeQueryEvent extends Event
      * Get the value of repository
      *
      * @return  Repository
-     */ 
+     */
     public function getRepository()
     {
         return $this->repository;

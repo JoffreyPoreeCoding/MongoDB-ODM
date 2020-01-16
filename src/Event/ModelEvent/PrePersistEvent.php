@@ -6,5 +6,5 @@ use JPC\MongoDB\ODM\Event\ModelEvent\ModelEvent;
 
 class PrePersistEvent extends ModelEvent
 {
-    public const NAME = 'model.pre_persist';
+    const NAME = 'model.pre_persist';
 }

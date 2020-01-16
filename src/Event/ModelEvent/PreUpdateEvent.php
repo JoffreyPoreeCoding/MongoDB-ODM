@@ -6,5 +6,5 @@ use JPC\MongoDB\ODM\Event\ModelEvent\ModelEvent;
 
 class PreUpdateEvent extends ModelEvent
 {
-    public const NAME = 'model.pre_update';
+    const NAME = 'model.pre_update';
 }
