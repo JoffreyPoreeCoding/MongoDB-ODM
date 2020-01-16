@@ -13,14 +13,14 @@
     "license": "MIT",
     "require": {
         "php": ">=7.1",
-        "doctrine/annotations": "^^1.6",
+        "doctrine/annotations": "^1.6",
         "doctrine/cache": "^1.8",
         "mongodb/mongodb": "^1.4",
         "symfony/event-dispatcher": "^4.3"
     },
     "require-dev": {
-        "symfony/var-dumper": "^3.4|^4.2",
-        "phpunit/phpunit": "^5.7|^8.1"
+        "symfony/var-dumper": "^4.2",
+        "phpunit/phpunit": "^8.1"
     },
     "authors": [
         {
