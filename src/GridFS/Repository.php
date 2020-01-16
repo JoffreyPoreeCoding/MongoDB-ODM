@@ -2,6 +2,7 @@
 
 namespace JPC\MongoDB\ODM\GridFS;
 
+use Doctrine\Common\Cache\CacheProvider;
 use JPC\MongoDB\ODM\DocumentManager;
 use JPC\MongoDB\ODM\Event\BeforeQueryEvent;
 use JPC\MongoDB\ODM\Event\ModelEvent\PostDeleteEvent;
@@ -302,7 +303,7 @@ class Repository extends BaseRepository
     public function insertOne($document, $options = [])
     {
         $event = new PreInsertEvent($this->documentManager, $this, $document);
-        $this->eventDispatcher->dispatch($event);
+        $this->eventDispatcher->dispatch($event, PreInsertEvent::NAME);
 
         $objectDatas = $this->hydrator->unhydrate($document);
 
@@ -327,7 +328,7 @@ class Repository extends BaseRepository
         $this->hydrator->hydrate($document, $data, true);
 
         $event = new PostInsertEvent($this->documentManager, $this, $document);
-        $this->eventDispatcher->dispatch($event);
+        $this->eventDispatcher->dispatch($event, PostInsertEvent::NAME);
 
         $this->documentManager->setObjectState($document, ObjectManager::OBJ_MANAGED);
         $this->cacheObject($document);
@@ -363,7 +364,7 @@ class Repository extends BaseRepository
     public function deleteOne($document, $options = [])
     {
         $event = new PreDeleteEvent($this->documentManager, $this, $document);
-        $this->eventDispatcher->dispatch($event);
+        $this->eventDispatcher->dispatch($event, PreDeleteEvent::NAME);
 
         $unhydratedObject = $this->hydrator->unhydrate($document);
 
@@ -375,7 +376,7 @@ class Repository extends BaseRepository
         $this->bucket->delete($id);
 
         $event = new PostDeleteEvent($this->documentManager, $this, $document);
-        $this->eventDispatcher->dispatch($event);
+        $this->eventDispatcher->dispatch($event, PostDeleteEvent::NAME);
 
         if (is_object($document)) {
             $this->documentManager->removeObject($document);
