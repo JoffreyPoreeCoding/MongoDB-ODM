@@ -92,7 +92,7 @@ class DocumentManager extends ObjectManager
         }
 
         $this->options = $options;
-        $this->eventDispatcher = $eventDispatcher ?? new EventDispatcher();
+        $this->eventDispatcher = isset($eventDispatcher) ? $eventDispatcher : new EventDispatcher();
         $this->client = $client;
         $this->database = $database;
         $this->repositoryFactory = isset($repositoryFactory) ? $repositoryFactory : new RepositoryFactory($this->eventDispatcher);

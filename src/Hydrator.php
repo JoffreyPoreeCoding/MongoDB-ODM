@@ -66,7 +66,7 @@ class Hydrator
      */
     public function hydrate(&$object, $data, $soft = false, $maxReferenceDepth = 10)
     {
-        $strategy = $this->documentManager->getOptions()['hydratorStrategy'] ?? self::STRAT_SETTERS;
+        $strategy = isset($this->documentManager->getOptions()['hydratorStrategy']) ? $this->documentManager->getOptions()['hydratorStrategy'] : self::STRAT_SETTERS;
         $reflectionClass = new \ReflectionClass($this->classMetadata->getName());
         if ($data instanceof \MongoDB\Model\BSONArray || $data instanceof \MongoDB\Model\BSONDocument) {
             $data = (array) $data;

@@ -58,7 +58,7 @@ class Repository extends BaseRepository
         EventDispatcher $eventDispatcher,
         Bucket $bucket = null
     ) {
-        $uqc = $uqc ?? new GridFSUpdateQueryCreator();
+        $uqc = isset($uqc) ?: new GridFSUpdateQueryCreator();
         parent::__construct($documentManager, $collection, $classMetadata, $hydrator, $queryCaster, $uqc, $objectCache, $lastProjectionCache, $eventDispatcher);
 
         if ($this->modelName !== Document::class && !is_subclass_of($this->modelName, Document::class)) {

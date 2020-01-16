@@ -40,11 +40,11 @@ class ModelEventSubscriber implements EventSubscriberInterface
         $classMetadata = $event->getRepository()->getClassMetadata();
 
         $modelEvents = $classMetadata->getEvents();
-        $currentModelEvents = $modelEvents[$event::NAME] ?? [];
+        $currentModelEvents = isset($modelEvents[$event::NAME]) ? $modelEvents[$event::NAME] : [];
 
         $document = $event->getDocument();
-        if(isset($document)){
-            while(false !== ($modelEvent = current($currentModelEvents)) && !$event->isPropagationStopped()){
+        if (isset($document)) {
+            while (false !== ($modelEvent = current($currentModelEvents)) && !$event->isPropagationStopped()) {
                 call_user_func([$document, $modelEvent], $event);
                 next($currentModelEvents);
             }
