@@ -79,7 +79,7 @@ class ClassMetadataFactory
      */
     private function loadMetadataForClass($className)
     {
-        $classMetadatas = new ClassMetadata($className);
+        $classMetadatas = new ClassMetadata($className, $this->annotationReader);
         return $classMetadatas;
     }
 }

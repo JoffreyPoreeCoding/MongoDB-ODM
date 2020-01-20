@@ -5,6 +5,7 @@ namespace JPC\MongoDB\ODM\Tools\ClassMetadata;
 use Doctrine\Common\Annotations\Annotation;
 use Doctrine\Common\Annotations\AnnotationReader;
 use Doctrine\Common\Annotations\CachedReader;
+use Doctrine\Common\Annotations\Reader;
 use Doctrine\Common\Cache\ApcuCache;
 use JPC\MongoDB\ODM\Tools\ClassMetadata\Info\CollectionInfo;
 use JPC\MongoDB\ODM\Tools\ClassMetadata\Info\PropertyInfo;
@@ -22,7 +23,7 @@ class ClassMetadata
 
     /**
      * Annotation Reader
-     * @var     AnnotationReader
+     * @var     Reader
      */
     private $reader;
 
@@ -78,9 +79,9 @@ class ClassMetadata
      * Create new ClassMetadata
      *
      * @param   string              $className          Name of the class
-     * @param   AnnotationReader    $reader             Annotation reader
+     * @param   Reader    $reader             Annotation reader
      */
-    public function __construct($className, $reader = null)
+    public function __construct(string $className, Reader $reader = null)
     {
         $this->reader = isset($reader) ? $reader : new CachedReader(new AnnotationReader(), new ApcuCache(), false);
         $this->name = $className;

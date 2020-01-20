@@ -43,7 +43,7 @@ class ModelEventSubscriber implements EventSubscriberInterface
         $currentModelEvents = isset($modelEvents[$event::NAME]) ? $modelEvents[$event::NAME] : [];
 
         $document = $event->getDocument();
-        if (isset($document)) {
+        if (isset($document) && is_object($document)) {
             while (false !== ($modelEvent = current($currentModelEvents)) && !$event->isPropagationStopped()) {
                 call_user_func([$document, $modelEvent], $event);
                 next($currentModelEvents);
