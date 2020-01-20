@@ -5,11 +5,11 @@ namespace JPC\MongoDB\ODM\Tools\ClassMetadata;
 use Doctrine\Common\Annotations\Annotation;
 use Doctrine\Common\Annotations\AnnotationReader;
 use Doctrine\Common\Annotations\CachedReader;
+use Doctrine\Common\Annotations\Reader;
 use Doctrine\Common\Cache\ApcuCache;
 use JPC\MongoDB\ODM\Tools\ClassMetadata\Info\CollectionInfo;
 use JPC\MongoDB\ODM\Tools\ClassMetadata\Info\PropertyInfo;
 use JPC\MongoDB\ODM\Tools\ClassMetadata\Info\ReferenceInfo;
-use JPC\MongoDB\ODM\Tools\EventManager;
 
 /**
  * Parse and store all info about a class to map
@@ -23,7 +23,7 @@ class ClassMetadata
 
     /**
      * Annotation Reader
-     * @var     AnnotationReader
+     * @var     Reader
      */
     private $reader;
 
@@ -65,9 +65,9 @@ class ClassMetadata
 
     /**
      * Event information
-     * @var EventInfo
+     * @var array
      */
-    private $eventManager;
+    private $events;
 
     /**
      * Generator class for ids
@@ -79,9 +79,9 @@ class ClassMetadata
      * Create new ClassMetadata
      *
      * @param   string              $className          Name of the class
-     * @param   AnnotationReader    $reader             Annotation reader
+     * @param   Reader    $reader             Annotation reader
      */
-    public function __construct($className, $reader = null)
+    public function __construct(string $className, Reader $reader = null)
     {
         $this->reader = isset($reader) ? $reader : new CachedReader(new AnnotationReader(), new ApcuCache(), false);
         $this->name = $className;
@@ -287,15 +287,15 @@ class ClassMetadata
     /**
      * Get the event manager
      *
-     * @return EventManager
+     * @return array
      */
-    public function getEventManager()
+    public function getEvents()
     {
         if (!$this->loaded) {
             $this->load();
         }
 
-        return $this->eventManager;
+        return $this->events;
     }
 
     /**
@@ -333,7 +333,7 @@ class ClassMetadata
             }
         }
 
-        $this->eventManager = new EventManager();
+        $this->events = [];
         if ($this->hasEvent) {
             $methods = $reflectionClass->getMethods();
             foreach ($methods as $method) {
@@ -341,7 +341,7 @@ class ClassMetadata
                 if (!empty($annotations)) {
                     foreach ($annotations as $annotation) {
                         if (in_array('JPC\MongoDB\ODM\Annotations\Event\Event', class_implements($annotation))) {
-                            $this->eventManager->add($annotation, $method->getName());
+                            $this->events['model.' . $annotation->getName()][] = $method->getName();
                         }
                     }
                 }

@@ -7,7 +7,6 @@ use JPC\MongoDB\ODM\Hydrator;
 use JPC\MongoDB\ODM\Repository;
 use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
 use JPC\MongoDB\ODM\Tools\ClassMetadata\Info\PropertyInfo;
-use JPC\MongoDB\ODM\Tools\EventManager;
 use JPC\MongoDB\ODM\Tools\QueryCaster;
 use JPC\MongoDB\ODM\Tools\UpdateQueryCreator;
 use JPC\Test\MongoDB\ODM\Framework\TestCase;
@@ -16,6 +15,7 @@ use MongoDB\DeleteResult;
 use MongoDB\InsertManyResult;
 use MongoDB\InsertOneResult;
 use MongoDB\UpdateResult;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 
 class RepositoryTest extends TestCase
 {
@@ -33,12 +33,17 @@ class RepositoryTest extends TestCase
     private $updateQueryCreatorMock;
 
     private $repositoryMockBuilder;
+   
+    private $eventDispatcherMock;
 
     public function setUp()
     {
         parent::setup();
+        $this->eventDispatcherMock = $this->createMock(EventDispatcher::class);
+
         $this->documentManagerMock = $this->createMock(DocumentManager::class);
         $this->documentManagerMock->method('getDefaultOptions')->willReturn(['iterator' => true]);
+        $this->documentManagerMock->method('getEventDispatcher')->willReturn($this->eventDispatcherMock);
 
         $this->collectionMock = $this->createMock(Collection::class);
         $this->classMetadataMock = $this->createMock(ClassMetadata::class);
@@ -46,11 +51,8 @@ class RepositoryTest extends TestCase
         $this->queryCasterMock = $this->createMock(QueryCaster::class);
         $this->updateQueryCreatorMock = $this->createMock(UpdateQueryCreator::class);
 
-        $eventManagerMock = $this->createMock(EventManager::class);
-        $this->classMetadataMock->method('getEventManager')->willReturn($eventManagerMock);
-
         $this->repositoryMockBuilder = $this->getMockBuilder(Repository::class)
-            ->setConstructorArgs([$this->documentManagerMock, $this->collectionMock, $this->classMetadataMock, $this->hydratorMock, $this->queryCasterMock, $this->updateQueryCreatorMock])
+            ->setConstructorArgs([$this->documentManagerMock, $this->collectionMock, $this->classMetadataMock, $this->hydratorMock, $this->queryCasterMock, $this->updateQueryCreatorMock, null, null, $this->eventDispatcherMock])
             ->disableOriginalClone()
             ->disableArgumentCloning()
             ->disallowMockingUnknownTypes();
@@ -417,9 +419,9 @@ class RepositoryTest extends TestCase
         $this->classMetadataMock->method("getName")->willReturn("stdClass");
         $repository = $this->repositoryMockBuilder->setMethods(["castQuery", "getUpdateQuery"])->getMock();
 
-        $this->hydratorMock->expects($this->exactly(2))->method("unhydrate")->willReturn(["_id" => 1]);
+        $this->hydratorMock->expects($this->exactly(1))->method("unhydrate")->willReturn(["_id" => 1]);
 
-        $repository->expects($this->exactly(2))->method("getUpdateQuery")->willReturn(["update" => "value"]);
+        $repository->expects($this->exactly(1))->method("getUpdateQuery")->willReturn(["update" => "value"]);
         $repository->expects($this->any())->method("castQuery");
 
         $result = $this->createMock(UpdateResult::class);

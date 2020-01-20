@@ -18,7 +18,7 @@ abstract class Query
      *
      * @var DocumentManager
      */
-    protected $dm;
+    protected $documentManager;
 
     /**
      * Repository
@@ -34,9 +34,9 @@ abstract class Query
      */
     protected $document;
 
-    public function __construct(DocumentManager $dm, Repository $repository, $document)
+    public function __construct(DocumentManager $documentManager, Repository $repository, $document)
     {
-        $this->dm = $dm;
+        $this->documentManager = $documentManager;
         $this->repository = $repository;
         $this->document = $document;
     }

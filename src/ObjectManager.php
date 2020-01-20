@@ -66,6 +66,7 @@ class ObjectManager
         if (isset($this->objectsRepository[$oid])) {
             $repository = $this->objectsRepository[$oid];
             $data = $repository->getHydrator()->unhydrate($object);
+            $repository->removeObjectCache($object);
         }
         $id = isset($data['_id']) ? serialize($data['_id']) . $repository->getCollection() : $oid;
 

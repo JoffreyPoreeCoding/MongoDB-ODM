@@ -2,13 +2,17 @@
 
 namespace JPC\MongoDB\ODM;
 
+use JPC\MongoDB\ODM\Event\ModelEvent\PostFlushEvent;
+use JPC\MongoDB\ODM\Event\ModelEvent\PostPersistEvent;
+use JPC\MongoDB\ODM\Event\ModelEvent\PreFlushEvent;
+use JPC\MongoDB\ODM\Event\ModelEvent\PrePersistEvent;
 use JPC\MongoDB\ODM\Factory\RepositoryFactory;
 use JPC\MongoDB\ODM\GridFS\Repository as GridFSRepository;
 use JPC\MongoDB\ODM\ObjectManager;
 use JPC\MongoDB\ODM\Repository;
-use JPC\MongoDB\ODM\Tools\EventManager;
 use MongoDB\Client as MongoClient;
 use MongoDB\Database as MongoDatabase;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 
 /**
  * MongoDB Documents manager
@@ -54,6 +58,12 @@ class DocumentManager extends ObjectManager
     protected $defaultOptions = [];
 
     /**
+     * Dispatcher for customizable events
+     * @var EventDispatcher
+     */
+    protected $eventDispatcher;
+
+    /**
      * Create new DocumentManager
      * @param MongoClient               $client             MongoClient for connection
      * @param MongoDatabase             $database           MongoDatabase object
@@ -61,6 +71,7 @@ class DocumentManager extends ObjectManager
      * @param boolean                   $debug              Enable or not the debug mode
      * @param array                     $options            ODM Options
      * @param array                     $defaultOptions     Default options for commands
+     * @param EventDispatcher           $eventDispatcher    Dispatcher for customizable events
      *
      * Available options :
      *  * hydratorStrategy : Hydrator::SETTERS, Hydrator::ATTRIBUTES
@@ -72,7 +83,8 @@ class DocumentManager extends ObjectManager
         RepositoryFactory $repositoryFactory = null,
         $debug = false,
         $options = [],
-        $defaultOptions = []
+        $defaultOptions = [],
+        EventDispatcher $eventDispatcher = null
     ) {
         $this->debug = $debug;
         if ($this->debug) {
@@ -80,10 +92,11 @@ class DocumentManager extends ObjectManager
         }
 
         $this->options = $options;
+        $this->eventDispatcher = isset($eventDispatcher) ? $eventDispatcher : new EventDispatcher();
         $this->client = $client;
         $this->database = $database;
-        $this->repositoryFactory = isset($repositoryFactory) ? $repositoryFactory : new RepositoryFactory();
-        $this->objectManager = isset($objectManager) ? $objectManager : new ObjectManager();
+        $this->repositoryFactory = isset($repositoryFactory) ? $repositoryFactory : new RepositoryFactory($this->eventDispatcher);
+        $this->objectManager = new ObjectManager();
     }
 
     /**
@@ -109,9 +122,11 @@ class DocumentManager extends ObjectManager
     public function persist($object, $collection = null)
     {
         $repository = $this->getRepository(get_class($object), $collection);
-        $repository->getClassMetadata()->getEventManager()->execute(EventManager::EVENT_PRE_PERSIST, $object);
+        $event = new PrePersistEvent($this, $repository, $object);
+        $this->eventDispatcher->dispatch($event, $event::NAME);
         $this->addObject($object, ObjectManager::OBJ_NEW, $repository);
-        $repository->getClassMetadata()->getEventManager()->execute(EventManager::EVENT_POST_PERSIST, $object);
+        $event = new PostPersistEvent($this, $repository, $object);
+        $this->eventDispatcher->dispatch($event, $event::NAME);
 
         return $this;
     }
@@ -229,14 +244,15 @@ class DocumentManager extends ObjectManager
             } else {
                 $query = $repository->deleteOne($document, ['getQuery' => true]);
                 $repositoryId = spl_object_hash($repository);
-                $bulkOperations[$repositoryId] = $bulkOperations[$repositoryId] ?? $repository->createBulkWriteQuery();
+                $bulkOperations[$repositoryId] = isset($bulkOperations[$repositoryId]) ? $bulkOperations[$repositoryId] : $repository->createBulkWriteQuery();
                 $bulkOperations[$repositoryId]->addQuery($query);
             }
         }
 
         foreach (array_merge($insert, $update, $remove) as $id => $document) {
             $repository = $this->getObjectRepository($document);
-            $repository->getClassMetadata()->getEventManager()->execute(EventManager::EVENT_PRE_FLUSH, $document);
+            $event = new PreFlushEvent($this, $repository, $document);
+            $this->eventDispatcher->dispatch($event, $event::NAME);
         }
 
         foreach ($bulkOperations as $bulkOperation) {
@@ -245,7 +261,8 @@ class DocumentManager extends ObjectManager
 
         foreach (array_merge($insert, $update) as $id => $document) {
             $repository = $this->getObjectRepository($document);
-            $repository->getClassMetadata()->getEventManager()->execute(EventManager::EVENT_POST_FLUSH, $document);
+            $event = new PostFlushEvent($this, $repository, $document);
+            $this->eventDispatcher->dispatch($event, $event::NAME);
             $repository->cacheObject($document);
         }
 
@@ -437,5 +454,15 @@ class DocumentManager extends ObjectManager
         $this->options = $options;
 
         return $this;
+    }
+
+    /**
+     * Get dispatcher for customizable events
+     *
+     * @return  EventDispatcher
+     */
+    public function getEventDispatcher()
+    {
+        return $this->eventDispatcher;
     }
 }

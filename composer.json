@@ -12,15 +12,15 @@
     "homepage" : "https://github.com/JoffreyPoreeCoding/MongoDB-ODM",
     "license": "MIT",
     "require": {
-        "php": ">=5.5",
-        "doctrine/annotations": "^1.4|^1.6",
-        "doctrine/cache": "^1.6|^1.7|^1.8",
-        "mongodb/mongodb": "^1.4",
-        "symfony/event-dispatcher": "^4.2"
+        "php": ">=7.1",
+        "doctrine/annotations": "^1.8",
+        "doctrine/cache": "^1.8",
+        "mongodb/mongodb": "^1.5",
+        "symfony/event-dispatcher": "^4.4"
     },
     "require-dev": {
-        "symfony/var-dumper": "^3.4|^4.2",
-        "phpunit/phpunit": "^5.7|^8.1"
+        "symfony/var-dumper": "^4.2",
+        "phpunit/phpunit": "^7.5"
     },
     "authors": [
         {

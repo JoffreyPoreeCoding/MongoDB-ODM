@@ -15,11 +15,11 @@ abstract class AbstractIdGenerator
     /**
      * Create an ID
      *
-     * @param   DocumentManager     $dm         Document manager of document
+     * @param   DocumentManager     $documentManager         Document manager of document
      * @param   object              $document   Document on wich the ID will be created
      * @return  mixed                         The ID
      *
      * @abstract
      */
-    abstract public function generate(DocumentManager $dm, $document);
+    abstract public function generate(DocumentManager $documentManager, $document);
 }

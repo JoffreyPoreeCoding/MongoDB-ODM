@@ -2,13 +2,14 @@
 
 namespace JPC\MongoDB\ODM\Query;
 
+use JPC\MongoDB\ODM\Repository;
+use JPC\MongoDB\ODM\Query\Query;
+use JPC\MongoDB\ODM\ObjectManager;
 use JPC\MongoDB\ODM\DocumentManager;
 use JPC\MongoDB\ODM\Id\AbstractIdGenerator;
-use JPC\MongoDB\ODM\ObjectManager;
-use JPC\MongoDB\ODM\Query\Query;
-use JPC\MongoDB\ODM\Repository;
+use JPC\MongoDB\ODM\Event\ModelEvent\PreInsertEvent;
+use JPC\MongoDB\ODM\Event\ModelEvent\PostInsertEvent;
 use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
-use JPC\MongoDB\ODM\Tools\EventManager;
 
 class InsertOne extends Query
 {
@@ -26,9 +27,9 @@ class InsertOne extends Query
      */
     protected $classMetadata;
 
-    public function __construct(DocumentManager $dm, Repository $repository, $document, $options = [])
+    public function __construct(DocumentManager $documentManager, Repository $repository, $document, $options = [])
     {
-        parent::__construct($dm, $repository, $document);
+        parent::__construct($documentManager, $repository, $document);
         $this->options = $options;
         $this->classMetadata = $repository->getClassMetadata();
     }
@@ -40,7 +41,8 @@ class InsertOne extends Query
 
     public function beforeQuery()
     {
-        $this->classMetadata->getEventManager()->execute(EventManager::EVENT_PRE_INSERT, $this->document);
+        $event = new PreInsertEvent($this->documentManager, $this->repository, $this->document);
+        $this->documentManager->getEventDispatcher()->dispatch($event, $event::NAME);
 
         $idGen = $this->classMetadata->getIdGenerator();
         if ($idGen !== null) {
@@ -48,7 +50,7 @@ class InsertOne extends Query
                 throw new \Exception('Bad ID generator : class \'' . $idGen . '\' not exists or not extends JPC\MongoDB\ODM\Id\AbstractIdGenerator');
             }
             $generator = new $idGen();
-            $this->id = $generator->generate($this->dm, $this->document);
+            $this->id = $generator->generate($this->documentManager, $this->document);
         }
     }
 
@@ -80,10 +82,11 @@ class InsertOne extends Query
             }
 
             $this->repository->getHydrator()->hydrate($this->document, ['_id' => $result['id']], true);
-            $this->classMetadata->getEventManager()->execute(EventManager::EVENT_POST_INSERT, $this->document);
-            if ($this->dm->hasObject($this->document)) {
+            $event = new PostInsertEvent($this->documentManager, $this->repository, $this->document);
+            $this->documentManager->getEventDispatcher()->dispatch($event, $event::NAME);
+            if ($this->documentManager->hasObject($this->document)) {
                 $this->repository->cacheObject($this->document);
-                $this->dm->setObjectState($this->document, ObjectManager::OBJ_MANAGED);
+                $this->documentManager->setObjectState($this->document, ObjectManager::OBJ_MANAGED);
             }
         }
     }
@@ -92,7 +95,7 @@ class InsertOne extends Query
     {
         $document = $this->repository->getHydrator()->unhydrate($this->document);
 
-        if ($this->id !== null) {
+        if ($this->id !== null && !isset($document['_id'])) {
             $document['_id'] = $this->id;
         }
 

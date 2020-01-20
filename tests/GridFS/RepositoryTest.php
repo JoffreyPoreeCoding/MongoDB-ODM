@@ -6,13 +6,13 @@ use JPC\MongoDB\ODM\DocumentManager;
 use JPC\MongoDB\ODM\GridFS\Hydrator;
 use JPC\MongoDB\ODM\GridFS\Repository;
 use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
-use JPC\MongoDB\ODM\Tools\EventManager;
 use JPC\MongoDB\ODM\Tools\QueryCaster;
 use JPC\MongoDB\ODM\Tools\UpdateQueryCreator;
 use JPC\Test\MongoDB\ODM\Framework\TestCase;
 use JPC\Test\MongoDB\ODM\GridFS\Model\GridFSObjectMapping;
 use MongoDB\Collection;
 use MongoDB\GridFS\Bucket;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 
 class RepositoryTest extends TestCase
 {
@@ -24,13 +24,17 @@ class RepositoryTest extends TestCase
     private $queryCaster;
     private $updateQueryCreator;
     private $bucket;
+    private $eventDispatcherMock;
 
     private $repository;
 
     public function setUp()
     {
+        $this->eventDispatcherMock = $this->createMock(EventDispatcher::class);
+
         $this->documentManager = $this->createMock(DocumentManager::class);
         $this->documentManager->method('getDefaultOptions')->willReturn(['iterator' => true]);
+        $this->documentManager->method('getEventDispatcher')->willReturn($this->eventDispatcherMock);
 
         $this->collection = $this->createMock(Collection::class);
         $this->classMetadata = $this->createMock(ClassMetadata::class);
@@ -39,12 +43,10 @@ class RepositoryTest extends TestCase
         $this->updateQueryCreator = $this->createMock(UpdateQueryCreator::class);
         $this->bucket = $this->createMock(Bucket::class);
 
-        $eventManagerMock = $this->createMock(EventManager::class);
-        $this->classMetadata->method('getEventManager')->willReturn($eventManagerMock);
         $this->classMetadata->method("getName")->willReturn("JPC\Test\MongoDB\ODM\GridFS\Model\GridFSObjectMapping");
         $this->classMetadata->method("getBucketName")->willReturn("test");
 
-        $this->repository = new Repository($this->documentManager, $this->collection, $this->classMetadata, $this->hydrator, $this->queryCaster, $this->updateQueryCreator, null, $this->bucket);
+        $this->repository = new Repository($this->documentManager, $this->collection, $this->classMetadata, $this->hydrator, $this->queryCaster, $this->updateQueryCreator, null, null, new EventDispatcher(), $this->bucket);
     }
 
     public function testGetBucket()

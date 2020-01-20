@@ -14,11 +14,11 @@ class AutoGenerator
     /**
      * Create a MongoDB\BSON\ObjectId
      *
-     * @param   DocumentManager     $dm         Document manager of document
+     * @param   DocumentManager     $documentManager         Document manager of document
      * @param   object              $document   Document on wich the ID will be created
      * @return  ObjectId                        The ID
      */
-    public function generate(DocumentManager $dm, $document)
+    public function generate(DocumentManager $documentManager, $document)
     {
         return new ObjectId();
     }

@@ -13,9 +13,9 @@ class BulkWrite extends Query
 
     protected $options;
 
-    public function __construct(DocumentManager $dm, Repository $repository, array $queries = [], array $options = [])
+    public function __construct(DocumentManager $documentManager, Repository $repository, array $queries = [], array $options = [])
     {
-        parent::__construct($dm, $repository, null);
+        parent::__construct($documentManager, $repository, null);
         $this->queries = $queries;
         $this->options = $options;
     }

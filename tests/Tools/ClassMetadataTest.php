@@ -68,7 +68,7 @@ class ClassMetadataTest extends TestCase
 
     public function testGetEventManager()
     {
-        $this->assertEquals(["pre_persist" => ["event"]], $this->classMetadata->getEventManager()->getEvents());
+        $this->assertEquals(["model.pre_persist" => ["event"]], $this->classMetadata->getEvents());
     }
 }
 

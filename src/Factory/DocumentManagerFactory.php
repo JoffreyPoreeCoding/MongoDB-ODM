@@ -3,8 +3,10 @@
 namespace JPC\MongoDB\ODM\Factory;
 
 use JPC\MongoDB\ODM\DocumentManager;
+use JPC\MongoDB\ODM\Subscriber\ModelEventSubscriber;
 use MongoDB\Client;
 use MongoDB\Database;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 
 /**
  * Factory to create document manager easily
@@ -16,25 +18,25 @@ class DocumentManagerFactory
      * Repository factory class
      * @var string
      */
-    private $repositoryFactoryClass;
+    protected $repositoryFactoryClass;
 
     /**
      * Already opened connexions
      * @var Client
      */
-    private $connexions = [];
+    protected $connexions = [];
 
     /**
      * Already created document managers
      * @var DocumentManager
      */
-    private $managers = [];
+    protected $managers = [];
 
     /**
      * Class metadata factory
      * @var ClassMetadataFactory
      */
-    private $classMetadataFactory;
+    protected $classMetadataFactory;
 
     /**
      * Create a document manager factory
@@ -67,11 +69,20 @@ class DocumentManagerFactory
         }
 
         if (!isset($this->managers[$managerId])) {
-            $database = new Database($client->getManager(), $dbName);
+            $database = new Database($client->getManager(), $dbName, $options);
 
             $class = $this->repositoryFactoryClass;
 
-            $repositoryFactory = new $class(null, $this->classMetadataFactory);
+            $eventDispatcher = new EventDispatcher();
+            if (isset($options['event_subscribers'])) {
+                foreach ($options['event_subscribers'] as $subscriber) {
+                    $eventDispatcher->addSubscriber($subscriber);
+                }
+            }
+            $modelEventSubscriber = new ModelEventSubscriber();
+            $eventDispatcher->addSubscriber($modelEventSubscriber);
+
+            $repositoryFactory = new $class($eventDispatcher, null, $this->classMetadataFactory);
 
             $this->managers[$managerId] = new DocumentManager(
                 $client,
@@ -79,7 +90,8 @@ class DocumentManagerFactory
                 $repositoryFactory,
                 $debug,
                 $options,
-                []
+                [],
+                $eventDispatcher
             );
         }
 

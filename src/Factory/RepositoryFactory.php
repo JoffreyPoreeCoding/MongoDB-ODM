@@ -10,12 +10,20 @@ use JPC\MongoDB\ODM\Factory\ClassMetadataFactory;
 use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
 use JPC\MongoDB\ODM\Tools\QueryCaster;
 use MongoDB\Collection;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 
 /**
  * Repository factory
  */
 class RepositoryFactory
 {
+
+    /**
+     * Dispatcher for event
+     *
+     * @var EventDispatcher
+     */
+    protected $eventDispatcher;
 
     /**
      * Already created repositories
@@ -37,8 +45,9 @@ class RepositoryFactory
      * @param Cache|null                $cache                Cache used to store repositories
      * @param ClassMetadataFactory|null $classMetadataFactory Factory that will create class Metadata
      */
-    public function __construct(Cache $cache = null, ClassMetadataFactory $classMetadataFactory = null)
+    public function __construct(EventDispatcher $eventDispatcher, Cache $cache = null, ClassMetadataFactory $classMetadataFactory = null)
     {
+        $this->eventDispatcher = $eventDispatcher;
         $this->cache = isset($cache) ? $cache : new ArrayCache();
         $this->classMetadataFactory = isset($classMetadataFactory) ? $classMetadataFactory : new ClassMetadataFactory();
     }
@@ -92,9 +101,9 @@ class RepositoryFactory
         if (isset($bucketName)) {
             $bucket = $documentManager->getDatabase()->selectGridFSBucket(["bucketName" => $bucketName]);
 
-            $repository = new $repositoryClass($documentManager, $collection, $classMetadata, $hydrator, $queryCaster, null, $repositoryCache, $bucket);
+            $repository = new $repositoryClass($documentManager, $collection, $classMetadata, $hydrator, $queryCaster, null, $repositoryCache, null, $this->eventDispatcher, $bucket);
         } else {
-            $repository = new $repositoryClass($documentManager, $collection, $classMetadata, $hydrator, $queryCaster, null, $repositoryCache);
+            $repository = new $repositoryClass($documentManager, $collection, $classMetadata, $hydrator, $queryCaster, null, $repositoryCache, null, $this->eventDispatcher);
         }
         $this->cache->save($repIndex, $repository, 120);
 
@@ -109,21 +118,23 @@ class RepositoryFactory
      * @param   string              $collectionName     Name of collection
      * @return  Collection
      */
-    private function createCollection(DocumentManager $documentManager, ClassMetadata $classMetadata, $collectionName)
+    protected function createCollection(DocumentManager $documentManager, ClassMetadata $classMetadata, $collectionName)
     {
 
         $database = $documentManager->getDatabase();
 
-        $exists = false;
-        foreach ($database->listCollections() as $collection) {
-            if ($collection->getName() == $collectionName) {
-                $exists = true;
-            }
-        }
-
         $creationOptions = $classMetadata->getCollectionCreationOptions();
-        if (!empty($creationOptions) && !$exists) {
-            $database->createCollection($collectionName, $creationOptions);
+        if (!empty($creationOptions)) {
+            $exists = false;
+
+            foreach ($database->listCollections() as $collection) {
+                if ($collection->getName() == $collectionName) {
+                    $exists = true;
+                }
+            }
+            if (!$exists) {
+                $database->createCollection($collectionName, $creationOptions);
+            }
         }
 
         $collectionOptions = $classMetadata->getCollectionOptions();

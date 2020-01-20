@@ -6,6 +6,10 @@ use Doctrine\Common\Cache\ArrayCache;
 use Doctrine\Common\Cache\CacheProvider;
 use Doctrine\Common\Cache\FlushableCache;
 use JPC\MongoDB\ODM\DocumentManager;
+use JPC\MongoDB\ODM\Event\BeforeQueryEvent;
+use JPC\MongoDB\ODM\Event\ModelEvent\PostInsertEvent;
+use JPC\MongoDB\ODM\Event\ModelEvent\PostLoadEvent;
+use JPC\MongoDB\ODM\Event\ModelEvent\PreInsertEvent;
 use JPC\MongoDB\ODM\Id\AbstractIdGenerator;
 use JPC\MongoDB\ODM\Iterator\DocumentIterator;
 use JPC\MongoDB\ODM\Query\BulkWrite;
@@ -14,10 +18,10 @@ use JPC\MongoDB\ODM\Query\InsertOne;
 use JPC\MongoDB\ODM\Query\ReplaceOne;
 use JPC\MongoDB\ODM\Query\UpdateOne;
 use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
-use JPC\MongoDB\ODM\Tools\EventManager;
 use JPC\MongoDB\ODM\Tools\QueryCaster;
 use JPC\MongoDB\ODM\Tools\UpdateQueryCreator;
 use MongoDB\Collection;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 
 /**
  * Allow to find, delete, document in MongoDB
@@ -82,17 +86,25 @@ class Repository
     protected $lastProjectionCache;
 
     /**
+     * Dispatcher for customizable events
+     * @var EventDispatcher
+     */
+    protected $eventDispatcher;
+
+    /**
      * Create a repository
      *
-     * @param   DocumentManager     $documentManager    Document manager
-     * @param   Collection          $collection         MongoDB Collection
-     * @param   ClassMetadata       $classMetadata      Class metadata
-     * @param   Hydrator            $hydrator           Object hydrator
-     * @param   QueryCaster         $queryCaster        Query caster
-     * @param   UpdateQueryCreator  $uqc                Update query Creator
-     * @param   CacheProvider       $objectCache        Cache for persisted objects
+     * @param   DocumentManager     $documentManager     Document manager
+     * @param   Collection          $collection          MongoDB Collection
+     * @param   ClassMetadata       $classMetadata       Class metadata
+     * @param   Hydrator            $hydrator            Object hydrator
+     * @param   QueryCaster         $queryCaster         Query caster
+     * @param   UpdateQueryCreator  $uqc                 Update query Creator
+     * @param   CacheProvider       $objectCache         Cache for persisted objects
+     * @param   CacheProvider       $lastProjectionCache Cache to store last projection on object
+     * @param   CacheProvider       $objectCache         Cache for persisted objects
      */
-    public function __construct(DocumentManager $documentManager, Collection $collection, ClassMetadata $classMetadata, Hydrator $hydrator, QueryCaster $queryCaster, UpdateQueryCreator $uqc = null, CacheProvider $objectCache = null, CacheProvider $lastProjectionCache = null)
+    public function __construct(DocumentManager $documentManager, Collection $collection, ClassMetadata $classMetadata, Hydrator $hydrator, QueryCaster $queryCaster, UpdateQueryCreator $uqc = null, CacheProvider $objectCache = null, CacheProvider $lastProjectionCache = null, EventDispatcher $eventDispatcher = null)
     {
         $this->documentManager = $documentManager;
         $this->collection = $collection;
@@ -107,6 +119,8 @@ class Repository
 
         $this->queryCaster = $queryCaster;
         $this->updateQueryCreator = isset($uqc) ? $uqc : new UpdateQueryCreator();
+
+        $this->eventDispatcher = $eventDispatcher;
     }
 
     /**
@@ -130,6 +144,9 @@ class Repository
      */
     public function count($filters = [], $options = [])
     {
+        $event = new BeforeQueryEvent($this->documentManager, $this, null);
+        $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+
         return $this->collection->count($this->castQuery($filters), $options);
     }
 
@@ -160,6 +177,9 @@ class Repository
 
         $filters = $this->castQuery($filters);
 
+        $event = new BeforeQueryEvent($this->documentManager, $this, null);
+        $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+
         $result = $this->collection->distinct($field, $filters, $options);
         return $result;
     }
@@ -179,6 +199,9 @@ class Repository
     public function find($id, $projections = [], $options = [])
     {
         $options = $this->createOption($projections, null, $options);
+
+        $event = new BeforeQueryEvent($this->documentManager, $this, null);
+        $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
 
         $result = $this->collection->findOne(["_id" => $id], $options);
 
@@ -201,6 +224,9 @@ class Repository
     public function findAll($projections = [], $sorts = [], $options = [])
     {
         $options = $this->createOption($projections, $sorts, $options);
+
+        $event = new BeforeQueryEvent($this->documentManager, $this, null);
+        $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
 
         $result = $this->collection->find([], $options);
 
@@ -243,6 +269,9 @@ class Repository
 
         $filters = $this->castQuery($filters);
 
+        $event = new BeforeQueryEvent($this->documentManager, $this, null);
+        $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+
         $result = $this->collection->find($filters, $options);
         if (!isset($options['iterator']) || $options['iterator'] == false) {
             $objects = [];
@@ -282,6 +311,9 @@ class Repository
 
         $filters = $this->castQuery($filters);
 
+        $event = new BeforeQueryEvent($this->documentManager, $this, null);
+        $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+
         $result = $this->collection->findOne($filters, $options);
 
         return $this->createObject($result, $options);
@@ -310,6 +342,9 @@ class Repository
         $filters = $this->castQuery($filters);
         $update = $this->castQuery($update);
 
+        $event = new BeforeQueryEvent($this->documentManager, $this, null);
+        $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+
         $result = (array) $this->collection->findOneAndUpdate($filters, $update, $options);
 
         return $this->createObject($result, $options);
@@ -326,6 +361,9 @@ class Repository
     {
         $options['cursorType'] = \MongoDB\Operation\Find::TAILABLE_AWAIT;
 
+        $event = new BeforeQueryEvent($this->documentManager, $this, null);
+        $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+
         return $this->collection->find($this->castQuery($filters), $options);
     }
 
@@ -339,6 +377,10 @@ class Repository
     public function insertOne($document, $options = [])
     {
         $query = new InsertOne($this->documentManager, $this, $document, $options);
+
+        $event = new BeforeQueryEvent($this->documentManager, $this, $query);
+        $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+
         if (isset($options['getQuery']) && $options['getQuery']) {
             return $query;
         } else {
@@ -357,7 +399,9 @@ class Repository
     {
         $insertQuery = [];
         foreach ($documents as $document) {
-            $this->classMetadata->getEventManager()->execute(EventManager::EVENT_PRE_INSERT, $document);
+            $event = new PreInsertEvent($this->documentManager, $this, $document);
+            $this->documentManager->getEventDispatcher()->dispatch($event, $event::NAME);
+
             $query = $this->hydrator->unhydrate($document);
 
             $idGen = $this->classMetadata->getIdGenerator();
@@ -372,6 +416,9 @@ class Repository
             $insertQuery[] = $query;
         }
 
+        $event = new BeforeQueryEvent($this->documentManager, $this, null);
+        $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+
         $result = $this->collection->insertMany($insertQuery, $options);
 
         if ($result->isAcknowledged()) {
@@ -382,7 +429,8 @@ class Repository
                 $insertQuery[$key]["_id"] = $id;
                 $this->hydrator->hydrate($documents[$key], $insertQuery[$key]);
 
-                $this->classMetadata->getEventManager()->execute(EventManager::EVENT_POST_INSERT, $documents[$key]);
+                $event = new PostInsertEvent($this->documentManager, $this, $documents[$key]);
+                $this->documentManager->getEventDispatcher()->dispatch($event, $event::NAME);
 
                 $this->cacheObject($documents[$key]);
             }
@@ -408,6 +456,10 @@ class Repository
     public function updateOne($document, $update = [], $options = [])
     {
         $query = new UpdateOne($this->documentManager, $this, $document, $update, $options);
+
+        $event = new BeforeQueryEvent($this->documentManager, $this, $query);
+        $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+
         if (isset($options['getQuery']) && $options['getQuery']) {
             return $query;
         } else {
@@ -425,6 +477,9 @@ class Repository
      */
     public function updateMany($filters, $update, $options = [])
     {
+        $event = new BeforeQueryEvent($this->documentManager, $this, null);
+        $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+
         $result = $this->collection->updateMany($this->castQuery($filters), $update, $options);
 
         if ($result->isAcknowledged()) {
@@ -445,6 +500,10 @@ class Repository
     public function replaceOne($document, $replacement, $options = [])
     {
         $query = new ReplaceOne($this->documentManager, $this, $document, $replacement, $options);
+
+        $event = new BeforeQueryEvent($this->documentManager, $this, $query);
+        $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+
         if (isset($options['getQuery']) && $options['getQuery']) {
             return $query;
         } else {
@@ -462,6 +521,10 @@ class Repository
     public function deleteOne($document, $options = [])
     {
         $query = new DeleteOne($this->documentManager, $this, $document, $options);
+
+        $event = new BeforeQueryEvent($this->documentManager, $this, $query);
+        $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+
         if (isset($options['getQuery']) && $options['getQuery']) {
             return $query;
         } else {
@@ -478,6 +541,9 @@ class Repository
      */
     public function deleteMany($filter, $options = [])
     {
+        $event = new BeforeQueryEvent($this->documentManager, $this, null);
+        $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+
         $filter = $this->castQuery($filter);
         $result = $this->collection->deleteMany($filter, $options);
 
@@ -504,11 +570,12 @@ class Repository
     {
         $object = null;
         if ($data != null) {
+            $isReadOnly = (isset($options['readOnly']) && $options['readOnly'] == true);
             $id = isset($data['_id']) ? serialize($data['_id']) . $this->getCollection() : null;
             $model = $this->getModelName();
 
             $softHydrate = false;
-            if (null !== $this->documentManager->getObject($id)) {
+            if (!$isReadOnly && null !== $this->documentManager->getObject($id)) {
                 $softHydrate = true;
                 $object = $this->documentManager->getObject($id);
             } else {
@@ -517,8 +584,9 @@ class Repository
 
             $this->hydrator->hydrate($object, $data, $softHydrate);
 
-            $this->classMetadata->getEventManager()->execute(EventManager::EVENT_POST_LOAD, $object);
-            if (!isset($options['readOnly']) || $options['readOnly'] != true) {
+            $event = new PostLoadEvent($this->documentManager, $this, $object);
+            $this->documentManager->getEventDispatcher()->dispatch($event, $event::NAME);
+            if (!$isReadOnly) {
                 $oid = spl_object_hash($object);
                 $data = $this->hydrator->unhydrate($object);
                 $id = isset($data['_id']) ? serialize($data['_id']) . $this->getCollection() : $oid;
@@ -545,6 +613,10 @@ class Repository
         $options = [];
         isset($projections) ? $options["projection"] = $this->castQuery($projections) : null;
         isset($sort) ? $options["sort"] = $this->castQuery($sort) : null;
+
+        if (isset($projections) && isset($projections['_id']) && false == $projections['_id']) {
+            $otherOptions['readOnly'] = true;
+        }
 
         $options = array_merge($this->documentManager->getDefaultOptions(), $otherOptions, $options);
         return $options;
