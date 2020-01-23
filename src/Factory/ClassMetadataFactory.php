@@ -5,6 +5,8 @@ namespace JPC\MongoDB\ODM\Factory;
 use Doctrine\Common\Annotations\AnnotationReader;
 use Doctrine\Common\Annotations\CachedReader;
 use Doctrine\Common\Cache\ApcuCache;
+use Doctrine\Common\Cache\ArrayCache;
+use Doctrine\Common\Cache\Cache;
 use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
 
 /**
@@ -18,13 +20,13 @@ class ClassMetadataFactory
     /* ================================== */
 
     /**
-     * Class metadatas
-     * @var array
+     * Classes metadata
+     * @var ArrayCache
      */
-    private $loadedMetadatas = [];
+    private $loadedMetadata;
 
     /**
-     * Annotation Reader for class metadatas
+     * Annotation Reader for classes metadata
      * @var AnnotationReader
      */
     private $annotationReader;
@@ -38,9 +40,10 @@ class ClassMetadataFactory
      *
      * @param AnnotationReader|null     $annotationReader   Annotation reader that will be used in class metadatas
      */
-    public function __construct(AnnotationReader $annotationReader = null)
+    public function __construct(AnnotationReader $annotationReader = null, Cache $loadedMetadataCache = null)
     {
         $this->annotationReader = isset($annotationReader) ? $annotationReader : new CachedReader(new AnnotationReader(), new ApcuCache(), false);
+        $this->loadedMetadata = $loadedMetadataCache ?? new ArrayCache();
     }
 
     /* ================================== */
@@ -54,16 +57,25 @@ class ClassMetadataFactory
      *
      * @return  ClassMetadata   Class metadatas
      */
+    /**
+     * Allow to get class metadata for specified class
+     *
+     * @param   string          $className          Name of the class to get metadatas
+     *
+     * @return  ClassMetadata   Class metadatas
+     */
     public function getMetadataForClass($className)
     {
         if (!class_exists($className)) {
             throw new \Exception("Class $className does not exist!");
         }
-        if (isset($this->loadedMetadatas[$className])) {
-            return $this->loadedMetadatas[$className];
+        if (false == ($classMetadata = $this->loadedMetadata->fetch($className))) {
+            $classMetadata = $this->loadMetadataForClass($className, $this->annotationReader);
         }
 
-        return $this->loadedMetadatas[$className] = $this->loadMetadataForClass($className, $this->annotationReader);
+        $this->loadedMetadata->save($className, $classMetadata, 10);
+
+        return $classMetadata;
     }
 
     /* ================================== */
