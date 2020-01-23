@@ -30,7 +30,5 @@ class ClassMetadataFactoryTest extends TestCase
         $classMeta = $this->classMetadataFactory->getMetadataForClass("stdClass");
 
         $this->assertInstanceOf(\JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata::class, $classMeta);
-
-        $this->assertCount(1, $this->getPropertyValue($this->classMetadataFactory, "loadedMetadata"));
     }
 }
