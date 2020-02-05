@@ -136,29 +136,29 @@ class Repository
     }
 
     /**
-     * Count corresponding documents for filters
+     * Count corresponding documents for filter
      *
-     * @param   array                   $filters            Object
+     * @param   array                   $filter            Object
      * @param   array                   $options            Options for the query
      * @return  int                                         Number of corresponding documents
      */
-    public function count($filters = [], $options = [])
+    public function count($filter = [], $options = [])
     {
         $event = new BeforeQueryEvent($this->documentManager, $this, null);
         $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
 
-        return $this->collection->count($this->castQuery($filters), $options);
+        return $this->collection->count($this->castQuery($filter), $options);
     }
 
     /**
      * Get distinct value for a field
      *
      * @param  string $fieldName Name of the field
-     * @param  array  $filters   Filters of query
+     * @param  array  $filter   Filter of query
      * @param  array  $options   Options of query
      * @return array             List of distinct values
      */
-    public function distinct($fieldName, $filters = [], $options = [])
+    public function distinct($fieldName, $filter = [], $options = [])
     {
         $field = $fieldName;
 
@@ -175,12 +175,12 @@ class Repository
             }
         }
 
-        $filters = $this->castQuery($filters);
+        $filter = $this->castQuery($filter);
 
         $event = new BeforeQueryEvent($this->documentManager, $this, null);
         $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
 
-        $result = $this->collection->distinct($field, $filters, $options);
+        $result = $this->collection->distinct($field, $filter, $options);
         return $result;
     }
 
@@ -256,23 +256,23 @@ class Repository
      *  *   iterator : boolean|string - Return DocumentIterator if true (or specified class if is string)
      * @see MongoDB\Operation\Find::__construct for more option
      *
-     * @param   array                   $filters            Filters
+     * @param   array                   $filter            Filter
      * @param   array                   $projections        Projection of the query
      * @param   array                   $sorts              Sorts specification
      * @param   array                   $options            Options for the query
      * @param array $options
      * @return void
      */
-    public function findBy($filters, $projections = [], $sorts = [], $options = [])
+    public function findBy($filter, $projections = [], $sorts = [], $options = [])
     {
         $options = $this->createOption($projections, $sorts, $options);
 
-        $filters = $this->castQuery($filters);
+        $filter = $this->castQuery($filter);
 
         $event = new BeforeQueryEvent($this->documentManager, $this, null);
         $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
 
-        $result = $this->collection->find($filters, $options);
+        $result = $this->collection->find($filter, $options);
         if (!isset($options['iterator']) || $options['iterator'] == false) {
             $objects = [];
             foreach ($result as $datas) {
@@ -283,7 +283,7 @@ class Repository
             return $objects;
         } else {
             $iteratorClass = $options['iterator'];
-            $iterator = $iteratorClass === true ? new DocumentIterator($result, $this->modelName, $this, $filters) : new $iteratorClass($result, $this->modelName, $this, $filters);
+            $iterator = $iteratorClass === true ? new DocumentIterator($result, $this->modelName, $this, $filter) : new $iteratorClass($result, $this->modelName, $this, $filter);
             if (isset($options['readOnly']) && $options['readOnly'] == true) {
                 $iterator->readOnly();
             }
@@ -298,23 +298,23 @@ class Repository
      *  *   readOnly : boolean - When false, flush will not update object
      * @see MongoDB\Operation\Find::__construct for more option
      *
-     * @param   array                   $filters            Filters
+     * @param   array                   $filter            Filter
      * @param   array                   $projections        Projection of the query
      * @param   array                   $sorts              Sorts specification
      * @param   array                   $options            Options for the query
      * @param array $options
      * @return void
      */
-    public function findOneBy($filters = [], $projections = [], $sorts = [], $options = [])
+    public function findOneBy($filter = [], $projections = [], $sorts = [], $options = [])
     {
         $options = $this->createOption($projections, $sorts, $options);
 
-        $filters = $this->castQuery($filters);
+        $filter = $this->castQuery($filter);
 
         $event = new BeforeQueryEvent($this->documentManager, $this, null);
         $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
 
-        $result = $this->collection->findOne($filters, $options);
+        $result = $this->collection->findOne($filter, $options);
 
         return $this->createObject($result, $options);
     }
@@ -326,7 +326,7 @@ class Repository
      *  *   readOnly : boolean - When false, flush will not update object
      * @see MongoDB\Operation\FindAndModify::__construct for more option
      *
-     * @param   array                   $filters            Filters
+     * @param   array                   $filter            Filter
      * @param   array                   $update             Update to perform
      * @param   array                   $projections        Projection of the query
      * @param   array                   $sorts              Sorts specification
@@ -334,18 +334,18 @@ class Repository
      * @param array $options
      * @return void
      */
-    public function findAndModifyOneBy($filters = [], $update = [], $projections = [], $sorts = [], $options = [])
+    public function findAndModifyOneBy($filter = [], $update = [], $projections = [], $sorts = [], $options = [])
     {
 
         $options = $this->createOption($projections, $sorts, $options);
 
-        $filters = $this->castQuery($filters);
+        $filter = $this->castQuery($filter);
         $update = $this->castQuery($update);
 
         $event = new BeforeQueryEvent($this->documentManager, $this, null);
         $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
 
-        $result = (array) $this->collection->findOneAndUpdate($filters, $update, $options);
+        $result = (array) $this->collection->findOneAndUpdate($filter, $update, $options);
 
         return $this->createObject($result, $options);
     }
@@ -353,18 +353,18 @@ class Repository
     /**
      * Get tailable cursor for query
      *
-     * @param  array  $filters Filters of query
+     * @param  array  $filter Filter of query
      * @param  array  $options Option (Tailable setted as default)
      * @return \MongoDB\Driver\TailableCursor          A tailable cursor
      */
-    public function getTailableCursor($filters = [], $options = [])
+    public function getTailableCursor($filter = [], $options = [])
     {
         $options['cursorType'] = \MongoDB\Operation\Find::TAILABLE_AWAIT;
 
         $event = new BeforeQueryEvent($this->documentManager, $this, null);
         $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
 
-        return $this->collection->find($this->castQuery($filters), $options);
+        return $this->collection->find($this->castQuery($filter), $options);
     }
 
     /**
@@ -470,17 +470,17 @@ class Repository
     /**
      * Update many document
      *
-     * @param   array   $filters    Filters
+     * @param   array   $filter    Filter
      * @param   array   $update     Update to perform
      * @param   array   $options    Options
      * @return  void
      */
-    public function updateMany($filters, $update, $options = [])
+    public function updateMany($filter, $update, $options = [])
     {
         $event = new BeforeQueryEvent($this->documentManager, $this, null);
         $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
 
-        $result = $this->collection->updateMany($this->castQuery($filters), $update, $options);
+        $result = $this->collection->updateMany($this->castQuery($filter), $update, $options);
 
         if ($result->isAcknowledged()) {
             return true;

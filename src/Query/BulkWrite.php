@@ -46,13 +46,13 @@ class BulkWrite extends Query
                     $operations[] = [$query->getType() => [$query->getDocument()]];
                     break;
                 case self::TYPE_UPDATE_ONE:
-                    $operations[] = [$query->getType() => [$query->getFilters(), $query->getUpdate(), $query->getOptions()]];
+                    $operations[] = [$query->getType() => [$query->getFilter(), $query->getUpdate(), $query->getOptions()]];
                     break;
                 case self::TYPE_DELETE_ONE:
-                    $operations[] = [$query->getType() => [$query->getFilters(), $query->getOptions()]];
+                    $operations[] = [$query->getType() => [$query->getFilter(), $query->getOptions()]];
                     break;
                 case self::TYPE_REPLACE_ONE:
-                    $operations[] = [$query->getType() => [$query->getFilters(), $query->getReplacement(), $query->getOptions()]];
+                    $operations[] = [$query->getType() => [$query->getFilter(), $query->getReplacement(), $query->getOptions()]];
                     break;
                 default:
                     throw new \Exception('Not supported operation type \'' . $query->getType() . '\'');

@@ -47,9 +47,9 @@ You can now simply find a document by using one of this functions of repository 
 ```php
 public function find($id, $projections = [], $options = []);
 public function findAll($projections = [], $sorts = [], $options = []);
-public function findBy($filters, $projections = [], $sorts = [], $options = []);
-public function findOneBy($filters = [], $projections = [], $sorts = [], $options = []);
-public function findAndModifyOneBy($filters = [], $update = [], $projections = [], $sorts = [], $options = []);
+public function findBy($filter, $projections = [], $sorts = [], $options = []);
+public function findOneBy($filter = [], $projections = [], $sorts = [], $options = []);
+public function findAndModifyOneBy($filter = [], $update = [], $projections = [], $sorts = [], $options = []);
 ```
 
 Example :
@@ -61,7 +61,7 @@ Example :
 
 $repository = $documentManager->getRepository("ACME\Model\MyDoc");
 
-// NOTE: filters, projections, etc... can be property name or field name
+// NOTE: filter, projections, etc... can be property name or field name
 $myDocument = $repository->findOneBy(["field1" => "my_field_value", "myEmbedded.oneFieldEmb" => "another_value"]);
 ```
 

@@ -14,7 +14,7 @@ class ReplaceOne extends Query
 
     protected $document;
 
-    protected $filters;
+    protected $filter;
 
     protected $replacement;
 
@@ -48,13 +48,13 @@ class ReplaceOne extends Query
         if (is_object($this->document) && $this->document instanceof $modelName) {
             $unhydratedObject = $this->repository->getHydrator()->unhydrate($this->document);
             $id = $unhydratedObject["_id"];
-            $this->filters = ["_id" => $id];
+            $this->filter = ["_id" => $id];
         } elseif (is_object($this->document)) {
             throw new MappingException('Document sended to update function must be of type "' . $modelName . '"');
         } else {
             $queryCaster = $this->repository->getQueryCaster();
             $queryCaster->init($this->document);
-            $this->filters = $queryCaster->getCastedQuery();
+            $this->filter = $queryCaster->getCastedQuery();
         }
 
         if (is_object($this->replacement) && $this->replacement instanceof $modelName) {
@@ -72,7 +72,7 @@ class ReplaceOne extends Query
     public function perfomQuery(&$result)
     {
         if (!empty($this->replacement)) {
-            $result = $this->repository->getCollection()->replaceOne($this->filters, $this->replacement, $this->options);
+            $result = $this->repository->getCollection()->replaceOne($this->filter, $this->replacement, $this->options);
         } else {
             return true;
         }
@@ -96,12 +96,12 @@ class ReplaceOne extends Query
         }
     }
 
-    public function getFilters()
+    public function getFilter()
     {
-        if (!isset($this->filters)) {
+        if (!isset($this->filter)) {
             $this->beforeQuery();
         }
-        return $this->filters;
+        return $this->filter;
     }
 
     public function getReplacement()

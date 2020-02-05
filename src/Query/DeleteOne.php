@@ -2,11 +2,11 @@
 
 namespace JPC\MongoDB\ODM\Query;
 
-use JPC\MongoDB\ODM\Repository;
-use JPC\MongoDB\ODM\Query\Query;
 use JPC\MongoDB\ODM\DocumentManager;
-use JPC\MongoDB\ODM\Event\ModelEvent\PreDeleteEvent;
 use JPC\MongoDB\ODM\Event\ModelEvent\PostDeleteEvent;
+use JPC\MongoDB\ODM\Event\ModelEvent\PreDeleteEvent;
+use JPC\MongoDB\ODM\Query\Query;
+use JPC\MongoDB\ODM\Repository;
 use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
 
 class DeleteOne extends Query
@@ -45,9 +45,9 @@ class DeleteOne extends Query
 
     public function perfomQuery(&$result)
     {
-        $filters = $this->getFilters();
+        $filter = $this->getFilter();
 
-        $result = $this->repository->getCollection()->deleteOne($filters, $this->options);
+        $result = $this->repository->getCollection()->deleteOne($filter, $this->options);
 
         return $result->isAcknowledged() || $this->repository->getCollection()->getWriteConcern()->getW() === 0;
     }
@@ -64,7 +64,7 @@ class DeleteOne extends Query
         }
     }
 
-    public function getFilters()
+    public function getFilter()
     {
         $unhydratedObject = $this->repository->getHydrator()->unhydrate($this->document);
         $id = $unhydratedObject["_id"];

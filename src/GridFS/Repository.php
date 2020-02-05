@@ -159,21 +159,21 @@ class Repository extends BaseRepository
      *  *   iterator : boolean|string - Return DocumentIterator if true (or specified class if is string)
      * @see MongoDB\Operation\Find::__construct for more option
      *
-     * @param   array                   $filters            Filters
+     * @param   array                   $filter            Filter
      * @param   array                   $projections        Projection of the query
      * @param   array                   $sorts              Sorts specification
      * @param   array                   $options            Options for the query
      * @param array $options
      * @return void
      */
-    public function findBy($filters, $projections = array(), $sorts = array(), $options = array())
+    public function findBy($filter, $projections = array(), $sorts = array(), $options = array())
     {
         $options = $this->createOption($projections, $sorts, $options);
         if (!isset($options['iterator']) || $options['iterator'] === false) {
             $event = new BeforeQueryEvent($this->documentManager, $this, null);
             $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
 
-            $objects = parent::findBy($filters, $projections, $sorts, $options);
+            $objects = parent::findBy($filter, $projections, $sorts, $options);
             foreach ($objects as $object) {
                 $data = [];
                 if ($this->getStreamProjection($projections)) {
@@ -190,7 +190,7 @@ class Repository extends BaseRepository
             $event = new BeforeQueryEvent($this->documentManager, $this, null);
             $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
 
-            return parent::findBy($filters, $projections, $sorts, $options);
+            return parent::findBy($filter, $projections, $sorts, $options);
         }
     }
 
@@ -201,19 +201,19 @@ class Repository extends BaseRepository
      *  *   readOnly : boolean - When false, flush will not update object
      * @see MongoDB\Operation\Find::__construct for more option
      *
-     * @param   array                   $filters            Filters
+     * @param   array                   $filter            Filter
      * @param   array                   $projections        Projection of the query
      * @param   array                   $sorts              Sorts specification
      * @param   array                   $options            Options for the query
      * @param array $options
      * @return void
      */
-    public function findOneBy($filters = array(), $projections = array(), $sorts = array(), $options = array())
+    public function findOneBy($filter = array(), $projections = array(), $sorts = array(), $options = array())
     {
         $event = new BeforeQueryEvent($this->documentManager, $this, null);
         $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
 
-        $object = parent::findOneBy($filters, $projections, $sorts, $options);
+        $object = parent::findOneBy($filter, $projections, $sorts, $options);
         if (isset($object)) {
             $data = [];
 
@@ -232,7 +232,7 @@ class Repository extends BaseRepository
      *  *   readOnly : boolean - When false, flush will not update object
      * @see MongoDB\Operation\FindAndModify::__construct for more option
      *
-     * @param   array                   $filters            Filters
+     * @param   array                   $filter            Filter
      * @param   array                   $update             Update to perform
      * @param   array                   $projections        Projection of the query
      * @param   array                   $sorts              Sorts specification
@@ -240,12 +240,12 @@ class Repository extends BaseRepository
      * @param array $options
      * @return void
      */
-    public function findAndModifyOneBy($filters = [], $update = [], $projections = [], $sorts = [], $options = [])
+    public function findAndModifyOneBy($filter = [], $update = [], $projections = [], $sorts = [], $options = [])
     {
         $event = new BeforeQueryEvent($this->documentManager, $this, null);
         $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
 
-        $object = parent::findAndModifyOneBy($filters, $update, $projections, $sorts, $options);
+        $object = parent::findAndModifyOneBy($filter, $update, $projections, $sorts, $options);
 
         if (isset($object)) {
             $data = [];
@@ -386,7 +386,7 @@ class Repository extends BaseRepository
     /**
      * Delete a document form gr
      *
-     * @param   array   $filters    Query that match documents to delete
+     * @param   array   $filter    Query that match documents to delete
      * @param   array   $options    Useless, just for Repository compatibility
      * @return void
      */
