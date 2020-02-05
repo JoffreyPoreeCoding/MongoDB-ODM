@@ -37,7 +37,7 @@ class BulkWrite extends Query
         }
     }
 
-    public function perfomQuery(&$result)
+    public function performQuery(&$result)
     {
         $operations = [];
         foreach ($this->queries as $query) {

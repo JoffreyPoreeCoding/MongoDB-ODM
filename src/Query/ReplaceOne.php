@@ -5,16 +5,16 @@ namespace JPC\MongoDB\ODM\Query;
 use JPC\MongoDB\ODM\DocumentManager;
 use JPC\MongoDB\ODM\Event\ModelEvent\PostUpdateEvent;
 use JPC\MongoDB\ODM\Exception\MappingException;
+use JPC\MongoDB\ODM\Query\FilterableQuery;
 use JPC\MongoDB\ODM\Query\Query;
 use JPC\MongoDB\ODM\Repository;
 use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
 
 class ReplaceOne extends Query
 {
+    use FilterableQuery;
 
     protected $document;
-
-    protected $filter;
 
     protected $replacement;
 
@@ -69,7 +69,7 @@ class ReplaceOne extends Query
         }
     }
 
-    public function perfomQuery(&$result)
+    public function performQuery(&$result)
     {
         if (!empty($this->replacement)) {
             $result = $this->repository->getCollection()->replaceOne($this->filter, $this->replacement, $this->options);
@@ -94,14 +94,6 @@ class ReplaceOne extends Query
                 }
             }
         }
-    }
-
-    public function getFilter()
-    {
-        if (!isset($this->filter)) {
-            $this->beforeQuery();
-        }
-        return $this->filter;
     }
 
     public function getReplacement()

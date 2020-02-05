@@ -54,7 +54,7 @@ class InsertOne extends Query
         }
     }
 
-    public function perfomQuery(&$result)
+    public function performQuery(&$result)
     {
         $insertQuery = $this->getDocument();
 

@@ -34,6 +34,9 @@ abstract class Query
      */
     protected $document;
 
+    protected $beforeQueryExecuted = false;
+    protected $afterQueryExecuted = false;
+
     public function __construct(DocumentManager $documentManager, Repository $repository, $document)
     {
         $this->documentManager = $documentManager;
@@ -45,7 +48,7 @@ abstract class Query
 
     abstract public function beforeQuery();
 
-    abstract public function perfomQuery(&$result);
+    abstract public function performQuery(&$result);
 
     abstract public function afterQuery($result);
 
@@ -53,12 +56,24 @@ abstract class Query
     {
         $result = [];
 
-        $this->beforeQuery();
-
-        if ($acknowlegde = $this->perfomQuery($result)) {
-            $this->afterQuery($result);
+        if (!$this->beforeQueryExecuted) {
+            $this->beforeQuery();
+            $this->beforeQueryExecuted = true;
         }
 
-        return $acknowlegde;
+        if ($acknowledge = $this->performQuery($result)) {
+            if (!$this->afterQueryExecuted) {
+                $this->afterQuery($result);
+                $this->afterQueryExecuted = true;
+            }
+        }
+
+        return $acknowledge;
+    }
+
+    public function reset()
+    {
+        $this->beforeQueryExecuted = false;
+        $this->afterQueryExecuted = false;
     }
 }

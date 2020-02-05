@@ -6,6 +6,7 @@ use JPC\MongoDB\ODM\DocumentManager;
 use JPC\MongoDB\ODM\Event\ModelEvent\PostUpdateEvent;
 use JPC\MongoDB\ODM\Event\ModelEvent\PreUpdateEvent;
 use JPC\MongoDB\ODM\Exception\MappingException;
+use JPC\MongoDB\ODM\Query\FilterableQuery;
 use JPC\MongoDB\ODM\Query\Query;
 use JPC\MongoDB\ODM\Repository;
 use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
@@ -13,9 +14,9 @@ use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
 class UpdateOne extends Query
 {
 
-    protected $document;
+    use FilterableQuery;
 
-    protected $filter;
+    protected $document;
 
     protected $update;
 
@@ -76,7 +77,7 @@ class UpdateOne extends Query
         }
     }
 
-    public function perfomQuery(&$result)
+    public function performQuery(&$result)
     {
         if (!empty($this->update)) {
             $result = $this->repository->getCollection()->updateOne($this->filter, $this->update, $this->options);
@@ -103,14 +104,6 @@ class UpdateOne extends Query
                 }
             }
         }
-    }
-
-    public function getFilter()
-    {
-        if (!isset($this->filter)) {
-            $this->beforeQuery();
-        }
-        return $this->filter;
     }
 
     public function getUpdate()

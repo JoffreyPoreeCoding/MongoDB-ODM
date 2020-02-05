@@ -12,6 +12,8 @@ use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
 class DeleteOne extends Query
 {
 
+    use FilterableQuery;
+
     protected $options;
 
     protected $id;
@@ -37,17 +39,20 @@ class DeleteOne extends Query
 
     public function beforeQuery()
     {
+        $unhydratedObject = $this->repository->getHydrator()->unhydrate($this->document);
+        $id = $unhydratedObject["_id"];
+
+        $this->filter = ['_id' => $id];
+
         if (is_a($this->document, $this->repository->getModelName())) {
             $event = new PreDeleteEvent($this->documentManager, $this->repository, $this->document);
             $this->documentManager->getEventDispatcher()->dispatch($event, $event::NAME);
         }
     }
 
-    public function perfomQuery(&$result)
+    public function performQuery(&$result)
     {
-        $filter = $this->getFilter();
-
-        $result = $this->repository->getCollection()->deleteOne($filter, $this->options);
+        $result = $this->repository->getCollection()->deleteOne($this->filter, $this->options);
 
         return $result->isAcknowledged() || $this->repository->getCollection()->getWriteConcern()->getW() === 0;
     }
@@ -62,14 +67,6 @@ class DeleteOne extends Query
                 $this->repository->removeObjectCache($this->document);
             }
         }
-    }
-
-    public function getFilter()
-    {
-        $unhydratedObject = $this->repository->getHydrator()->unhydrate($this->document);
-        $id = $unhydratedObject["_id"];
-
-        return ['_id' => $id];
     }
 
     public function getOptions()
