@@ -33,7 +33,7 @@ class RepositoryTest extends TestCase
     private $updateQueryCreatorMock;
 
     private $repositoryMockBuilder;
-   
+
     private $eventDispatcherMock;
 
     public function setUp()
@@ -508,6 +508,7 @@ class RepositoryTest extends TestCase
 
     public function testDeleteOne()
     {
+        $this->classMetadataMock->expects($this->once())->method('getName')->willReturn('stdClass');
         $repository = $this->repositoryMockBuilder->setMethods(null)->getMock();
 
         $this->hydratorMock->method("unhydrate")->willReturn(["_id" => 1]);
@@ -518,6 +519,7 @@ class RepositoryTest extends TestCase
         $this->collectionMock->expects($this->once())->method("deleteOne")->with(["_id" => 1], ["option" => "value"])->willReturn($deleteResult);
 
         $document = new \stdClass();
+        $document->toto = '1';
 
         $result = $repository->deleteOne($document, ["option" => "value"]);
 

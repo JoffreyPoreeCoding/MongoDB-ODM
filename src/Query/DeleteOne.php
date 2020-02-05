@@ -5,6 +5,7 @@ namespace JPC\MongoDB\ODM\Query;
 use JPC\MongoDB\ODM\DocumentManager;
 use JPC\MongoDB\ODM\Event\ModelEvent\PostDeleteEvent;
 use JPC\MongoDB\ODM\Event\ModelEvent\PreDeleteEvent;
+use JPC\MongoDB\ODM\Exception\MappingException;
 use JPC\MongoDB\ODM\Query\Query;
 use JPC\MongoDB\ODM\Repository;
 use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
@@ -39,10 +40,18 @@ class DeleteOne extends Query
 
     public function beforeQuery()
     {
-        $unhydratedObject = $this->repository->getHydrator()->unhydrate($this->document);
-        $id = $unhydratedObject["_id"];
-
-        $this->filter = ['_id' => $id];
+        $modelName = $this->repository->getModelName();
+        if (is_object($this->document) && $this->document instanceof $modelName) {
+            $unhydratedObject = $this->repository->getHydrator()->unhydrate($this->document);
+            $id = $unhydratedObject["_id"];
+            $this->filter = ["_id" => $id];
+        } elseif (is_object($this->document)) {
+            throw new MappingException('Document sended to delete function must be of type "' . $modelName . '"');
+        } else {
+            $queryCaster = $this->repository->getQueryCaster();
+            $queryCaster->init($this->document);
+            $this->filter = $queryCaster->getCastedQuery();
+        }
 
         if (is_a($this->document, $this->repository->getModelName())) {
             $event = new PreDeleteEvent($this->documentManager, $this->repository, $this->document);
