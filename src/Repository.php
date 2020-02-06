@@ -2,25 +2,26 @@
 
 namespace JPC\MongoDB\ODM;
 
-use Doctrine\Common\Cache\ArrayCache;
-use Doctrine\Common\Cache\CacheProvider;
-use Doctrine\Common\Cache\FlushableCache;
+use MongoDB\Collection;
 use JPC\MongoDB\ODM\DocumentManager;
-use JPC\MongoDB\ODM\Event\BeforeQueryEvent;
-use JPC\MongoDB\ODM\Event\ModelEvent\PostInsertEvent;
-use JPC\MongoDB\ODM\Event\ModelEvent\PostLoadEvent;
-use JPC\MongoDB\ODM\Event\ModelEvent\PreInsertEvent;
-use JPC\MongoDB\ODM\Id\AbstractIdGenerator;
-use JPC\MongoDB\ODM\Iterator\DocumentIterator;
 use JPC\MongoDB\ODM\Query\BulkWrite;
 use JPC\MongoDB\ODM\Query\DeleteOne;
 use JPC\MongoDB\ODM\Query\InsertOne;
-use JPC\MongoDB\ODM\Query\ReplaceOne;
 use JPC\MongoDB\ODM\Query\UpdateOne;
-use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
+use Doctrine\Common\Cache\ArrayCache;
+use JPC\MongoDB\ODM\Query\ReplaceOne;
 use JPC\MongoDB\ODM\Tools\QueryCaster;
+use Doctrine\Common\Cache\CacheProvider;
+use Doctrine\Common\Cache\FlushableCache;
+use JPC\MongoDB\ODM\Event\BeforeQueryEvent;
+use JPC\MongoDB\ODM\Id\AbstractIdGenerator;
 use JPC\MongoDB\ODM\Tools\UpdateQueryCreator;
-use MongoDB\Collection;
+use JPC\MongoDB\ODM\Iterator\DocumentIterator;
+use JPC\MongoDB\ODM\Exception\MappingException;
+use JPC\MongoDB\ODM\Event\ModelEvent\PostLoadEvent;
+use JPC\MongoDB\ODM\Event\ModelEvent\PreInsertEvent;
+use JPC\MongoDB\ODM\Event\ModelEvent\PostInsertEvent;
+use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
 /**
@@ -402,7 +403,13 @@ class Repository
             $event = new PreInsertEvent($this->documentManager, $this, $document);
             $this->documentManager->getEventDispatcher()->dispatch($event, $event::NAME);
 
-            $query = $this->hydrator->unhydrate($document);
+            if (is_object($document) && is_a($document, $this->getModelName())) {
+                $query = $this->getHydrator()->unhydrate($document);
+            } elseif (is_object($document)) {
+                throw new MappingException('Document sended to delete function must be of type "' . $this->getModelName() . '"');
+            } else {
+                $query = $document;
+            }
 
             $idGen = $this->classMetadata->getIdGenerator();
             if ($idGen !== null) {
@@ -425,6 +432,10 @@ class Repository
             foreach ($result->getInsertedIds() as $key => $id) {
                 if ($id instanceof \stdClass) {
                     $id = (array) $id;
+                }
+                if (!is_object($document) || !is_a($document, $this->getModelName())) {
+                    $class = $this->getModelName();
+                    $documents[$key] = new $class();
                 }
                 $insertQuery[$key]["_id"] = $id;
                 $this->hydrator->hydrate($documents[$key], $insertQuery[$key]);

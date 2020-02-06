@@ -382,6 +382,7 @@ class RepositoryTest extends TestCase
      */
     public function testInsertMany()
     {
+        $this->classMetadataMock->expects($this->once())->method('getName')->willReturn("stdClass");
         $repository = $this->repositoryMockBuilder->setMethods(["cacheObject"])->getMock();
 
         $documentOne = new \stdClass();

@@ -2,13 +2,13 @@
 
 namespace JPC\MongoDB\ODM\Query;
 
-use JPC\MongoDB\ODM\Repository;
-use JPC\MongoDB\ODM\Query\Query;
-use JPC\MongoDB\ODM\ObjectManager;
 use JPC\MongoDB\ODM\DocumentManager;
-use JPC\MongoDB\ODM\Id\AbstractIdGenerator;
-use JPC\MongoDB\ODM\Event\ModelEvent\PreInsertEvent;
 use JPC\MongoDB\ODM\Event\ModelEvent\PostInsertEvent;
+use JPC\MongoDB\ODM\Event\ModelEvent\PreInsertEvent;
+use JPC\MongoDB\ODM\Id\AbstractIdGenerator;
+use JPC\MongoDB\ODM\ObjectManager;
+use JPC\MongoDB\ODM\Query\Query;
+use JPC\MongoDB\ODM\Repository;
 use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
 
 class InsertOne extends Query
