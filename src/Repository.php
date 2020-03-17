@@ -312,7 +312,7 @@ class Repository
 
         $filter = $this->castQuery($filter);
 
-	$event = new BeforeQueryEvent($this->documentManager, $this, null);
+	    $event = new BeforeQueryEvent($this->documentManager, $this, null);
         $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
 
         $result = $this->collection->findOne($filter, $options);

@@ -50,7 +50,7 @@ class QueryCaster
         if (!isset(self::$mongoDbQueryOperators)) {
             $callBack = [$this, 'aggregOnMongoDbOperators'];
             self::$mongoDbQueryOperators = [
-                '$elemMatch' => $callBack, '$gt' => $callBack, '$lt' => $callBack, '$gte' => $callBack, '$lte' => $callBack, '$eq' => $callBack, '$ne' => $callBack, '$in' => $callBack, '$nin' => $callBack,
+                '$gt' => $callBack, '$lt' => $callBack, '$gte' => $callBack, '$lte' => $callBack, '$eq' => $callBack, '$ne' => $callBack, '$in' => $callBack, '$nin' => $callBack,
             ];
         }
         $this->classMetadataFactory = $classMetadataFactory;
@@ -108,11 +108,16 @@ class QueryCaster
                     }
 
                     if (false != ($fieldInfos = $classMetadata->getPropertyInfoForField($field)) && $fieldInfos->getMultiEmbedded()) {
-                        $newValue = [];
-                        foreach ($value as $v) {
-                            $newValue[] = $this->castArray($v, $this->lastUsedMetadata);
+                        if (key($value) == '$elemMatch') {
+                            $newValue = $this->castArray(current($value), $this->lastUsedMetadata);
+                            $value = ['$elemMatch' => $newValue];
+                        } else {
+                            $newValue = [];
+                            foreach ($value as $v) {
+                                $newValue[] = $this->castArray($v, $this->lastUsedMetadata);
+                            }
+                            $value = $newValue;
                         }
-                        $value = $newValue;
                     }
                 }
 
