@@ -529,17 +529,16 @@ class RepositoryTest extends TestCase
 
     public function testDeleteMany()
     {
-        $repository = $this->repositoryMockBuilder->setMethods(["castQuery"])->getMock();
-
-        $repository->expects($this->once())->method("castQuery")->with(["filter" => "value"])->willReturn(["f" => "v"]);
-
+        $repository = $this->repositoryMockBuilder->setMethods(null)->getMock();
+        
         $deleteResult = $this->createMock(DeleteResult::class);
         $deleteResult->method("isAcknowledged")->willReturn(true);
         $deleteResult->method("getDeletedCount")->willReturn(3);
-
+        
         $this->collectionMock->expects($this->once())->method("deleteMany")->with(["f" => "v"], ["option" => "value"])->willReturn($deleteResult);
-
-        $document = new \stdClass();
+        
+        $this->queryCasterMock->expects($this->once())->method("init")->with(["filter" => "value"]);
+        $this->queryCasterMock->expects($this->once())->method("getCastedQuery")->with()->willReturn(["f" => "v"]);
 
         $result = $repository->deleteMany(["filter" => "value"], ["option" => "value"]);
 

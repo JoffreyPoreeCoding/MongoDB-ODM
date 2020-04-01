@@ -2,26 +2,27 @@
 
 namespace JPC\MongoDB\ODM;
 
-use MongoDB\Collection;
-use JPC\MongoDB\ODM\DocumentManager;
-use JPC\MongoDB\ODM\Query\BulkWrite;
-use JPC\MongoDB\ODM\Query\DeleteOne;
-use JPC\MongoDB\ODM\Query\InsertOne;
-use JPC\MongoDB\ODM\Query\UpdateOne;
 use Doctrine\Common\Cache\ArrayCache;
-use JPC\MongoDB\ODM\Query\ReplaceOne;
-use JPC\MongoDB\ODM\Tools\QueryCaster;
 use Doctrine\Common\Cache\CacheProvider;
 use Doctrine\Common\Cache\FlushableCache;
+use JPC\MongoDB\ODM\DocumentManager;
 use JPC\MongoDB\ODM\Event\BeforeQueryEvent;
-use JPC\MongoDB\ODM\Id\AbstractIdGenerator;
-use JPC\MongoDB\ODM\Tools\UpdateQueryCreator;
-use JPC\MongoDB\ODM\Iterator\DocumentIterator;
-use JPC\MongoDB\ODM\Exception\MappingException;
+use JPC\MongoDB\ODM\Event\ModelEvent\PostInsertEvent;
 use JPC\MongoDB\ODM\Event\ModelEvent\PostLoadEvent;
 use JPC\MongoDB\ODM\Event\ModelEvent\PreInsertEvent;
-use JPC\MongoDB\ODM\Event\ModelEvent\PostInsertEvent;
+use JPC\MongoDB\ODM\Exception\MappingException;
+use JPC\MongoDB\ODM\Id\AbstractIdGenerator;
+use JPC\MongoDB\ODM\Iterator\DocumentIterator;
+use JPC\MongoDB\ODM\Query\BulkWrite;
+use JPC\MongoDB\ODM\Query\DeleteMany;
+use JPC\MongoDB\ODM\Query\DeleteOne;
+use JPC\MongoDB\ODM\Query\InsertOne;
+use JPC\MongoDB\ODM\Query\ReplaceOne;
+use JPC\MongoDB\ODM\Query\UpdateOne;
 use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
+use JPC\MongoDB\ODM\Tools\QueryCaster;
+use JPC\MongoDB\ODM\Tools\UpdateQueryCreator;
+use MongoDB\Collection;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
 /**
@@ -145,8 +146,10 @@ class Repository
      */
     public function count($filter = [], $options = [])
     {
-        $event = new BeforeQueryEvent($this->documentManager, $this, null);
-        $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+        if (!isset($options['getQuery']) || !$options['getQuery']) {
+            $event = new BeforeQueryEvent($this->documentManager, $this, null);
+            $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+        }
 
         return $this->collection->count($this->castQuery($filter), $options);
     }
@@ -178,8 +181,10 @@ class Repository
 
         $filter = $this->castQuery($filter);
 
-        $event = new BeforeQueryEvent($this->documentManager, $this, null);
-        $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+        if (!isset($options['getQuery']) || !$options['getQuery']) {
+            $event = new BeforeQueryEvent($this->documentManager, $this, null);
+            $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+        }
 
         $result = $this->collection->distinct($field, $filter, $options);
         return $result;
@@ -201,8 +206,10 @@ class Repository
     {
         $options = $this->createOption($projections, null, $options);
 
-        $event = new BeforeQueryEvent($this->documentManager, $this, null);
-        $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+        if (!isset($options['getQuery']) || !$options['getQuery']) {
+            $event = new BeforeQueryEvent($this->documentManager, $this, null);
+            $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+        }
 
         $result = $this->collection->findOne(["_id" => $id], $options);
 
@@ -226,8 +233,10 @@ class Repository
     {
         $options = $this->createOption($projections, $sorts, $options);
 
-        $event = new BeforeQueryEvent($this->documentManager, $this, null);
-        $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+        if (!isset($options['getQuery']) || !$options['getQuery']) {
+            $event = new BeforeQueryEvent($this->documentManager, $this, null);
+            $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+        }
 
         $result = $this->collection->find([], $options);
 
@@ -270,8 +279,10 @@ class Repository
 
         $filter = $this->castQuery($filter);
 
-        $event = new BeforeQueryEvent($this->documentManager, $this, null);
-        $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+        if (!isset($options['getQuery']) || !$options['getQuery']) {
+            $event = new BeforeQueryEvent($this->documentManager, $this, null);
+            $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+        }
 
         $result = $this->collection->find($filter, $options);
         if (!isset($options['iterator']) || $options['iterator'] == false) {
@@ -312,8 +323,10 @@ class Repository
 
         $filter = $this->castQuery($filter);
 
-	    $event = new BeforeQueryEvent($this->documentManager, $this, null);
-        $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+        if (!isset($options['getQuery']) || !$options['getQuery']) {
+            $event = new BeforeQueryEvent($this->documentManager, $this, null);
+            $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+        }
 
         $result = $this->collection->findOne($filter, $options);
 
@@ -343,8 +356,10 @@ class Repository
         $filter = $this->castQuery($filter);
         $update = $this->castQuery($update);
 
-        $event = new BeforeQueryEvent($this->documentManager, $this, null);
-        $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+        if (!isset($options['getQuery']) || !$options['getQuery']) {
+            $event = new BeforeQueryEvent($this->documentManager, $this, null);
+            $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+        }
 
         $result = (array) $this->collection->findOneAndUpdate($filter, $update, $options);
 
@@ -362,8 +377,10 @@ class Repository
     {
         $options['cursorType'] = \MongoDB\Operation\Find::TAILABLE_AWAIT;
 
-        $event = new BeforeQueryEvent($this->documentManager, $this, null);
-        $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+        if (!isset($options['getQuery']) || !$options['getQuery']) {
+            $event = new BeforeQueryEvent($this->documentManager, $this, null);
+            $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+        }
 
         return $this->collection->find($this->castQuery($filter), $options);
     }
@@ -379,8 +396,10 @@ class Repository
     {
         $query = new InsertOne($this->documentManager, $this, $document, $options);
 
-        $event = new BeforeQueryEvent($this->documentManager, $this, $query);
-        $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+        if (!isset($options['getQuery']) || !$options['getQuery']) {
+            $event = new BeforeQueryEvent($this->documentManager, $this, $query);
+            $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+        }
 
         if (isset($options['getQuery']) && $options['getQuery']) {
             return $query;
@@ -423,8 +442,10 @@ class Repository
             $insertQuery[] = $query;
         }
 
-        $event = new BeforeQueryEvent($this->documentManager, $this, null);
-        $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+        if (!isset($options['getQuery']) || !$options['getQuery']) {
+            $event = new BeforeQueryEvent($this->documentManager, $this, null);
+            $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+        }
 
         $result = $this->collection->insertMany($insertQuery, $options);
 
@@ -468,8 +489,10 @@ class Repository
     {
         $query = new UpdateOne($this->documentManager, $this, $document, $update, $options);
 
-        $event = new BeforeQueryEvent($this->documentManager, $this, $query);
-        $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+        if (!isset($options['getQuery']) || !$options['getQuery']) {
+            $event = new BeforeQueryEvent($this->documentManager, $this, $query);
+            $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+        }
 
         if (isset($options['getQuery']) && $options['getQuery']) {
             return $query;
@@ -488,8 +511,10 @@ class Repository
      */
     public function updateMany($filter, $update, $options = [])
     {
-        $event = new BeforeQueryEvent($this->documentManager, $this, null);
-        $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+        if (!isset($options['getQuery']) || !$options['getQuery']) {
+            $event = new BeforeQueryEvent($this->documentManager, $this, null);
+            $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+        }
 
         $result = $this->collection->updateMany($this->castQuery($filter), $update, $options);
 
@@ -512,8 +537,10 @@ class Repository
     {
         $query = new ReplaceOne($this->documentManager, $this, $document, $replacement, $options);
 
-        $event = new BeforeQueryEvent($this->documentManager, $this, $query);
-        $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+        if (!isset($options['getQuery']) || !$options['getQuery']) {
+            $event = new BeforeQueryEvent($this->documentManager, $this, $query);
+            $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+        }
 
         if (isset($options['getQuery']) && $options['getQuery']) {
             return $query;
@@ -533,8 +560,10 @@ class Repository
     {
         $query = new DeleteOne($this->documentManager, $this, $document, $options);
 
-        $event = new BeforeQueryEvent($this->documentManager, $this, $query);
-        $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+        if (!isset($options['getQuery']) || !$options['getQuery']) {
+            $event = new BeforeQueryEvent($this->documentManager, $this, $query);
+            $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+        }
 
         if (isset($options['getQuery']) && $options['getQuery']) {
             return $query;
@@ -552,16 +581,17 @@ class Repository
      */
     public function deleteMany($filter, $options = [])
     {
-        $event = new BeforeQueryEvent($this->documentManager, $this, null);
-        $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+        $query = new DeleteMany($this->documentManager, $this, $filter, $options);
 
-        $filter = $this->castQuery($filter);
-        $result = $this->collection->deleteMany($filter, $options);
+        if (!isset($options['getQuery']) || !$options['getQuery']) {
+            $event = new BeforeQueryEvent($this->documentManager, $this, $query);
+            $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+        }
 
-        if ($result->isAcknowledged()) {
-            return true;
+        if (isset($options['getQuery']) && $options['getQuery']) {
+            return $query;
         } else {
-            return false;
+            return $query->execute();
         }
     }
 
@@ -617,7 +647,7 @@ class Repository
      * @param   array   $projections    Projection specification
      * @param   array   $sort           Sort specification
      * @param   array   $otherOptions   Other options
-     * @return  void
+     * @return  array
      */
     protected function createOption($projections, $sort, $otherOptions = [])
     {

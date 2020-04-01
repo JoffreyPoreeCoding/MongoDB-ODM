@@ -3,6 +3,7 @@
 namespace JPC\MongoDB\ODM\Query;
 
 use JPC\MongoDB\ODM\DocumentManager;
+use JPC\MongoDB\ODM\Event\BeforeQueryEvent;
 use JPC\MongoDB\ODM\Query\Query;
 use JPC\MongoDB\ODM\Repository;
 
@@ -41,6 +42,9 @@ class BulkWrite extends Query
     {
         $operations = [];
         foreach ($this->queries as $query) {
+            $event = new BeforeQueryEvent($this->documentManager, $this->repository, $query);
+            $this->documentManager->getEventDispatcher()->dispatch($event, $event::NAME);
+            
             switch ($query->getType()) {
                 case self::TYPE_INSERT_ONE:
                     $operations[] = [$query->getType() => [$query->getDocument()]];
@@ -49,6 +53,9 @@ class BulkWrite extends Query
                     $operations[] = [$query->getType() => [$query->getFilter(), $query->getUpdate(), $query->getOptions()]];
                     break;
                 case self::TYPE_DELETE_ONE:
+                    $operations[] = [$query->getType() => [$query->getFilter(), $query->getOptions()]];
+                    break;
+                case self::TYPE_DELETE_MANY:
                     $operations[] = [$query->getType() => [$query->getFilter(), $query->getOptions()]];
                     break;
                 case self::TYPE_REPLACE_ONE:
