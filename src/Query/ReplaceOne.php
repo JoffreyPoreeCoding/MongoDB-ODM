@@ -62,10 +62,6 @@ class ReplaceOne extends Query
             $this->replacement = $unhydratedObject;
         } elseif (is_object($this->replacement)) {
             throw new MappingException('Replacement sended to update function must be of type "' . $modelName . '"');
-        } else {
-            $queryCaster = $this->repository->getQueryCaster();
-            $queryCaster->init($this->replacement);
-            $this->replacement = $queryCaster->getCastedQuery();
         }
     }
 
