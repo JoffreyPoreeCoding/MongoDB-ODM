@@ -250,7 +250,7 @@ class Repository
             return $objects;
         } else {
             $iteratorClass = $options['iterator'];
-            $iterator = $iteratorClass === true ? new DocumentIterator($result, $this->modelName, $this) : new $iteratorClass($result, $this->modelName, $this);
+            $iterator = $iteratorClass === true ? new DocumentIterator($result, $this, $options) : new $iteratorClass($result, $this, $options);
             if (isset($options['readOnly']) && $options['readOnly'] == true) {
                 $iterator->readOnly();
             }
@@ -295,7 +295,7 @@ class Repository
             return $objects;
         } else {
             $iteratorClass = $options['iterator'];
-            $iterator = $iteratorClass === true ? new DocumentIterator($result, $this->modelName, $this, $filter) : new $iteratorClass($result, $this->modelName, $this, $filter);
+            $iterator = $iteratorClass === true ? new DocumentIterator($result, $this, $options, $filter) : new $iteratorClass($result, $this, $options, $filter);
             if (isset($options['readOnly']) && $options['readOnly'] == true) {
                 $iterator->readOnly();
             }
@@ -471,7 +471,6 @@ class Repository
         } else {
             foreach ($documents as $document) {
                 $this->cacheObject($document);
-                // $this->documentManager->removeObject();
             }
             return false;
         }
@@ -607,13 +606,14 @@ class Repository
      * @param   array   $options    Options
      * @return  void
      */
-    protected function createObject($data, $options = [])
+    public function createObject($data, $options = [])
     {
         $object = null;
-        if ($data != null) {
+        if (!empty($data) && isset($options['rawData']) && $options['rawData'] == true) {
+            $object = $data;
+        } elseif ($data != null) {
             $isReadOnly = (isset($options['readOnly']) && $options['readOnly'] == true);
             $id = isset($data['_id']) ? serialize($data['_id']) . $this->getCollection() : null;
-            $model = $this->getModelName();
 
             $softHydrate = false;
             if (!$isReadOnly && null !== $this->documentManager->getObject($id)) {
@@ -652,8 +652,12 @@ class Repository
     protected function createOption($projections, $sort, $otherOptions = [])
     {
         $options = [];
-        isset($projections) ? $options["projection"] = $this->castQuery($projections) : null;
-        isset($sort) ? $options["sort"] = $this->castQuery($sort) : null;
+        if (isset($projections) && !empty($projections)) {
+            $options["projection"] = $this->castQuery($projections);
+        }
+        if (isset($projections) && !empty($projections)) {
+            $options["sort"] = $this->castQuery($sort);
+        }
 
         if (isset($projections) && isset($projections['_id']) && false == $projections['_id']) {
             $otherOptions['readOnly'] = true;
@@ -739,7 +743,6 @@ class Repository
      */
     public function getUpdateQuery($document)
     {
-        $updateQuery = [];
         $old = $this->uncacheObject($document);
         $new = $this->hydrator->unhydrate($document);
 

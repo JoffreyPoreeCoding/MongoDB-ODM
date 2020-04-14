@@ -37,32 +37,12 @@ class DocumentIterator implements Iterator, \Countable
     protected $repository;
 
     /**
-     * The query used to get data
+     * The filter used to get data
      *
      * @var array
      */
-    protected $query;
+    protected $filter;
 
-    /**
-     * Hydrator for object
-     *
-     * @var Hydrator
-     */
-    protected $hydrator;
-
-    /**
-     * The class metadata
-     *
-     * @var \JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata
-     */
-    protected $classMetadata;
-
-    /**
-     * Document manager
-     *
-     * @var DocumentManager
-     */
-    protected $documentManager;
 
     /**
      * Generator used to get data
@@ -117,20 +97,15 @@ class DocumentIterator implements Iterator, \Countable
      * Create a new cursor
      *
      * @param   Traversable|array   $data           Data to traverse
-     * @param   string              $objectClass    Class of object to hydrate
-     * @param   Repository          $repository     Repository used for query
-     * @param   array               $query          Query used
+     * @param   Repository          $repository     Repository used for filter
      */
-    public function __construct($data, $objectClass, Repository $repository, $query = [])
+    public function __construct($data, Repository $repository, array $options, array $filter = [])
     {
         $this->data = $data;
-        $this->objectClass = $objectClass;
         $this->repository = $repository;
-        $this->query = $query;
-        $this->hydrator = $repository->getHydrator();
-        $this->classMetadata = $repository->getClassMetadata();
-        $this->documentManager = $repository->getDocumentManager();
         $this->objects = [];
+        $this->options = $options;
+        $this->filter = $filter;
 
         $this->generator = $this->createGenerator();
         $this->currentData = $this->generator->current();
@@ -196,15 +171,7 @@ class DocumentIterator implements Iterator, \Countable
     public function current()
     {
         if ($this->valid() && !isset($this->objects[$this->position])) {
-            $class = $this->objectClass;
-            $object = new $class();
-            $this->hydrator->hydrate($object, $this->currentData);
-            $event = new PostLoadEvent($this->documentManager, $this->repository, $object);
-            $this->documentManager->getEventDispatcher()->dispatch($event, $event::NAME);
-            if (!$this->readOnly) {
-                $this->repository->cacheObject($object);
-                $this->documentManager->addObject($object, DocumentManager::OBJ_MANAGED, $this->repository);
-            }
+            $object = $this->repository->createObject($this->currentData, $this->options);
             if ($this->rewindable) {
                 $this->objects[] = $object;
             } else {
@@ -261,7 +228,7 @@ class DocumentIterator implements Iterator, \Countable
     public function count()
     {
         if (!isset($this->count)) {
-            $this->count = $this->repository->count($this->query);
+            $this->count = $this->repository->count($this->filter);
         }
         return $this->count;
     }

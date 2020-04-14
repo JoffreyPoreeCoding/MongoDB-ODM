@@ -312,7 +312,6 @@ class RepositoryTest extends TestCase
         $this->collectionMock->expects($this->once())->method("findOneAndUpdate")->with(["f" => "value"], ["u" => "value"], ["option1" => "value1", "option2" => "value2"])->willReturn(null);
 
         $result = $repository->findAndModifyOneBy(["filter" => "value"], ["update" => "value"], ["projection" => "value"], ["sort" => "value"], ["option" => "value"]);
-
         $this->assertNull($result);
     }
 
