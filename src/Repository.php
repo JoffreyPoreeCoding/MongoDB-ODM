@@ -106,7 +106,7 @@ class Repository
      * @param   CacheProvider       $lastProjectionCache Cache to store last projection on object
      * @param   CacheProvider       $objectCache         Cache for persisted objects
      */
-    public function __construct(DocumentManager $documentManager, Collection $collection, ClassMetadata $classMetadata, Hydrator $hydrator, QueryCaster $queryCaster, UpdateQueryCreator $uqc = null, CacheProvider $objectCache = null, CacheProvider $lastProjectionCache = null, EventDispatcher $eventDispatcher = null)
+    public function __construct(DocumentManager $documentManager, Collection $collection, ClassMetadata $classMetadata, Hydrator $hydrator, QueryCaster $queryCaster, UpdateQueryCreator $uqc = null, CacheProvider $objectCache = null, CacheProvider $lastProjectionCache = null)
     {
         $this->documentManager = $documentManager;
         $this->collection = $collection;
@@ -121,8 +121,6 @@ class Repository
 
         $this->queryCaster = $queryCaster;
         $this->updateQueryCreator = isset($uqc) ? $uqc : new UpdateQueryCreator();
-
-        $this->eventDispatcher = $eventDispatcher;
     }
 
     /**
@@ -148,7 +146,7 @@ class Repository
     {
         if (!isset($options['getQuery']) || !$options['getQuery']) {
             $event = new BeforeQueryEvent($this->documentManager, $this, null);
-            $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+            $this->documentManager->getEventDispatcher()->dispatch($event, BeforeQueryEvent::NAME);
         }
 
         return $this->collection->count($this->castQuery($filter), $options);
@@ -183,7 +181,7 @@ class Repository
 
         if (!isset($options['getQuery']) || !$options['getQuery']) {
             $event = new BeforeQueryEvent($this->documentManager, $this, null);
-            $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+            $this->documentManager->getEventDispatcher()->dispatch($event, BeforeQueryEvent::NAME);
         }
 
         $result = $this->collection->distinct($field, $filter, $options);
@@ -208,7 +206,7 @@ class Repository
 
         if (!isset($options['getQuery']) || !$options['getQuery']) {
             $event = new BeforeQueryEvent($this->documentManager, $this, null);
-            $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+            $this->documentManager->getEventDispatcher()->dispatch($event, BeforeQueryEvent::NAME);
         }
 
         $result = $this->collection->findOne(["_id" => $id], $options);
@@ -235,7 +233,7 @@ class Repository
 
         if (!isset($options['getQuery']) || !$options['getQuery']) {
             $event = new BeforeQueryEvent($this->documentManager, $this, null);
-            $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+            $this->documentManager->getEventDispatcher()->dispatch($event, BeforeQueryEvent::NAME);
         }
 
         $result = $this->collection->find([], $options);
@@ -281,7 +279,7 @@ class Repository
 
         if (!isset($options['getQuery']) || !$options['getQuery']) {
             $event = new BeforeQueryEvent($this->documentManager, $this, null);
-            $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+            $this->documentManager->getEventDispatcher()->dispatch($event, BeforeQueryEvent::NAME);
         }
 
         $result = $this->collection->find($filter, $options);
@@ -325,7 +323,7 @@ class Repository
 
         if (!isset($options['getQuery']) || !$options['getQuery']) {
             $event = new BeforeQueryEvent($this->documentManager, $this, null);
-            $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+            $this->documentManager->getEventDispatcher()->dispatch($event, BeforeQueryEvent::NAME);
         }
 
         $result = $this->collection->findOne($filter, $options);
@@ -358,7 +356,7 @@ class Repository
 
         if (!isset($options['getQuery']) || !$options['getQuery']) {
             $event = new BeforeQueryEvent($this->documentManager, $this, null);
-            $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+            $this->documentManager->getEventDispatcher()->dispatch($event, BeforeQueryEvent::NAME);
         }
 
         $result = (array) $this->collection->findOneAndUpdate($filter, $update, $options);
@@ -379,7 +377,7 @@ class Repository
 
         if (!isset($options['getQuery']) || !$options['getQuery']) {
             $event = new BeforeQueryEvent($this->documentManager, $this, null);
-            $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+            $this->documentManager->getEventDispatcher()->dispatch($event, BeforeQueryEvent::NAME);
         }
 
         return $this->collection->find($this->castQuery($filter), $options);
@@ -398,7 +396,7 @@ class Repository
 
         if (!isset($options['getQuery']) || !$options['getQuery']) {
             $event = new BeforeQueryEvent($this->documentManager, $this, $query);
-            $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+            $this->documentManager->getEventDispatcher()->dispatch($event, BeforeQueryEvent::NAME);
         }
 
         if (isset($options['getQuery']) && $options['getQuery']) {
@@ -444,7 +442,7 @@ class Repository
 
         if (!isset($options['getQuery']) || !$options['getQuery']) {
             $event = new BeforeQueryEvent($this->documentManager, $this, null);
-            $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+            $this->documentManager->getEventDispatcher()->dispatch($event, BeforeQueryEvent::NAME);
         }
 
         $result = $this->collection->insertMany($insertQuery, $options);
@@ -490,7 +488,7 @@ class Repository
 
         if (!isset($options['getQuery']) || !$options['getQuery']) {
             $event = new BeforeQueryEvent($this->documentManager, $this, $query);
-            $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+            $this->documentManager->getEventDispatcher()->dispatch($event, BeforeQueryEvent::NAME);
         }
 
         if (isset($options['getQuery']) && $options['getQuery']) {
@@ -512,7 +510,7 @@ class Repository
     {
         if (!isset($options['getQuery']) || !$options['getQuery']) {
             $event = new BeforeQueryEvent($this->documentManager, $this, null);
-            $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+            $this->documentManager->getEventDispatcher()->dispatch($event, BeforeQueryEvent::NAME);
         }
 
         $result = $this->collection->updateMany($this->castQuery($filter), $update, $options);
@@ -538,7 +536,7 @@ class Repository
 
         if (!isset($options['getQuery']) || !$options['getQuery']) {
             $event = new BeforeQueryEvent($this->documentManager, $this, $query);
-            $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+            $this->documentManager->getEventDispatcher()->dispatch($event, BeforeQueryEvent::NAME);
         }
 
         if (isset($options['getQuery']) && $options['getQuery']) {
@@ -561,7 +559,7 @@ class Repository
 
         if (!isset($options['getQuery']) || !$options['getQuery']) {
             $event = new BeforeQueryEvent($this->documentManager, $this, $query);
-            $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+            $this->documentManager->getEventDispatcher()->dispatch($event, BeforeQueryEvent::NAME);
         }
 
         if (isset($options['getQuery']) && $options['getQuery']) {
@@ -584,7 +582,7 @@ class Repository
 
         if (!isset($options['getQuery']) || !$options['getQuery']) {
             $event = new BeforeQueryEvent($this->documentManager, $this, $query);
-            $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+            $this->documentManager->getEventDispatcher()->dispatch($event, BeforeQueryEvent::NAME);
         }
 
         if (isset($options['getQuery']) && $options['getQuery']) {

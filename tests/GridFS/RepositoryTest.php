@@ -46,7 +46,7 @@ class RepositoryTest extends TestCase
         $this->classMetadata->method("getName")->willReturn("JPC\Test\MongoDB\ODM\GridFS\Model\GridFSObjectMapping");
         $this->classMetadata->method("getBucketName")->willReturn("test");
 
-        $this->repository = new Repository($this->documentManager, $this->collection, $this->classMetadata, $this->hydrator, $this->queryCaster, $this->updateQueryCreator, null, null, new EventDispatcher(), $this->bucket);
+        $this->repository = new Repository($this->documentManager, $this->collection, $this->classMetadata, $this->hydrator, $this->queryCaster, $this->updateQueryCreator, null, null, $this->bucket);
     }
 
     public function testGetBucket()
