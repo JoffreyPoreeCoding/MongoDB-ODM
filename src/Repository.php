@@ -653,7 +653,7 @@ class Repository
         if (isset($projections) && !empty($projections)) {
             $options["projection"] = $this->castQuery($projections);
         }
-        if (isset($projections) && !empty($projections)) {
+        if (isset($sort) && !empty($sort)) {
             $options["sort"] = $this->castQuery($sort);
         }
 
