@@ -21,7 +21,6 @@ use JPC\MongoDB\ODM\Tools\QueryCaster;
 use JPC\MongoDB\ODM\Tools\UpdateQueryCreator;
 use MongoDB\Collection;
 use MongoDB\GridFS\Bucket;
-use Symfony\Component\EventDispatcher\EventDispatcher;
 
 /**
  * Repository to make action on gridfs bucket
@@ -329,8 +328,10 @@ class Repository extends BaseRepository
         $event = new PostInsertEvent($this->documentManager, $this, $document);
         $this->documentManager->getEventDispatcher()->dispatch($event, PostInsertEvent::NAME);
 
-        $this->documentManager->setObjectState($document, ObjectManager::OBJ_MANAGED);
-        $this->cacheObject($document);
+        if ($this->documentManager->hasObject($document)) {
+            $this->documentManager->setObjectState($document, ObjectManager::OBJ_MANAGED);
+            $this->cacheObject($document);
+        }
 
         return true;
     }
