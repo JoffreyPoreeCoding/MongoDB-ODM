@@ -162,6 +162,7 @@ class Repository
      */
     public function distinct($fieldName, $filter = [], $options = [])
     {
+        $options = $this->createOption([], [], $options);
         $field = $fieldName;
 
         $propInfos = $this->classMetadata->getPropertyInfoForField($fieldName);
@@ -392,6 +393,7 @@ class Repository
      */
     public function insertOne($document, $options = [])
     {
+        $options = $this->createOption([], [], $options);
         $query = new InsertOne($this->documentManager, $this, $document, $options);
 
         if (!isset($options['getQuery']) || !$options['getQuery']) {
@@ -415,6 +417,7 @@ class Repository
      */
     public function insertMany($documents, $options = [])
     {
+        $options = $this->createOption([], [], $options);
         $insertQuery = [];
         foreach ($documents as $document) {
             $event = new PreInsertEvent($this->documentManager, $this, $document);
@@ -484,6 +487,7 @@ class Repository
      */
     public function updateOne($document, $update = [], $options = [])
     {
+        $options = $this->createOption([], [], $options);
         $query = new UpdateOne($this->documentManager, $this, $document, $update, $options);
 
         if (!isset($options['getQuery']) || !$options['getQuery']) {
@@ -508,6 +512,7 @@ class Repository
      */
     public function updateMany($filter, $update, $options = [])
     {
+        $options = $this->createOption([], [], $options);
         if (!isset($options['getQuery']) || !$options['getQuery']) {
             $event = new BeforeQueryEvent($this->documentManager, $this, null);
             $this->documentManager->getEventDispatcher()->dispatch($event, BeforeQueryEvent::NAME);
@@ -532,6 +537,7 @@ class Repository
      */
     public function replaceOne($document, $replacement, $options = [])
     {
+        $options = $this->createOption([], [], $options);
         $query = new ReplaceOne($this->documentManager, $this, $document, $replacement, $options);
 
         if (!isset($options['getQuery']) || !$options['getQuery']) {
@@ -555,6 +561,7 @@ class Repository
      */
     public function deleteOne($document, $options = [])
     {
+        $options = $this->createOption([], [], $options);
         $query = new DeleteOne($this->documentManager, $this, $document, $options);
 
         if (!isset($options['getQuery']) || !$options['getQuery']) {
@@ -578,6 +585,7 @@ class Repository
      */
     public function deleteMany($filter, $options = [])
     {
+        $options = $this->createOption([], [], $options);
         $query = new DeleteMany($this->documentManager, $this, $filter, $options);
 
         if (!isset($options['getQuery']) || !$options['getQuery']) {
@@ -592,9 +600,10 @@ class Repository
         }
     }
 
-    public function createBulkWriteQuery()
+    public function createBulkWriteQuery($queries = [], $options = [])
     {
-        return new BulkWrite($this->documentManager, $this);
+        $options = $this->createOption([], [], $options);
+        return new BulkWrite($this->documentManager, $this, $queries, $options);
     }
 
     /**
