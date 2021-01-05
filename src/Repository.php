@@ -170,7 +170,7 @@ class Repository
             $propInfos = $this->classMetadata->getPropertyInfo($fieldName);
         }
 
-        if (isset($propInfos)) {
+        if (isset($propInfos) && false !== $propInfos) {
             $field = $propInfos->getField();
 
             if ($propInfos->getMetadata()) {
