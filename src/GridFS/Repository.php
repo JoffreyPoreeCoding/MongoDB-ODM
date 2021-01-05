@@ -21,7 +21,6 @@ use JPC\MongoDB\ODM\Tools\QueryCaster;
 use JPC\MongoDB\ODM\Tools\UpdateQueryCreator;
 use MongoDB\Collection;
 use MongoDB\GridFS\Bucket;
-use Symfony\Component\EventDispatcher\EventDispatcher;
 
 /**
  * Repository to make action on gridfs bucket
@@ -56,11 +55,10 @@ class Repository extends BaseRepository
         UpdateQueryCreator $uqc = null,
         CacheProvider $objectCache = null,
         CacheProvider $lastProjectionCache = null,
-        EventDispatcher $eventDispatcher,
         Bucket $bucket = null
     ) {
         $uqc = isset($uqc) ? $uqc : new GridFSUpdateQueryCreator();
-        parent::__construct($documentManager, $collection, $classMetadata, $hydrator, $queryCaster, $uqc, $objectCache, $lastProjectionCache, $eventDispatcher);
+        parent::__construct($documentManager, $collection, $classMetadata, $hydrator, $queryCaster, $uqc, $objectCache, $lastProjectionCache);
 
         if ($this->modelName !== Document::class && !is_subclass_of($this->modelName, Document::class)) {
             throw new MappingException("Model must extends '" . Document::class . "'.");
@@ -99,7 +97,7 @@ class Repository extends BaseRepository
     public function find($id, $projections = array(), $options = array())
     {
         $event = new BeforeQueryEvent($this->documentManager, $this, null);
-        $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+        $this->documentManager->getEventDispatcher()->dispatch($event, BeforeQueryEvent::NAME);
 
         if (null !== ($object = parent::find($id, $projections, $options))) {
             $data = [];
@@ -130,7 +128,7 @@ class Repository extends BaseRepository
         $options = $this->createOption($projections, $sorts, $options);
         if (!isset($options['iterator']) || $options['iterator'] === false) {
             $event = new BeforeQueryEvent($this->documentManager, $this, null);
-            $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+            $this->documentManager->getEventDispatcher()->dispatch($event, BeforeQueryEvent::NAME);
 
             $objects = parent::findAll($projections, $sorts, $options);
             foreach ($objects as $object) {
@@ -143,7 +141,7 @@ class Repository extends BaseRepository
         } else {
             if (!is_string($options['iterator'])) {
                 $event = new BeforeQueryEvent($this->documentManager, $this, null);
-                $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+                $this->documentManager->getEventDispatcher()->dispatch($event, BeforeQueryEvent::NAME);
 
                 $options['iterator'] = GridFSDocumentIterator::class;
             }
@@ -171,7 +169,7 @@ class Repository extends BaseRepository
         $options = $this->createOption($projections, $sorts, $options);
         if (!isset($options['iterator']) || $options['iterator'] === false) {
             $event = new BeforeQueryEvent($this->documentManager, $this, null);
-            $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+            $this->documentManager->getEventDispatcher()->dispatch($event, BeforeQueryEvent::NAME);
 
             $objects = parent::findBy($filter, $projections, $sorts, $options);
             foreach ($objects as $object) {
@@ -188,7 +186,7 @@ class Repository extends BaseRepository
             }
 
             $event = new BeforeQueryEvent($this->documentManager, $this, null);
-            $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+            $this->documentManager->getEventDispatcher()->dispatch($event, BeforeQueryEvent::NAME);
 
             return parent::findBy($filter, $projections, $sorts, $options);
         }
@@ -211,7 +209,7 @@ class Repository extends BaseRepository
     public function findOneBy($filter = array(), $projections = array(), $sorts = array(), $options = array())
     {
         $event = new BeforeQueryEvent($this->documentManager, $this, null);
-        $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+        $this->documentManager->getEventDispatcher()->dispatch($event, BeforeQueryEvent::NAME);
 
         $object = parent::findOneBy($filter, $projections, $sorts, $options);
         if (isset($object)) {
@@ -243,7 +241,7 @@ class Repository extends BaseRepository
     public function findAndModifyOneBy($filter = [], $update = [], $projections = [], $sorts = [], $options = [])
     {
         $event = new BeforeQueryEvent($this->documentManager, $this, null);
-        $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+        $this->documentManager->getEventDispatcher()->dispatch($event, BeforeQueryEvent::NAME);
 
         $object = parent::findAndModifyOneBy($filter, $update, $projections, $sorts, $options);
 
@@ -303,7 +301,7 @@ class Repository extends BaseRepository
     public function insertOne($document, $options = [])
     {
         $event = new PreInsertEvent($this->documentManager, $this, $document);
-        $this->eventDispatcher->dispatch($event, PreInsertEvent::NAME);
+        $this->documentManager->getEventDispatcher()->dispatch($event, PreInsertEvent::NAME);
 
         $objectDatas = $this->hydrator->unhydrate($document);
 
@@ -319,7 +317,7 @@ class Repository extends BaseRepository
         unset($objectDatas["filename"]);
 
         $event = new BeforeQueryEvent($this->documentManager, $this, null);
-        $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+        $this->documentManager->getEventDispatcher()->dispatch($event, BeforeQueryEvent::NAME);
 
         $id = $this->bucket->uploadFromStream($filename, $stream, $objectDatas);
         $data['_id'] = $id;
@@ -328,10 +326,12 @@ class Repository extends BaseRepository
         $this->hydrator->hydrate($document, $data, true);
 
         $event = new PostInsertEvent($this->documentManager, $this, $document);
-        $this->eventDispatcher->dispatch($event, PostInsertEvent::NAME);
+        $this->documentManager->getEventDispatcher()->dispatch($event, PostInsertEvent::NAME);
 
-        $this->documentManager->setObjectState($document, ObjectManager::OBJ_MANAGED);
-        $this->cacheObject($document);
+        if ($this->documentManager->hasObject($document)) {
+            $this->documentManager->setObjectState($document, ObjectManager::OBJ_MANAGED);
+            $this->cacheObject($document);
+        }
 
         return true;
     }
@@ -364,19 +364,19 @@ class Repository extends BaseRepository
     public function deleteOne($document, $options = [])
     {
         $event = new PreDeleteEvent($this->documentManager, $this, $document);
-        $this->eventDispatcher->dispatch($event, PreDeleteEvent::NAME);
+        $this->documentManager->getEventDispatcher()->dispatch($event, PreDeleteEvent::NAME);
 
         $unhydratedObject = $this->hydrator->unhydrate($document);
 
         $id = $unhydratedObject["_id"];
 
         $event = new BeforeQueryEvent($this->documentManager, $this, null);
-        $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
+        $this->documentManager->getEventDispatcher()->dispatch($event, BeforeQueryEvent::NAME);
 
         $this->bucket->delete($id);
 
         $event = new PostDeleteEvent($this->documentManager, $this, $document);
-        $this->eventDispatcher->dispatch($event, PostDeleteEvent::NAME);
+        $this->documentManager->getEventDispatcher()->dispatch($event, PostDeleteEvent::NAME);
 
         if (is_object($document)) {
             $this->documentManager->removeObject($document);

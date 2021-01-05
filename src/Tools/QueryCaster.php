@@ -8,6 +8,8 @@ use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
 class QueryCaster
 {
 
+    const MULTI_EMBEDDED_SPECIAL_OPERATOR = ['$elemMatch', '$exists'];
+
     /**
      * Contain all of MongoDD Operators
      * @var array<string>
@@ -108,9 +110,11 @@ class QueryCaster
                     }
 
                     if (false != ($fieldInfos = $classMetadata->getPropertyInfoForField($field)) && $fieldInfos->getMultiEmbedded()) {
-                        if (key($value) == '$elemMatch') {
-                            $newValue = $this->castArray(current($value), $this->lastUsedMetadata);
-                            $value = ['$elemMatch' => $newValue];
+                        $key = key($value);
+                        if (in_array($key, self::MULTI_EMBEDDED_SPECIAL_OPERATOR)) {
+                            $realValue = current($value);
+                            $newValue = is_array($realValue) ? $this->castArray($realValue, $this->lastUsedMetadata) : $realValue;
+                            $value = [$key => $newValue];
                         } else {
                             $newValue = [];
                             foreach ($value as $v) {

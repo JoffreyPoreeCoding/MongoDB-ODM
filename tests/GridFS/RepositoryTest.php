@@ -46,7 +46,7 @@ class RepositoryTest extends TestCase
         $this->classMetadata->method("getName")->willReturn("JPC\Test\MongoDB\ODM\GridFS\Model\GridFSObjectMapping");
         $this->classMetadata->method("getBucketName")->willReturn("test");
 
-        $this->repository = new Repository($this->documentManager, $this->collection, $this->classMetadata, $this->hydrator, $this->queryCaster, $this->updateQueryCreator, null, null, new EventDispatcher(), $this->bucket);
+        $this->repository = new Repository($this->documentManager, $this->collection, $this->classMetadata, $this->hydrator, $this->queryCaster, $this->updateQueryCreator, null, null, $this->bucket);
     }
 
     public function testGetBucket()
@@ -83,14 +83,16 @@ class RepositoryTest extends TestCase
         $this->collection->method("find")->willReturn([["_id" => 1, "filename" => "filename"], ["_id" => 2, "filename" => "filename"]]);
         $this->bucket->method("openDownloadStream")->willReturn("filecontent");
         $this->hydrator->method("hydrate")->will($this->returnCallback([$this, "fakeHydration"]));
+        $this->queryCaster->expects($this->once())->method('init')->with(["test" => "test"]);
+        $this->queryCaster->expects($this->once())->method('getCastedQuery')->willReturn(["t" => "test"]);
         $objects = $this->repository->findBy(["test" => "test"], [], [], ['cursor' => false]);
-
+        
         foreach ($objects as $object) {
             $this->assertEquals("filecontent", $object->getStream());
             $this->assertEquals("filename", $object->getFilename());
         }
     }
-
+    
     public function testFindOneBy()
     {
         $this->collection->method("findOne")->willReturn(["filename" => "filename"]);

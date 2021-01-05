@@ -101,9 +101,9 @@ class RepositoryFactory
         if (isset($bucketName)) {
             $bucket = $documentManager->getDatabase()->selectGridFSBucket(["bucketName" => $bucketName]);
 
-            $repository = new $repositoryClass($documentManager, $collection, $classMetadata, $hydrator, $queryCaster, null, $repositoryCache, null, $this->eventDispatcher, $bucket);
+            $repository = new $repositoryClass($documentManager, $collection, $classMetadata, $hydrator, $queryCaster, null, $repositoryCache, null, $bucket);
         } else {
-            $repository = new $repositoryClass($documentManager, $collection, $classMetadata, $hydrator, $queryCaster, null, $repositoryCache, null, $this->eventDispatcher);
+            $repository = new $repositoryClass($documentManager, $collection, $classMetadata, $hydrator, $queryCaster, null, $repositoryCache, null);
         }
         $this->cache->save($repIndex, $repository, 120);
 

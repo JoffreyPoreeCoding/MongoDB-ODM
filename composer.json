@@ -3,20 +3,20 @@
     "description": "A small MongoDB ODM",
     "version": "1.4.0",
     "type": "library",
-    "keywords" : [
+    "keywords": [
         "MongoDB",
         "ODM",
         "PHP",
         "Mapping"
     ],
-    "homepage" : "https://github.com/JoffreyPoreeCoding/MongoDB-ODM",
+    "homepage": "https://github.com/JoffreyPoreeCoding/MongoDB-ODM",
     "license": "MIT",
     "require": {
         "php": ">=7.1",
         "doctrine/annotations": "^1.8",
         "doctrine/cache": "^1.8",
         "mongodb/mongodb": "^1.5",
-        "symfony/event-dispatcher": "^4.4"
+        "symfony/event-dispatcher": "^4.4|^5.0"
     },
     "require-dev": {
         "symfony/var-dumper": "^4.2",
@@ -36,9 +36,10 @@
         "psr-0": {
             "JPC\\MongoDB\\ODM\\": "src/"
         },
-        "files": ["src/register_annotations.php"]
+        "files": [
+            "src/register_annotations.php"
+        ]
     },
-    
     "autoload-dev": {
         "psr-4": {
             "JPC\\MongoDB\\ODM\\": "src/",
@@ -50,6 +51,8 @@
             "JPC\\Test\\MongoDB\\ODM\\Model\\": "tests/models/",
             "JPC\\Test\\MongoDB\\ODM\\": "tests/"
         },
-        "files": ["src/register_annotations.php"]
+        "files": [
+            "src/register_annotations.php"
+        ]
     }
 }

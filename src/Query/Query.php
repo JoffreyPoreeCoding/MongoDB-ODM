@@ -11,6 +11,7 @@ abstract class Query
     const TYPE_UPDATE_ONE = 'updateOne';
     const TYPE_REPLACE_ONE = 'replaceOne';
     const TYPE_DELETE_ONE = 'deleteOne';
+    const TYPE_DELETE_MANY = 'deleteMany';
     const TYPE_BULK_WRITE = 'bulkWrite';
 
     /**
@@ -30,7 +31,7 @@ abstract class Query
     /**
      * Document where to perfom
      *
-     * @var object
+     * @var array|object
      */
     protected $document;
 
