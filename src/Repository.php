@@ -2,26 +2,26 @@
 
 namespace JPC\MongoDB\ODM;
 
-use MongoDB\Collection;
+use Doctrine\Common\Cache\ArrayCache;
+use Doctrine\Common\Cache\CacheProvider;
+use Doctrine\Common\Cache\FlushableCache;
 use JPC\MongoDB\ODM\DocumentManager;
+use JPC\MongoDB\ODM\Event\BeforeQueryEvent;
+use JPC\MongoDB\ODM\Event\ModelEvent\PostInsertEvent;
+use JPC\MongoDB\ODM\Event\ModelEvent\PostLoadEvent;
+use JPC\MongoDB\ODM\Event\ModelEvent\PreInsertEvent;
+use JPC\MongoDB\ODM\Exception\MappingException;
+use JPC\MongoDB\ODM\Id\AbstractIdGenerator;
+use JPC\MongoDB\ODM\Iterator\DocumentIterator;
 use JPC\MongoDB\ODM\Query\BulkWrite;
 use JPC\MongoDB\ODM\Query\DeleteOne;
 use JPC\MongoDB\ODM\Query\InsertOne;
-use JPC\MongoDB\ODM\Query\UpdateOne;
-use Doctrine\Common\Cache\ArrayCache;
 use JPC\MongoDB\ODM\Query\ReplaceOne;
-use JPC\MongoDB\ODM\Tools\QueryCaster;
-use Doctrine\Common\Cache\CacheProvider;
-use Doctrine\Common\Cache\FlushableCache;
-use JPC\MongoDB\ODM\Event\BeforeQueryEvent;
-use JPC\MongoDB\ODM\Id\AbstractIdGenerator;
-use JPC\MongoDB\ODM\Tools\UpdateQueryCreator;
-use JPC\MongoDB\ODM\Iterator\DocumentIterator;
-use JPC\MongoDB\ODM\Exception\MappingException;
-use JPC\MongoDB\ODM\Event\ModelEvent\PostLoadEvent;
-use JPC\MongoDB\ODM\Event\ModelEvent\PreInsertEvent;
-use JPC\MongoDB\ODM\Event\ModelEvent\PostInsertEvent;
+use JPC\MongoDB\ODM\Query\UpdateOne;
 use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
+use JPC\MongoDB\ODM\Tools\QueryCaster;
+use JPC\MongoDB\ODM\Tools\UpdateQueryCreator;
+use MongoDB\Collection;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
 /**
@@ -168,7 +168,7 @@ class Repository
             $propInfos = $this->classMetadata->getPropertyInfo($fieldName);
         }
 
-        if (isset($propInfos)) {
+        if (isset($propInfos) && false !== $propInfos) {
             $field = $propInfos->getField();
 
             if ($propInfos->getMetadata()) {
@@ -312,7 +312,7 @@ class Repository
 
         $filter = $this->castQuery($filter);
 
-	    $event = new BeforeQueryEvent($this->documentManager, $this, null);
+        $event = new BeforeQueryEvent($this->documentManager, $this, null);
         $this->eventDispatcher->dispatch($event, BeforeQueryEvent::NAME);
 
         $result = $this->collection->findOne($filter, $options);
