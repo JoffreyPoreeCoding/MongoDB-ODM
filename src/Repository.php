@@ -455,17 +455,15 @@ class Repository
                 if ($id instanceof \stdClass) {
                     $id = (array) $id;
                 }
-                if (!is_object($document) || !is_a($document, $this->getModelName())) {
-                    $class = $this->getModelName();
-                    $documents[$key] = new $class();
+                if (is_object($document) && is_a($document, $this->getModelName())) {
+                    $insertQuery[$key]["_id"] = $id;
+                    $this->hydrator->hydrate($documents[$key], $insertQuery[$key]);
+
+                    $event = new PostInsertEvent($this->documentManager, $this, $documents[$key]);
+                    $this->documentManager->getEventDispatcher()->dispatch($event, $event::NAME);
+
+                    $this->cacheObject($documents[$key]);
                 }
-                $insertQuery[$key]["_id"] = $id;
-                $this->hydrator->hydrate($documents[$key], $insertQuery[$key]);
-
-                $event = new PostInsertEvent($this->documentManager, $this, $documents[$key]);
-                $this->documentManager->getEventDispatcher()->dispatch($event, $event::NAME);
-
-                $this->cacheObject($documents[$key]);
             }
 
             return true;
