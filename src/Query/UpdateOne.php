@@ -59,7 +59,7 @@ class UpdateOne extends Query
             $this->filter = $queryCaster->getCastedQuery();
         }
 
-        if (empty($this->update)) {
+        if (empty($this->update) || $this->document === $this->update) {
             $event = new PreUpdateEvent($this->documentManager, $this->repository, $this->document);
             $this->documentManager->getEventDispatcher()->dispatch($event, $event::NAME);
 
