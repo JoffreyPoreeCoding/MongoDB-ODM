@@ -256,6 +256,7 @@ class DocumentManager extends ObjectManager
         }
 
         foreach ($bulkOperations as $bulkOperation) {
+            $bulkOperation->setOptions(['ordered' => false]);
             $bulkOperation->execute();
         }
 
