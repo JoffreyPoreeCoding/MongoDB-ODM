@@ -64,12 +64,14 @@ class DocumentManagerFactory
     public function createDocumentManager($mongouri, $dbName, $debug = false, $managerId = "", $newConnection = false, $options = [])
     {
 
+        $newClient = false;
         if (!isset($this->connexions[$mongouri])) {
-            $client = new Client($mongouri);
+            $this->connexions[$mongouri] = new Client($mongouri);
+            $newClient = true;
         }
 
-        if (!isset($this->managers[$managerId])) {
-            $database = new Database($client->getManager(), $dbName, $options);
+        if (!isset($this->managers[$managerId]) || $newClient) {
+            $database = new Database($this->connexions[$mongouri]->getManager(), $dbName, $options);
 
             $class = $this->repositoryFactoryClass;
 
@@ -85,7 +87,7 @@ class DocumentManagerFactory
             $repositoryFactory = new $class($eventDispatcher, null, $this->classMetadataFactory);
 
             $this->managers[$managerId] = new DocumentManager(
-                $client,
+                $this->connexions[$mongouri],
                 $database,
                 $repositoryFactory,
                 $debug,
