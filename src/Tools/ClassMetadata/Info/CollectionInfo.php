@@ -33,6 +33,11 @@ class CollectionInfo
     private $hydrator;
 
     /**
+     * @var bool
+     */
+    private $bypassConstructorOnFind;
+
+    /**
      * Options for collection creation
      * @var array
      */
@@ -77,6 +82,11 @@ class CollectionInfo
     public function getHydrator()
     {
         return $this->hydrator;
+    }
+
+    public function getBypassConstructorOnFind()
+    {
+        return $this->bypassConstructorOnFind;
     }
 
     public function getCreationOptions()
@@ -127,6 +137,13 @@ class CollectionInfo
     public function setHydrator($hydrator)
     {
         $this->hydrator = $hydrator;
+        return $this;
+    }
+
+    public function setBypassConstructorOnFind(bool $bypassConstructorOnFind)
+    {
+        $this->bypassConstructorOnFind = $bypassConstructorOnFind;
+
         return $this;
     }
 

@@ -47,7 +47,7 @@ class ClassMetadata
 
     /**
      * Info about the collection
-     * @var CollectionInfos
+     * @var CollectionInfo
      */
     private $collectionInfo;
 
@@ -135,6 +135,20 @@ class ClassMetadata
         }
 
         return $this->collectionInfo->getBucketName();
+    }
+    
+    /**
+     * Return default bucket name for this class
+     *
+     * @return void
+     */
+    public function getBypassConstructorOnFind()
+    {
+        if (!$this->loaded) {
+            $this->load();
+        }
+
+        return $this->collectionInfo->getBypassConstructorOnFind();
     }
 
     /**
@@ -379,6 +393,8 @@ class ClassMetadata
                 } else {
                     $this->collectionInfo->setHydrator("JPC\MongoDB\ODM\Hydrator");
                 }
+
+                $this->collectionInfo->setBypassConstructorOnFind($annotation->bypassConstructorOnFind);
 
                 $this->checkCollectionCreationOptions($annotation);
                 break;

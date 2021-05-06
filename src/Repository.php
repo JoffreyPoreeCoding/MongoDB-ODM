@@ -624,6 +624,9 @@ class Repository
             if (!$isReadOnly && null !== $this->documentManager->getObject($id)) {
                 $softHydrate = true;
                 $object = $this->documentManager->getObject($id);
+            } else if ($this->classMetadata->getBypassConstructorOnFind()) {
+                $reflectionClass = new \ReflectionClass($this->modelName);
+                $object = $reflectionClass->newInstanceWithoutConstructor();
             } else {
                 $object = new $this->modelName();
             }

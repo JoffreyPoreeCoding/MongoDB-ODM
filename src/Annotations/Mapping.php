@@ -44,6 +44,11 @@ class Document
      * @var int
      */
     public $max = false;
+
+    /**
+     * @var bool
+     */
+    public $bypassConstructorOnFind = false;
 }
 
 /**
@@ -198,7 +203,6 @@ class DiscriminatorMap
     public $map;
 }
 
-
 /**
  * Method to determine wich class will be instanced
  *
@@ -211,5 +215,3 @@ class DiscriminatorMethod
 {
     public $method;
 }
-
-
