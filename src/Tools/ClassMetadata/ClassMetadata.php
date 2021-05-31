@@ -136,7 +136,7 @@ class ClassMetadata
 
         return $this->collectionInfo->getBucketName();
     }
-    
+
     /**
      * Return default bucket name for this class
      *
@@ -394,8 +394,6 @@ class ClassMetadata
                     $this->collectionInfo->setHydrator("JPC\MongoDB\ODM\Hydrator");
                 }
 
-                $this->collectionInfo->setBypassConstructorOnFind($annotation->bypassConstructorOnFind);
-
                 $this->checkCollectionCreationOptions($annotation);
                 break;
             case "JPC\MongoDB\ODM\GridFS\Annotations\Mapping\Document":
@@ -413,6 +411,7 @@ class ClassMetadata
                 } else {
                     $this->collectionInfo->setHydrator("JPC\MongoDB\ODM\GridFS\Hydrator");
                 }
+
                 break;
             case "JPC\MongoDB\ODM\Annotations\Mapping\Option":
                 $this->processOptionAnnotation($annotation);
@@ -447,6 +446,8 @@ class ClassMetadata
         if (isset($annotation->typeMap)) {
             $options["typeMap"] = $annotation->typeMap;
         }
+
+        $this->collectionInfo->setBypassConstructorOnFind($annotation->bypassConstructorOnFind);
 
         $this->collectionInfo->setOptions($options);
     }

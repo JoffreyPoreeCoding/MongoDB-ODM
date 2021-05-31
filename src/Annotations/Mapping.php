@@ -45,10 +45,6 @@ class Document
      */
     public $max = false;
 
-    /**
-     * @var bool
-     */
-    public $bypassConstructorOnFind = false;
 }
 
 /**
@@ -68,6 +64,11 @@ class Option
     public $readPreference;
     public $typeMap;
     public $writeConcern;
+
+    /**
+     * @var bool
+     */
+    public $bypassConstructorOnFind = false;
 }
 
 /**

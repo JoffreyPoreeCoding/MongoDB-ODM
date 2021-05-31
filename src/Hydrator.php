@@ -6,6 +6,7 @@ use JPC\MongoDB\ODM\DocumentManager;
 use JPC\MongoDB\ODM\Factory\ClassMetadataFactory;
 use JPC\MongoDB\ODM\Factory\RepositoryFactory;
 use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
+use ReflectionClass;
 
 /**
  * Hydrate and unhydrate object from/to array data
@@ -17,8 +18,8 @@ class Hydrator
     const STRAT_ATTRIBUTES = 'ATTRIBUTES';
 
     /**
-     * Document Manager
-     * @var DocumentManager
+     * ClassMetadataFactory
+     * @var ClassMetadataFactory
      */
     protected $classMetadataFactory;
 
@@ -113,7 +114,7 @@ class Hydrator
                         if ($data[$field] instanceof $class) {
                             $embedded = $data[$field];
                         } else {
-                            $embedded = new $class();
+                            $embedded = $this->createObjectForEmbeddedField($class);
                             $this->getHydrator($class)->hydrate($embedded, $data[$field]);
                         }
                         $data[$field] = $embedded;
@@ -145,7 +146,7 @@ class Hydrator
                             if ($value instanceof $class) {
                                 $embedded = $value;
                             } else {
-                                $embedded = new $class();
+                                $embedded = $this->createObjectForEmbeddedField($class);
                                 $this->getHydrator($class)->hydrate($embedded, $value);
                             }
                             $array[$key] = $embedded;
@@ -164,7 +165,7 @@ class Hydrator
                                 $class = $this->classMetadata->getNamespace() . "\\" . $class;
                             }
 
-                            $referedObject = new $class();
+                            $referedObject = $this->createObjectForEmbeddedField($class);
 
                             $hydrator = $repository->getHydrator();
                             $hydrator->hydrate($referedObject, $objectDatas, $soft, $maxReferenceDepth - 1);
@@ -190,7 +191,7 @@ class Hydrator
                                     $class = $this->classMetadata->getNamespace() . "\\" . $class;
                                 }
 
-                                $referedObject = new $class();
+                                $referedObject = $this->createObjectForEmbeddedField($class);
 
                                 $hydrator = $repository->getHydrator();
                                 $hydrator->hydrate($referedObject, $objectDatas, $soft, $maxReferenceDepth - 1);
@@ -336,5 +337,18 @@ class Hydrator
         } else {
             $object->$setter($value);
         }
+    }
+
+    private function createObjectForEmbeddedField(string $class)
+    {
+        $byPassConstructor = $this->classMetadataFactory->getMetadataForClass($class)->getBypassConstructorOnFind();
+        if ($byPassConstructor) {
+            $reflectionClass = new ReflectionClass($class);
+            $object = $reflectionClass->newInstanceWithoutConstructor();
+        } else {
+            $object = new $class();
+        }
+
+        return $object;
     }
 }
