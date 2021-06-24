@@ -6,6 +6,7 @@ use JPC\MongoDB\ODM\DocumentManager;
 use JPC\MongoDB\ODM\Event\ModelEvent\PostInsertEvent;
 use JPC\MongoDB\ODM\Event\ModelEvent\PreInsertEvent;
 use JPC\MongoDB\ODM\Id\AbstractIdGenerator;
+use JPC\MongoDB\ODM\Id\AutoGenerator;
 use JPC\MongoDB\ODM\ObjectManager;
 use JPC\MongoDB\ODM\Query\Query;
 use JPC\MongoDB\ODM\Repository;
@@ -50,8 +51,11 @@ class InsertOne extends Query
                 throw new \Exception('Bad ID generator : class \'' . $idGen . '\' not exists or not extends JPC\MongoDB\ODM\Id\AbstractIdGenerator');
             }
             $generator = new $idGen();
-            $this->id = $generator->generate($this->documentManager, $this->document);
+        } else {
+            $generator = new AutoGenerator();
         }
+
+        $this->id = $generator->generate($this->documentManager, $this->document);
     }
 
     public function performQuery(&$result)
@@ -77,11 +81,13 @@ class InsertOne extends Query
     {
         $modelName = $this->repository->getModelName();
         if ($this->document instanceof $modelName) {
-            if ($result['id'] instanceof \stdClass) {
-                $result['id'] = (array) $result['id'];
+            if (isset($result['_id'])) {
+                if ($result['id'] instanceof \stdClass) {
+                    $result['id'] = (array) $result['id'];
+                }
+                $this->repository->getHydrator()->hydrate($this->document, ['_id' => $result['id']], true);
             }
 
-            $this->repository->getHydrator()->hydrate($this->document, ['_id' => $result['id']], true);
             $event = new PostInsertEvent($this->documentManager, $this->repository, $this->document);
             $this->documentManager->getEventDispatcher()->dispatch($event, $event::NAME);
             if ($this->documentManager->hasObject($this->document)) {
@@ -97,6 +103,7 @@ class InsertOne extends Query
 
         if ($this->id !== null && !isset($document['_id'])) {
             $document['_id'] = $this->id;
+            $this->repository->getHydrator()->hydrate($this->document, $document);
         }
 
         return $document;

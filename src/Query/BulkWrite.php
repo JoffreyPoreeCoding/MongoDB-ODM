@@ -6,6 +6,7 @@ use JPC\MongoDB\ODM\DocumentManager;
 use JPC\MongoDB\ODM\Event\BeforeQueryEvent;
 use JPC\MongoDB\ODM\Query\Query;
 use JPC\MongoDB\ODM\Repository;
+use MongoDB\Driver\Exception\BulkWriteException;
 
 class BulkWrite extends Query
 {
@@ -31,6 +32,43 @@ class BulkWrite extends Query
         return self::TYPE_BULK_WRITE;
     }
 
+    public function execute()
+    {
+        $result = [];
+
+        if (!$this->beforeQueryExecuted) {
+            $this->beforeQuery();
+            $this->beforeQueryExecuted = true;
+        }
+
+        try {
+            $acknowledge = $this->performQuery($result);
+        } catch (BulkWriteException $exception) {
+            if (($this->options['ordered'] ?? true) == false) {
+                $errorIndexes = array_map(function ($item) {
+                    return $item->getIndex();
+                }, $exception->getWriteResult()->getWriteErrors());
+
+                foreach ($this->queries as $key => $query) {
+                    if (!in_array($key, $errorIndexes)) {
+                        $query->afterQuery($result);
+                    }
+                }
+            }
+
+            throw $exception;
+        }
+
+        if ($acknowledge) {
+            if (!$this->afterQueryExecuted) {
+                $this->afterQuery($result);
+                $this->afterQueryExecuted = true;
+            }
+        }
+
+        return $acknowledge;
+    }
+
     public function beforeQuery()
     {
         foreach ($this->queries as $query) {
@@ -44,7 +82,7 @@ class BulkWrite extends Query
         foreach ($this->queries as $query) {
             $event = new BeforeQueryEvent($this->documentManager, $this->repository, $query);
             $this->documentManager->getEventDispatcher()->dispatch($event, $event::NAME);
-            
+
             switch ($query->getType()) {
                 case self::TYPE_INSERT_ONE:
                     $operations[] = [$query->getType() => [$query->getDocument()]];
