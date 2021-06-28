@@ -103,7 +103,11 @@ class InsertOne extends Query
 
         if ($this->id !== null && !isset($document['_id'])) {
             $document['_id'] = $this->id;
-            $this->repository->getHydrator()->hydrate($this->document, $document);
+
+            $modelName = $this->repository->getModelName();
+            if ($this->document instanceof $modelName) {
+                $this->repository->getHydrator()->hydrate($this->document, $document);
+            }
         }
 
         return $document;
