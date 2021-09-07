@@ -43,9 +43,9 @@ class Hydrator extends BaseHydrator
      * @param   mixed   $object     Object to unhydrate
      * @return  array
      */
-    public function unhydrate($object)
+    public function unhydrate($object, bool $keepNullValues = false)
     {
-        $datas = parent::unhydrate($object);
+        $datas = parent::unhydrate($object, $keepNullValues);
         $properties = $this->classMetadata->getPropertiesInfos();
         foreach ($properties as $name => $infos) {
             if ($infos->getMetadata()) {

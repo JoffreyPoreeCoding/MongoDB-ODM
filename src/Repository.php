@@ -752,10 +752,9 @@ class Repository
     public function getUpdateQuery($document, $options = [])
     {
         $old = $this->uncacheObject($document);
-        $new = $this->hydrator->unhydrate($document);
+        $new = $this->hydrator->unhydrate($document, $options['keepNullValues'] ?? false);
 
         $old = !$old ? [] : $old;
-        $this->updateQueryCreator->setOptions($options);
         $query = $this->updateQueryCreator->createUpdateQuery($old, $new);
 
         return $query;

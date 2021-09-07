@@ -404,10 +404,9 @@ class Repository extends BaseRepository
     public function getUpdateQuery($document, $options = [])
     {
         $old = $this->uncacheObject($document);
-        $new = $this->hydrator->unhydrate($document);
+        $new = $this->hydrator->unhydrate($document, $options['keepNullValues'] ?? false);
         unset($new["stream"]);
 
-        $this->updateQueryCreator->setOptions($options);
         $update = $this->updateQueryCreator->createUpdateQuery($old, $new);
         return $update;
     }

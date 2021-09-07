@@ -214,7 +214,7 @@ class Hydrator
      * @param   object  $object     Object to unhydrate
      * @return  array               Unhydrated Object
      */
-    public function unhydrate($object)
+    public function unhydrate($object, bool $keepNullValues = false)
     {
         $properties = $this->classMetadata->getPropertiesInfos();
         $datas = [];
@@ -228,7 +228,7 @@ class Hydrator
             $prop->setAccessible(true);
 
             $value = $prop->getValue($object);
-            if (null === $value) {
+            if (null === $value && !$keepNullValues) {
                 continue;
             }
 
