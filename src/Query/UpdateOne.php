@@ -63,7 +63,7 @@ class UpdateOne extends Query
             $event = new PreUpdateEvent($this->documentManager, $this->repository, $this->document);
             $this->documentManager->getEventDispatcher()->dispatch($event, $event::NAME);
 
-            $this->update = $this->repository->getUpdateQuery($this->document);
+            $this->update = $this->repository->getUpdateQuery($this->document, $this->options);
         } else {
             $modelName = $this->repository->getModelName();
             if ($this->update instanceof $modelName) {
