@@ -8,13 +8,20 @@ namespace JPC\MongoDB\ODM\Tools;
 class UpdateQueryCreator
 {
 
+    private $options = [];
+
+    public function setOptions(array $options): void
+    {
+        $this->options = $options;
+    }
+
     /**
      * Create an update query from old and new values of a document
      *
      * @param   array   $old        Old values of document
      * @param   array   $new        New values of document
      * @param   string  $prefix
-     * @return  void
+     * @return  array
      */
     public function createUpdateQuery($old, $new, $prefix = "")
     {
@@ -49,7 +56,7 @@ class UpdateQueryCreator
                         } else {
                             $update['$set'][$prefix . $key] = $value;
                         }
-                    } elseif ($value === null && $old[$key] !== null) {
+                    } elseif ($value === null && ($old[$key] !== null || ($this->options['useUnsetForNull'] ?? false == true))) {
                         $update['$unset'][$prefix . $key] = 1;
                     }
                 }
@@ -86,6 +93,8 @@ class UpdateQueryCreator
                 unset($update[$modifier]);
             }
         }
+
+        $this->options = [];
 
         return $update;
     }

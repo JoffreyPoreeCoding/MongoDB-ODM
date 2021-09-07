@@ -401,11 +401,13 @@ class Repository extends BaseRepository
      * @param   object  $document   The document that the update query will match
      * @return  array
      */
-    public function getUpdateQuery($document)
+    public function getUpdateQuery($document, $options = [])
     {
         $old = $this->uncacheObject($document);
         $new = $this->hydrator->unhydrate($document);
         unset($new["stream"]);
+
+        $this->updateQueryCreator->setOptions($options);
         $update = $this->updateQueryCreator->createUpdateQuery($old, $new);
         return $update;
     }
