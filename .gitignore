@@ -49,4 +49,6 @@ Temporary Items
 /vendor/
 /composer.lock
 
-.phpintel
+# VS Code
+.devcontainer
+*.code-workspace

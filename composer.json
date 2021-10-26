@@ -1,31 +1,29 @@
 {
     "name": "jpc/mongodb-odm",
     "description": "A small MongoDB ODM",
-    "version": "1.4.0",
     "type": "library",
     "keywords": [
         "MongoDB",
         "ODM",
         "PHP",
-        "Mapping"
+        "Mapping",
+        "Database",
+        "ORM"
     ],
     "homepage": "https://github.com/JoffreyPoreeCoding/MongoDB-ODM",
     "license": "MIT",
     "require": {
-        "php": ">=7.1",
-        "doctrine/annotations": "^1.8",
-        "doctrine/cache": "^1.8",
-        "mongodb/mongodb": "^1.5",
-        "symfony/event-dispatcher": "^4.4|^5.0"
+        "php": "^8.0",
+        "mongodb/mongodb": "^1.9"
     },
     "require-dev": {
-        "symfony/var-dumper": "^4.2",
-        "phpunit/phpunit": "^7.5"
+        "symfony/var-dumper": "^5.3",
+        "phpunit/phpunit": "^9.5"
     },
     "authors": [
         {
             "name": "Joffrey Poree",
-            "email": "contact@joffreyporee.com"
+            "email": "poree.joffrey@gmail.com"
         }
     ],
     "minimum-stability": "stable",
@@ -35,24 +33,14 @@
         },
         "psr-0": {
             "JPC\\MongoDB\\ODM\\": "src/"
-        },
-        "files": [
-            "src/register_annotations.php"
-        ]
+        }
     },
     "autoload-dev": {
         "psr-4": {
-            "JPC\\MongoDB\\ODM\\": "src/",
-            "JPC\\Test\\MongoDB\\ODM\\Model\\": "tests/models/",
             "JPC\\Test\\MongoDB\\ODM\\": "tests/"
         },
         "psr-0": {
-            "JPC\\MongoDB\\ODM\\": "src/",
-            "JPC\\Test\\MongoDB\\ODM\\Model\\": "tests/models/",
             "JPC\\Test\\MongoDB\\ODM\\": "tests/"
-        },
-        "files": [
-            "src/register_annotations.php"
-        ]
+        }
     }
 }
