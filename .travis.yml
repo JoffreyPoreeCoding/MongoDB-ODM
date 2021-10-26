@@ -1,8 +1,7 @@
 language: php
 
 php:
-  - 7.1
-  - 7.2
+  - 8.0
 
 env:
   - APCU_VERSION=5.1.18
@@ -11,7 +10,6 @@ services:
   - mongodb
 
 before_install:
-  -
   - pecl channel-update pecl.php.net
   - pecl install -f mongodb
   - yes '' | pecl install -f apcu-${APCU_VERSION}
@@ -20,5 +18,5 @@ before_script:
   - composer install --dev --no-interaction --prefer-source
 
 script:
-  - ./vendor/bin/phpunit --debug
+  - ./vendor/bin/phpunit
   
