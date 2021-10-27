@@ -1,30 +1,24 @@
 os: linux
 arch:
-  - arm64
-  - ppc64le
-  - s390x
+    - s390x
 
 language: php
 
 php:
-  - 8.0
+    - 8.0
 
-# env:
-#   - APCU_VERSION=5.1.18
-
-services:
-  - mongodb
+env:
+    - XDEBUG_MODE=coverage
 
 before_install:
-  - pecl channel-update pecl.php.net
-  - pecl install -f mongodb
-  # - yes '' | pecl install -f apcu-${APCU_VERSION}
+    - pecl channel-update pecl.php.net
+    - pecl install -f mongodb
 
 before_script:
-  - composer install --dev --no-interaction --prefer-source
+    - composer install --dev --no-interaction
 
 script:
-  - ./vendor/bin/phpunit
+    - ./vendor/bin/phpunit
 
 after_success:
     - bash <(curl -s https://codecov.io/bash)
