@@ -18,7 +18,8 @@
     },
     "require-dev": {
         "symfony/var-dumper": "^5.3",
-        "phpunit/phpunit": "^9.5"
+        "phpunit/phpunit": "^9.5",
+        "friendsofphp/php-cs-fixer": "^3.2"
     },
     "authors": [
         {
