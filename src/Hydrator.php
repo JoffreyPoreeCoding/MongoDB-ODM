@@ -88,8 +88,8 @@ class Hydrator
             }
 
             if (null !== ($field = $infos->getField())) {
-                if (!$soft && !array_key_exists($field, $data)) {
-                    $this->setValue($object, null, $setter, $prop);
+                if (!$soft && !array_key_exists($field, $data) && $prop->hasDefaultValue()) {
+                    $this->setValue($object, $prop->getDefaultValue(), $setter, $prop);
                 } elseif (array_key_exists($field, $data)) {
                     if (!$soft && $data[$field] === null) {
                         continue;
@@ -226,6 +226,9 @@ class Hydrator
         foreach ($properties as $name => $infos) {
             $prop = new \ReflectionProperty($this->classMetadata->getName(), $name);
             $prop->setAccessible(true);
+            if(!$prop->isInitialized($object)){
+                continue;
+            }
 
             $value = $prop->getValue($object);
             if (null === $value && !$keepNullValues) {
