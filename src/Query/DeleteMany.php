@@ -10,7 +10,6 @@ use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
 
 class DeleteMany extends Query
 {
-
     use FilterableQuery;
 
     protected $options;
@@ -46,6 +45,8 @@ class DeleteMany extends Query
     public function performQuery(&$result)
     {
         $result = $this->repository->getCollection()->deleteMany($this->filter, $this->options);
+        $this->rawResult = $result;
+
         return $result->isAcknowledged() || $this->repository->getCollection()->getWriteConcern()->getW() === 0;
     }
 

@@ -12,7 +12,6 @@ use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
 
 class DeleteOne extends Query
 {
-
     use FilterableQuery;
 
     protected $options;
@@ -62,6 +61,7 @@ class DeleteOne extends Query
     public function performQuery(&$result)
     {
         $result = $this->repository->getCollection()->deleteOne($this->filter, $this->options);
+        $this->rawResult = $result;
 
         return $result->isAcknowledged() || $this->repository->getCollection()->getWriteConcern()->getW() === 0;
     }

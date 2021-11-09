@@ -69,6 +69,7 @@ class ReplaceOne extends Query
     {
         if (!empty($this->replacement)) {
             $result = $this->repository->getCollection()->replaceOne($this->filter, $this->replacement, $this->options);
+            $this->rawResult = $result;
         } else {
             return true;
         }

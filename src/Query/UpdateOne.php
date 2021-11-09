@@ -13,7 +13,6 @@ use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
 
 class UpdateOne extends Query
 {
-
     use FilterableQuery;
 
     protected $document;
@@ -81,6 +80,7 @@ class UpdateOne extends Query
     {
         if (!empty($this->update)) {
             $result = $this->repository->getCollection()->updateOne($this->filter, $this->update, $this->options);
+            $this->rawResult = $result;
         } else {
             return true;
         }

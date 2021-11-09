@@ -35,6 +35,11 @@ abstract class Query
      */
     protected $document;
 
+    /**
+     * @var mixed
+     */
+    protected $rawResult;
+
     protected $beforeQueryExecuted = false;
     protected $afterQueryExecuted = false;
 
@@ -76,5 +81,15 @@ abstract class Query
     {
         $this->beforeQueryExecuted = false;
         $this->afterQueryExecuted = false;
+    }
+
+    /**
+     * Get the value of rawResult
+     *
+     * @return  mixed
+     */
+    public function getRawResult()
+    {
+        return $this->rawResult;
     }
 }

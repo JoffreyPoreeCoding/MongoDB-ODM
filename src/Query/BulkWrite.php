@@ -10,7 +10,6 @@ use MongoDB\Driver\Exception\BulkWriteException;
 
 class BulkWrite extends Query
 {
-
     protected $queries;
 
     protected $options;
@@ -109,6 +108,8 @@ class BulkWrite extends Query
         }
 
         $result = $this->repository->getCollection()->bulkWrite($operations, $this->options);
+        $this->rawResult = $result;
+        
         return $result->isAcknowledged() || $this->repository->getCollection()->getWriteConcern()->getW() === 0;
     }
 

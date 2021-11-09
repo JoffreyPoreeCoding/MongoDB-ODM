@@ -14,7 +14,6 @@ use JPC\MongoDB\ODM\Tools\ClassMetadata\ClassMetadata;
 
 class InsertOne extends Query
 {
-
     protected $document;
 
     protected $options;
@@ -63,7 +62,10 @@ class InsertOne extends Query
         $insertQuery = $this->getDocument();
 
         $queryResult = $this->repository->getCollection()->insertOne($insertQuery, $this->options);
+        $this->rawResult = $queryResult;
+        
         $result = $queryResult;
+
 
         if ($queryResult->isAcknowledged()) {
             $id = $queryResult->getInsertedId();
