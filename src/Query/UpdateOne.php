@@ -32,9 +32,8 @@ class UpdateOne extends Query
 
     public function __construct(DocumentManager $documentManager, Repository $repository, $document, $update = [], $options = [])
     {
-        parent::__construct($documentManager, $repository, $document);
+        parent::__construct($documentManager, $repository, $document, $options);
         $this->update = $update;
-        $this->options = $options;
         $this->classMetadata = $repository->getClassMetadata();
     }
 

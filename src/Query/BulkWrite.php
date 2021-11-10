@@ -16,9 +16,8 @@ class BulkWrite extends Query
 
     public function __construct(DocumentManager $documentManager, Repository $repository, array $queries = [], array $options = [])
     {
-        parent::__construct($documentManager, $repository, null);
+        parent::__construct($documentManager, $repository, null, $options);
         $this->queries = $queries;
-        $this->options = $options;
     }
 
     public function addQuery(Query $query)

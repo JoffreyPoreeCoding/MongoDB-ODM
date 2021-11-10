@@ -31,9 +31,8 @@ class ReplaceOne extends Query
 
     public function __construct(DocumentManager $documentManager, Repository $repository, $document, $replacement = [], $options = [])
     {
-        parent::__construct($documentManager, $repository, $document);
+        parent::__construct($documentManager, $repository, $document, $options);
         $this->replacement = $replacement;
-        $this->options = $options;
         $this->classMetadata = $repository->getClassMetadata();
     }
 

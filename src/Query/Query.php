@@ -36,6 +36,13 @@ abstract class Query
     protected $document;
 
     /**
+     * @var array
+     *
+     * @var array
+     */
+    protected $options;
+
+    /**
      * @var mixed
      */
     protected $rawResult;
@@ -43,11 +50,12 @@ abstract class Query
     protected $beforeQueryExecuted = false;
     protected $afterQueryExecuted = false;
 
-    public function __construct(DocumentManager $documentManager, Repository $repository, $document)
+    public function __construct(DocumentManager $documentManager, Repository $repository, $document, $options = [])
     {
         $this->documentManager = $documentManager;
         $this->repository = $repository;
         $this->document = $document;
+        $this->options = $options;
     }
 
     abstract public function getType();
@@ -74,7 +82,7 @@ abstract class Query
             }
         }
 
-        return $acknowledge;
+        return ($this->options['rawResult'] ?? false) ? $acknowledge : $this->rawResult;
     }
 
     public function reset()

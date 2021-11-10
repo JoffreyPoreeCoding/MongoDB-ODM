@@ -25,8 +25,7 @@ class DeleteMany extends Query
 
     public function __construct(DocumentManager $documentManager, Repository $repository, $document, $options = [])
     {
-        parent::__construct($documentManager, $repository, $document);
-        $this->options = $options;
+        parent::__construct($documentManager, $repository, $document, $options);
         $this->classMetadata = $repository->getClassMetadata();
     }
 
