@@ -82,7 +82,7 @@ abstract class Query
             }
         }
 
-        return ($this->options['rawResult'] ?? false) ? $acknowledge : $this->rawResult;
+        return ($this->options['rawResult'] ?? false) ? $this->rawResult : $acknowledge;
     }
 
     public function reset()
