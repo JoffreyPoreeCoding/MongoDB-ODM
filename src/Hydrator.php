@@ -13,7 +13,6 @@ use ReflectionClass;
  */
 class Hydrator
 {
-
     const STRAT_SETTERS = 'SETTERS';
     const STRAT_ATTRIBUTES = 'ATTRIBUTES';
 
@@ -226,7 +225,7 @@ class Hydrator
         foreach ($properties as $name => $infos) {
             $prop = new \ReflectionProperty($this->classMetadata->getName(), $name);
             $prop->setAccessible(true);
-            if(!$prop->isInitialized($object)){
+            if (!$prop->isInitialized($object)) {
                 continue;
             }
 
@@ -245,6 +244,9 @@ class Hydrator
                     $class = $this->classMetadata->getNamespace() . "\\" . $class;
                 }
                 $value = $this->getHydrator($class)->unhydrate($value);
+                if (empty($value)) {
+                    continue;
+                }
             }
 
             if (is_array($value) && $infos->getMultiEmbedded()) {
