@@ -16,7 +16,7 @@ class GridFSDocumentIterator extends DocumentIterator
      *
      * @return mixed
      */
-    public function current()
+    public function current(): mixed
     {
         $this->currentData['stream'] = $this->repository->getBucket()->openDownloadStream($this->currentData['_id']);
         return parent::current();
@@ -27,7 +27,7 @@ class GridFSDocumentIterator extends DocumentIterator
      *
      * @return void
      */
-    public function next()
+    public function next() :void
     {
         $this->position++;
         $this->generator->next();

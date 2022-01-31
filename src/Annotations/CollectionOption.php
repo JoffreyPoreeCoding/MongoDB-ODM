@@ -17,7 +17,7 @@ class WriteConcern
     {
         $default = [
             "w" => 1,
-            "timeout" => null,
+            "timeout" => 0,
             "journal" => true,
         ];
 
@@ -47,7 +47,6 @@ class WriteConcern
  */
 class ReadConcern
 {
-
     private $level;
 
     public function __construct(array $values)
@@ -77,7 +76,6 @@ class ReadConcern
  */
 class ReadPreference
 {
-
     const READ_PREFERENCES_ALLOWED = [
         \MongoDB\Driver\ReadPreference::RP_PRIMARY,
         \MongoDB\Driver\ReadPreference::RP_PRIMARY_PREFERRED,
