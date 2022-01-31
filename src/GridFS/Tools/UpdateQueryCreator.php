@@ -16,7 +16,7 @@ class UpdateQueryCreator extends BaseUpdateQueryCreator
      * @param   array   $old        Old values of document
      * @param   array   $new        New values of document
      * @param   string  $prefix
-     * 
+     *
      * @return  array
      */
     public function createUpdateQuery($old, $new, $prefix = "")
@@ -25,7 +25,7 @@ class UpdateQueryCreator extends BaseUpdateQueryCreator
 
         foreach ($new as $key => $value) {
             if (is_array($old) && array_key_exists($key, $old)) {
-                if (is_array($value) && strstr(key($value), '$') !== false) {
+                if (is_array($value) && !empty($value) && strstr(key($value), '$') !== false) {
                     $update[key($value)][$prefix . $key] = $value[key($value)];
                 } elseif ((is_array($value) && is_array($old[$key])) || (is_array($value) && $key == 'metadata')) {
                     if (!empty($old[$key]) || $key == 'metadata') {

@@ -22,9 +22,9 @@ class UpdateQueryCreator
 
         foreach ($new as $key => $value) {
             if (is_array($old) && array_key_exists($key, $old)) {
-                if (is_array($value) && strstr(key($value), '$') !== false) {
+                if (is_array($value) && !empty($value) && strstr(key($value), '$') !== false) {
                     $update[key($value)][$prefix . $key] = $value[key($value)];
-                } elseif (is_array($value) && is_array($old[$key])) {
+                } elseif (is_array($value) && !empty($value) && is_array($old[$key])) {
                     if (!empty($old[$key])) {
                         $embeddedUpdate = array_merge_recursive($update, $this->createUpdateQuery($old[$key], $value, $prefix . $key . "."));
                         if (isset($embeddedUpdate['$unset']) && array_values($old[$key]) === $old[$key] && $value !== null && count(array_filter(array_keys($value), 'is_string')) == 0) {

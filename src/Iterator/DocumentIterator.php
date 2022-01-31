@@ -3,11 +3,11 @@
 namespace JPC\MongoDB\ODM\Iterator;
 
 use Iterator;
-use Traversable;
-use JPC\MongoDB\ODM\Hydrator;
-use JPC\MongoDB\ODM\Repository;
 use JPC\MongoDB\ODM\DocumentManager;
 use JPC\MongoDB\ODM\Event\ModelEvent\PostLoadEvent;
+use JPC\MongoDB\ODM\Hydrator;
+use JPC\MongoDB\ODM\Repository;
+use Traversable;
 
 /**
  * Iterator for MongoDB cursor
@@ -126,7 +126,7 @@ class DocumentIterator implements Iterator, \Countable
      *
      * @return void
      */
-    public function rewind()
+    public function rewind(): void
     {
         if (!$this->rewindable && !$this->firstCross) {
             throw new \Exception('Unable to traverse not rewindable iterator multiple time');
@@ -140,7 +140,7 @@ class DocumentIterator implements Iterator, \Countable
      *
      * @return bool
      */
-    public function valid()
+    public function valid(): bool
     {
         if (isset($this->objects[$this->position])) {
             return true;
@@ -158,7 +158,7 @@ class DocumentIterator implements Iterator, \Countable
      *
      * @return int
      */
-    public function key()
+    public function key(): mixed
     {
         return $this->position;
     }
@@ -168,7 +168,7 @@ class DocumentIterator implements Iterator, \Countable
      *
      * @return mixed
      */
-    public function current()
+    public function current(): mixed
     {
         if ($this->valid() && !isset($this->objects[$this->position])) {
             $object = $this->repository->createObject($this->currentData, $this->options);
@@ -191,7 +191,7 @@ class DocumentIterator implements Iterator, \Countable
      *
      * @return void
      */
-    public function next()
+    public function next(): void
     {
         $this->position++;
         $this->generator->next();
@@ -225,7 +225,7 @@ class DocumentIterator implements Iterator, \Countable
      *
      * @return integer
      */
-    public function count()
+    public function count(): int
     {
         if (!isset($this->count)) {
             $this->count = $this->repository->count($this->filter);
