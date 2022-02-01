@@ -69,7 +69,9 @@ class UpdateQueryCreator
             }
 
             unset($new[$key]);
-            unset($old[$key]);
+            if (is_array($old)) {
+                unset($old[$key]);
+            }
         }
         if (is_array($old)) {
             foreach (array_keys($old) as $key) {

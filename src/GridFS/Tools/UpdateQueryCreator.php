@@ -72,6 +72,9 @@ class UpdateQueryCreator extends BaseUpdateQueryCreator
             }
 
             unset($new[$key]);
+            if (is_array($old)) {
+                unset($old[$key]);
+            }
         }
         if (is_array($old)) {
             foreach (array_keys($old) as $key) {
