@@ -57,7 +57,7 @@ class UpdateQueryCreator extends BaseUpdateQueryCreator
                     }
                 }
             } else {
-                if (is_array($value) && strstr(key($value), '$') === false) {
+                if (is_array($value) && !empty($value) && strstr(key($value), '$') === false) {
                     $embeddedQuery = $this->createUpdateQuery([], $value, $prefix . $key . ".");
                     if (count($embeddedQuery) == 1 && key($embeddedQuery) == '$set' && $key !== 'metadata') {
                         $update['$set'][$prefix . $key] = $value;
@@ -72,7 +72,6 @@ class UpdateQueryCreator extends BaseUpdateQueryCreator
             }
 
             unset($new[$key]);
-            unset($old[$key]);
         }
         if (is_array($old)) {
             foreach (array_keys($old) as $key) {
