@@ -64,7 +64,7 @@ class UpdateQueryCreator extends BaseUpdateQueryCreator
                     } else {
                         $update = array_merge_recursive($update, $embeddedQuery);
                     }
-                } elseif (is_array($value) && strstr(key($value), '$') !== false) {
+                } elseif (is_array($value) && !empty($value) && strstr(key($value), '$') !== false) {
                     $update[key($value)][$prefix . $key] = $value[key($value)];
                 } else {
                     $update['$set'][$prefix . $key] = $value;
