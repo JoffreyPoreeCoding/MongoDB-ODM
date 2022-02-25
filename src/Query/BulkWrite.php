@@ -25,6 +25,11 @@ class BulkWrite extends Query
         $this->queries[] = $query;
     }
 
+    public function getQueries(): array
+    {
+        return $this->queries;
+    }
+
     public function getType()
     {
         return self::TYPE_BULK_WRITE;
