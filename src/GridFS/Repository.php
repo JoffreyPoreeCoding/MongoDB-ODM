@@ -378,7 +378,7 @@ class Repository extends BaseRepository
         $event = new PostDeleteEvent($this->documentManager, $this, $document);
         $this->documentManager->getEventDispatcher()->dispatch($event, PostDeleteEvent::NAME);
 
-        if (is_object($document)) {
+        if (is_object($document) && $this->documentManager->hasObject($document)) {
             $this->documentManager->removeObject($document);
         }
     }
