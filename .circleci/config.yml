@@ -8,6 +8,7 @@ jobs:
         # See: https://circleci.com/docs/2.0/configuration-reference/#steps
         steps:
             - checkout
+            - run: pecl install pcov 
             - restore_cache:
                 keys:
                     - v1-dependencies-{{ checksum "composer.json" }}
@@ -17,10 +18,7 @@ jobs:
                 paths:
                     - ./vendor
                 key: v1-dependencies-{{ checksum "composer.json" }}
-            - run:
-                command: "./vendor/bin/phpunit"
-            - run:
-                command: "pecl"
+            - run:  "./vendor/bin/phpunit"
             - run:
                 name: Upload CodeCov.io Data
                 command: bash <(curl -s https://codecov.io/bash) -F unittests
