@@ -14,12 +14,14 @@
     "license": "MIT",
     "require": {
         "php": "^8.0",
-        "mongodb/mongodb": "^1.9"
+        "mongodb/mongodb": "^1.9",
+        "symfony/cache": "^5.3|^6.0"
     },
     "require-dev": {
-        "symfony/var-dumper": "^5.3",
+        "symfony/var-dumper": "^5.3|^6.0",
         "phpunit/phpunit": "^9.5",
-        "friendsofphp/php-cs-fixer": "^3.2"
+        "friendsofphp/php-cs-fixer": "^3.2",
+        "codedungeon/phpunit-result-printer": "^0.32.0"
     },
     "authors": [
         {
@@ -38,10 +40,10 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "JPC\\Test\\MongoDB\\ODM\\": "tests/"
+            "JPC\\MongoDB\\ODM\\Tests\\": "tests/"
         },
         "psr-0": {
-            "JPC\\Test\\MongoDB\\ODM\\": "tests/"
+            "JPC\\MongoDB\\ODM\\Tests\\": "tests/"
         }
     }
 }
