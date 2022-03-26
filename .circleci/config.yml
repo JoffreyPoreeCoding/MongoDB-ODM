@@ -20,6 +20,8 @@ jobs:
             - run:
                 command: "./vendor/bin/phpunit"
             - run:
+                command: "ls"
+            - run:
                 name: Upload CodeCov.io Data
                 command: bash <(curl -s https://codecov.io/bash) -F unittests
                 when: always # Uploads code coverage results, pass or fail
