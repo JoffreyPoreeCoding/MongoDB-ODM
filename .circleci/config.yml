@@ -34,6 +34,6 @@ jobs:
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
 workflows:
     test:
-        name : Unit Testing
+        workflow_name : Unit Testing
         jobs:
             - test
