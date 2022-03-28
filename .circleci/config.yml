@@ -8,17 +8,23 @@ jobs:
         # See: https://circleci.com/docs/2.0/configuration-reference/#steps
         steps:
             - checkout
-            - run: sudo pecl install pcov 
+            - run: 
+                name: "Install pcov"
+                command : sudo pecl install pcov 
             - restore_cache:
                 keys:
                     - v1-dependencies-{{ checksum "composer.json" }}
                     - v1-dependencies-
-            - run: composer install -n --prefer-dist --ignore-platform-reqs
+            - run: 
+                name: "Install Composer dependencies"
+                command: composer install -n --prefer-dist --ignore-platform-reqs
             - save_cache:
                 paths:
                     - ./vendor
                 key: v1-dependencies-{{ checksum "composer.json" }}
-            - run:  "./vendor/bin/phpunit"
+            - run:  
+                name: "Run Tests"
+                command: "./vendor/bin/phpunit"
             - run:
                 name: Upload CodeCov.io Data
                 command: bash <(curl -s https://codecov.io/bash) -F unittests
@@ -28,5 +34,6 @@ jobs:
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
 workflows:
     test:
+        name : Unit Testing
         jobs:
             - test
