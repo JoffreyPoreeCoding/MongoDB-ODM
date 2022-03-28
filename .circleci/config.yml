@@ -4,7 +4,7 @@ jobs:
     test:
         docker:
           - image: cimg/php:8.1
-        # Add steps to the job
+        resource_class: medium
         # See: https://circleci.com/docs/2.0/configuration-reference/#steps
         steps:
             - checkout
