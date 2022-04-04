@@ -39,7 +39,7 @@ class ClassMetadataFactory
 
         $parsers = $this->configuration->getMetadataParsers();
 
-        $classMetadata = new ClassMetadata();
+        $classMetadata = new ClassMetadata($this->configuration);
         $classMetadata->setClassName($class->getName());
         $classMetadata->setNamespace($class->getNamespaceName());
 
@@ -50,6 +50,7 @@ class ClassMetadataFactory
 
         foreach ($class->getProperties() as $property) {
             $propertyMetadata = new PropertyMetadata();
+            $propertyMetadata->setName($property->getName());
 
             /** @var ClassMetadataParserInterface $parser */
             foreach ($parsers as $parser) {

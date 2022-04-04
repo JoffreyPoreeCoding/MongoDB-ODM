@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace JPC\MongoDB\ODM\ClassMetadata;
 
+use JPC\MongoDB\ODM\Configuration\Configuration;
+
 /**
  * @codeCoverageIgnore
  */
@@ -22,7 +24,14 @@ class ClassMetadata
 
     private string $collection;
 
+    private string $hydratorClass;
+
     private array $properties;
+
+    public function __construct(Configuration $configuration)
+    {
+        $this->hydratorClass = $configuration->getDefaultHydratorClass();
+    }
 
     public function getClassName(): string
     {
@@ -56,6 +65,18 @@ class ClassMetadata
     public function setCollection($collection): self
     {
         $this->collection = $collection;
+
+        return $this;
+    }
+
+    public function getHydratorClass(): string
+    {
+        return $this->hydratorClass;
+    }
+
+    public function setHydratorClass(string $hydratorClass)
+    {
+        $this->hydratorClass = $hydratorClass;
 
         return $this;
     }

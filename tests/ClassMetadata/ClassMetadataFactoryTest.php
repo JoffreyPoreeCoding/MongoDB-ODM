@@ -80,7 +80,9 @@ class ClassMetadataFactoryTest extends TestCase
 
         $this->assertInstanceOf(ClassMetadata::class, $result);
         $this->assertInstanceOf(PropertyMetadata::class, $result->getProperties()[0]);
+        $this->assertEquals('propertyOne', $result->getProperties()[0]->getName());
         $this->assertInstanceOf(PropertyMetadata::class, $result->getProperties()[1]);
+        $this->assertEquals('propertyTwo', $result->getProperties()[1]->getName());
 
         $this->assertEquals(TestMetadataClass::class, $result->getClassName());
         $this->assertEquals('JPC\MongoDB\ODM\Tests\ClassMetadata', $result->getNamespace());
