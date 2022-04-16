@@ -11,17 +11,30 @@ declare(strict_types=1);
 
 namespace JPC\MongoDB\ODM\Hydration;
 
-class AccessorHydrator implements HydratorInterface
+use JPC\MongoDB\ODM\ClassMetadata\PropertyMetadata;
+use JPC\MongoDB\ODM\Exception\HydrationException;
+
+class AccessorHydrator extends DataTransformerHydrator
 {
-    public function hydrate(mixed $object, array $data): void
+    protected function setValue(object $object, PropertyMetadata $propertyMetadata, mixed $value): void
     {
+        $setter = 'set' . ucfirst($propertyMetadata->getName());
+
+        if (!method_exists($object, $setter)) {
+            throw new HydrationException('Can not hydrate property "' . $propertyMetadata->getName() . '" because method "' . $setter . '" not found in class "' . $object::class . '"');
+        }
+
+        $object->{$setter}($value);
     }
 
-    /**
-     * @return AccessorHydrator[]
-     */
-    public function dehydrate(mixed $object): array
+    protected function getValue(object $object, PropertyMetadata $propertyMetadata): mixed
     {
-        return [];
+        $getter = 'get' . ucfirst($propertyMetadata->getName());
+
+        if (!method_exists($object, $getter)) {
+            throw new HydrationException('Can not dehydrate property "' . $propertyMetadata->getName() . '" because method "' . $getter . '" not found in class "' . $object::class . '"');
+        }
+
+        return $object->{$getter}();
     }
 }

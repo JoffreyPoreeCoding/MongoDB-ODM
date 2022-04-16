@@ -16,10 +16,10 @@ interface HydratorInterface
     /**
      * Hydrate object with provided data.
      */
-    public function hydrate(mixed $object, array $data): void;
+    public function hydrate(object $object, array $data): void;
 
     /**
      * Extract data from object.
      */
-    public function dehydrate(mixed $object): array;
+    public function dehydrate(object $object): array;
 }

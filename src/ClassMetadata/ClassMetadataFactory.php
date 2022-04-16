@@ -14,11 +14,14 @@ namespace JPC\MongoDB\ODM\ClassMetadata;
 use JPC\MongoDB\ODM\ClassMetadata\Parser\ClassMetadataParserInterface;
 use JPC\MongoDB\ODM\Configuration\Configuration;
 use ReflectionClass;
+use Symfony\Contracts\Cache\CacheInterface;
 
 class ClassMetadataFactory
 {
     public function __construct(
-        private Configuration $configuration
+        private Configuration $configuration,
+        private CacheInterface $cache,
+        private iterable $classMetadataParsers
     ) {
     }
 
@@ -27,7 +30,7 @@ class ClassMetadataFactory
         $cacheKey             = preg_replace("~[\{\}\(\)/\\\\@:]~", '_', $className);
         $classMetadataFactory = $this;
 
-        return $this->configuration->getCache()->get(
+        return $this->cache->get(
             $cacheKey,
             static fn () => $classMetadataFactory->createMetadata($className)
         );
@@ -37,14 +40,12 @@ class ClassMetadataFactory
     {
         $class = new ReflectionClass($className);
 
-        $parsers = $this->configuration->getMetadataParsers();
-
         $classMetadata = new ClassMetadata($this->configuration);
         $classMetadata->setClassName($class->getName());
         $classMetadata->setNamespace($class->getNamespaceName());
 
         /** @var ClassMetadataParserInterface $parser */
-        foreach ($parsers as $parser) {
+        foreach ($this->classMetadataParsers as $parser) {
             $parser->parse($class, $classMetadata);
         }
 
@@ -53,7 +54,7 @@ class ClassMetadataFactory
             $propertyMetadata->setName($property->getName());
 
             /** @var ClassMetadataParserInterface $parser */
-            foreach ($parsers as $parser) {
+            foreach ($this->classMetadataParsers as $parser) {
                 $parser->parse($property, $propertyMetadata);
             }
 

@@ -26,6 +26,9 @@ class ClassMetadata
 
     private string $hydratorClass;
 
+    /**
+     * @var PropertyMetadata[]
+     */
     private array $properties;
 
     public function __construct(Configuration $configuration)
@@ -98,5 +101,27 @@ class ClassMetadata
         $this->properties = $properties;
 
         return $this;
+    }
+
+    /**
+     * @return PropertyMetadata[]
+     */
+    public function getFields(): iterable
+    {
+        foreach ($this->properties as $property) {
+            if ($property->getFieldName()) {
+                yield $property;
+            }
+        }
+    }
+
+    public function getField(string $name)
+    {
+        return current(
+            array_filter(
+                $this->properties,
+                static fn (PropertyMetadata $propertyMetadata) => $propertyMetadata->getFieldName() == $name
+            )
+        ) ?: null;
     }
 }

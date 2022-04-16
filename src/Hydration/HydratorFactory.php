@@ -11,26 +11,33 @@ declare(strict_types=1);
 
 namespace JPC\MongoDB\ODM\Hydration;
 
-use JPC\MongoDB\ODM\Configuration\Configuration;
+use JPC\MongoDB\ODM\ClassMetadata\ClassMetadataFactory;
 
 class HydratorFactory
 {
     public function __construct(
-        private Configuration $configuration
+        private ClassMetadataFactory $classMetadataFactory,
+        private iterable $hydrators
     ) {
     }
 
-    public function getHydrator(object|string $object): HydratorInterface
+    public function getHydrator(string|object $class): HydratorInterface
     {
-        if (is_object($object)) {
-            $object = $object::class;
+        if (is_object($class)) {
+            $class = $class::class;
         }
 
-        $classMetadataFactory = $this->configuration->getClassMetadataFactory();
-        $classMetadata        = $classMetadataFactory->getMetadata($object);
-
+        $classMetadata = $this->classMetadataFactory->getMetadata($class);
         $hydratorClass = $classMetadata->getHydratorClass();
 
-        return new $hydratorClass($classMetadata, $this->configuration);
+        $hydrator = null;
+
+        foreach ($this->hydrators as $key => $value) {
+            if ($key == $hydratorClass) {
+                $hydrator = $value;
+            }
+        }
+
+        return $hydrator;
     }
 }

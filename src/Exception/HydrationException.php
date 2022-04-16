@@ -9,14 +9,13 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace JPC\MongoDB\ODM\Exception\Configuration;
+namespace JPC\MongoDB\ODM\Exception;
 
-use JPC\MongoDB\ODM\Exception\ODMException;
 use Throwable;
 
-class MisconfigurationException extends ODMException
+class HydrationException extends ODMException
 {
-    public function __construct(string $message, int $code = 10000, Throwable $previous = null)
+    public function __construct(string $message, int $code = 11000, Throwable $previous = null)
     {
         parent::__construct($message, $code, $previous);
     }

@@ -16,15 +16,16 @@ use JPC\MongoDB\ODM\ClassMetadata\ClassMetadata;
 use JPC\MongoDB\ODM\ClassMetadata\PropertyMetadata;
 
 #[Attribute(Attribute::TARGET_PROPERTY)]
-class Field implements AttributeInterface
+class EmbedOne implements AttributeInterface
 {
     public function __construct(
-        private string $name,
+        private string $class,
     ) {
     }
 
     public function map(ClassMetadata|PropertyMetadata $metadata): void
     {
-        $metadata->setFieldName($this->name);
+        $metadata->setEmbedded(true);
+        $metadata->setEmbeddedClass($this->class);
     }
 }

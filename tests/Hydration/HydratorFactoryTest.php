@@ -13,39 +13,46 @@ namespace JPC\MongoDB\ODM\Tests\Hydration;
 
 use JPC\MongoDB\ODM\ClassMetadata\ClassMetadata;
 use JPC\MongoDB\ODM\ClassMetadata\ClassMetadataFactory;
-use JPC\MongoDB\ODM\Configuration\Configuration;
-use JPC\MongoDB\ODM\Hydration\AccessorHydrator;
 use JPC\MongoDB\ODM\Hydration\HydratorFactory;
+use JPC\MongoDB\ODM\Hydration\HydratorInterface;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use stdClass;
 
 class HydratorFactoryTest extends TestCase
 {
-    private Configuration & MockObject $configurationMock;
+    private MockObject & ClassMetadataFactory $classMetadataFactoryMock;
+
+    private MockObject & HydratorInterface $hydratorMock;
 
     private HydratorFactory $hydratorFactory;
 
     protected function setUp(): void
     {
-        $this->configurationMock = $this->createMock(Configuration::class);
-        $this->hydratorFactory   = new HydratorFactory($this->configurationMock);
+        $this->classMetadataFactoryMock = $this->createMock(ClassMetadataFactory::class);
+        $this->hydratorMock             = $this->createMock(HydratorInterface::class);
+
+        $this->hydratorFactory = new HydratorFactory($this->classMetadataFactoryMock, ['ValidHydrator' => $this->hydratorMock]);
     }
 
-    public function test_getHydrator(): void
+    public function test_getHydrator_withClassName(): void
     {
-        $object = new class()
-        {
-        };
+        $classMetadataMock = $this->createMock(ClassMetadata::class);
+        $classMetadataMock->expects($this->once())->method('getHydratorClass')->willReturn('ValidHydrator');
 
-        $classMetadata = $this->createMock(ClassMetadata::class);
-        $classMetadata->expects($this->once())->method('getHydratorClass')->willReturn(AccessorHydrator::class);
+        $this->classMetadataFactoryMock->expects($this->once())->method('getMetadata')->with(stdClass::class)->willReturn($classMetadataMock);
 
-        $classMetadataFactoryMock = $this->createMock(ClassMetadataFactory::class);
-        $classMetadataFactoryMock->expects($this->once())->method('getMetadata')->with($object::class)->willReturn($classMetadata);
+        $this->assertSame($this->hydratorMock, $this->hydratorFactory->getHydrator(stdClass::class));
+    }
 
-        $this->configurationMock->expects($this->once())->method('getClassMetadataFactory')->willReturn($classMetadataFactoryMock);
+    public function test_getHydrator_withObject(): void
+    {
+        $classMetadataMock = $this->createMock(ClassMetadata::class);
+        $classMetadataMock->expects($this->once())->method('getHydratorClass')->willReturn('ValidHydrator');
 
-        $hydrator = $this->hydratorFactory->getHydrator($object);
-        $this->assertInstanceOf(AccessorHydrator::class, $hydrator);
+        $this->classMetadataFactoryMock->expects($this->once())->method('getMetadata')->with(stdClass::class)->willReturn($classMetadataMock);
+
+        $object = new stdClass();
+        $this->assertSame($this->hydratorMock, $this->hydratorFactory->getHydrator($object));
     }
 }

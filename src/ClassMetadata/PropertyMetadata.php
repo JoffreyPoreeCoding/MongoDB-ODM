@@ -18,7 +18,7 @@ class PropertyMetadata
 {
     private string $name;
 
-    private string $field;
+    private string $fieldName;
 
     private bool $embedded;
 
@@ -38,19 +38,19 @@ class PropertyMetadata
         return $this;
     }
 
-    public function getField(): string
+    public function getFieldName(): ?string
     {
-        return $this->field;
+        return $this->fieldName ?? null;
     }
 
-    public function setField(string $field): self
+    public function setFieldName(string $fieldName): self
     {
-        $this->field = $field;
+        $this->fieldName = $fieldName;
 
         return $this;
     }
 
-    public function getEmbedded(): bool
+    public function isEmbedded(): bool
     {
         return $this->embedded;
     }
@@ -62,7 +62,7 @@ class PropertyMetadata
         return $this;
     }
 
-    public function getMultiple(): bool
+    public function isMultiple(): bool
     {
         return $this->multiple;
     }

@@ -19,6 +19,7 @@ use JPC\MongoDB\ODM\Configuration\Configuration;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
+use ReflectionException;
 use ReflectionProperty;
 use Symfony\Contracts\Cache\CacheInterface;
 
@@ -34,17 +35,15 @@ class ClassMetadataFactoryTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->cacheInterfaceMock = $this->createMock(CacheInterface::class);
-
+        $this->cacheInterfaceMock      = $this->createMock(CacheInterface::class);
         $this->classMetadataParserMock = $this->createMock(ClassMetadataParserInterface::class);
+        $this->configurationMock       = $this->createMock(Configuration::class);
 
-        $this->configurationMock = $this->createMock(Configuration::class);
-        $this->configurationMock->method('getCache')->willReturn($this->cacheInterfaceMock);
-        $this->configurationMock->method('getMetadataParsers')->willReturn([
-            $this->classMetadataParserMock,
-        ]);
-
-        $this->classMetadataFactory = new ClassMetadataFactory($this->configurationMock);
+        $this->classMetadataFactory = new ClassMetadataFactory(
+            $this->configurationMock,
+            $this->cacheInterfaceMock,
+            [$this->classMetadataParserMock]
+        );
     }
 
     public function test_getMetadata(): void
@@ -86,6 +85,14 @@ class ClassMetadataFactoryTest extends TestCase
 
         $this->assertEquals(TestMetadataClass::class, $result->getClassName());
         $this->assertEquals('JPC\MongoDB\ODM\Tests\ClassMetadata', $result->getNamespace());
+    }
+
+    public function test_createMetadata_classDoesNotExists(): void
+    {
+        $this->cacheInterfaceMock->expects($this->once())->method('get')->with($this->isType('string'), $this->isType('callable'))->willReturnCallback(static fn (string $key, callable $callback) => $callback());
+
+        $this->expectException(ReflectionException::class);
+        $this->classMetadataFactory->getMetadata('InvalidClass');
     }
 }
 

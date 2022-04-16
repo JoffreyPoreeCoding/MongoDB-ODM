@@ -13,6 +13,6 @@ namespace JPC\MongoDB\ODM\Exception;
 
 use Exception;
 
-class ODMException extends Exception implements ODMThrowable
+class ODMException extends Exception
 {
 }
