@@ -9,6 +9,8 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
+namespace JPC\MongoDB\ODM\Tests\ClassMetadata\Attribute;
+
 use JPC\MongoDB\ODM\ClassMetadata\Attribute\Field;
 use JPC\MongoDB\ODM\ClassMetadata\PropertyMetadata;
 use PHPUnit\Framework\TestCase;
