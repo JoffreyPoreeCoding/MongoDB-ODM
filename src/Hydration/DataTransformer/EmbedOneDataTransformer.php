@@ -44,6 +44,10 @@ class EmbedOneDataTransformer implements DataTransformerInterface
 
     public function reverseTransform(PropertyMetadata $propertyMetadata, mixed $value): mixed
     {
+        if (null === $value) {
+            return $value;
+        }
+
         $class = $propertyMetadata->getEmbeddedClass();
 
         if (!is_object($value) || !is_a($value, $class)) {

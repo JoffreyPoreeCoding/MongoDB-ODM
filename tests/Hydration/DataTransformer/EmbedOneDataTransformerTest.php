@@ -124,4 +124,13 @@ class EmbedOneDataTransformerTest extends TestCase
 
         $this->dataTransformer->reverseTransform($propertyMetadataMock, $data);
     }
+
+    public function test_reverseTransform_withNullValue(): void
+    {
+        $data = null;
+
+        $propertyMetadataMock = $this->createMock(PropertyMetadata::class);
+
+        $this->assertNull($this->dataTransformer->reverseTransform($propertyMetadataMock, $data));
+    }
 }
