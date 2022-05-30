@@ -20,11 +20,11 @@ class PropertyMetadata
 
     private string $fieldName;
 
-    private bool $embedded;
+    private bool $embedded = false;
 
-    private bool $multiple;
+    private bool $multiple = false;
 
-    private string $embeddedClass;
+    private ?string $embeddedClass = null;
 
     public function getName(): string
     {
@@ -74,7 +74,7 @@ class PropertyMetadata
         return $this;
     }
 
-    public function getEmbeddedClass(): string
+    public function getEmbeddedClass(): ?string
     {
         return $this->embeddedClass;
     }
