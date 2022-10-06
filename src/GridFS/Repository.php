@@ -19,7 +19,6 @@ use MongoDB\GridFS\Bucket;
  */
 class Repository extends BaseRepository
 {
-
     /**
      * GridFS Bucket
      * @var \MongoDB\GridFS\Bucket
@@ -125,6 +124,9 @@ class Repository extends BaseRepository
         } else {
             if (!is_string($options['iterator'])) {
                 $options['iterator'] = GridFSDocumentIterator::class;
+                if (!$this->getStreamProjection($projections)) {
+                    $options['noStream'] = true;
+                }
             }
             return parent::findAll($projections, $sorts, $options);
         }
@@ -161,6 +163,9 @@ class Repository extends BaseRepository
         } else {
             if (!is_string($options['iterator'])) {
                 $options['iterator'] = GridFSDocumentIterator::class;
+                if (!$this->getStreamProjection($projections)) {
+                    $options['noStream'] = true;
+                }
             }
             return parent::findBy($filters, $projections, $sorts, $options);
         }

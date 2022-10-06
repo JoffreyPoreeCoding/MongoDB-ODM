@@ -3,18 +3,17 @@
 namespace JPC\MongoDB\ODM\Iterator;
 
 use Iterator;
-use Traversable;
+use JPC\MongoDB\ODM\DocumentManager;
 use JPC\MongoDB\ODM\Hydrator;
 use JPC\MongoDB\ODM\Repository;
-use JPC\MongoDB\ODM\DocumentManager;
 use JPC\MongoDB\ODM\Tools\EventManager;
+use Traversable;
 
 /**
  * Iterator for MongoDB cursor
  */
 class DocumentIterator implements Iterator, \Countable
 {
-
     /**
      * Data
      *
@@ -42,6 +41,11 @@ class DocumentIterator implements Iterator, \Countable
      * @var array
      */
     protected $query;
+
+    /**
+     * @var array
+     */
+    protected $options;
 
     /**
      * Hydrator for object
@@ -121,7 +125,7 @@ class DocumentIterator implements Iterator, \Countable
      * @param   Repository          $repository     Repository used for query
      * @param   array               $query          Query used
      */
-    public function __construct($data, $objectClass, Repository $repository, $query = [])
+    public function __construct($data, $objectClass, Repository $repository, $query = [], $options = [])
     {
         $this->data = $data;
         $this->objectClass = $objectClass;
@@ -131,6 +135,7 @@ class DocumentIterator implements Iterator, \Countable
         $this->classMetadata = $repository->getClassMetadata();
         $this->documentManager = $repository->getDocumentManager();
         $this->objects = [];
+        $this->options = $options;
 
         $this->generator = $this->createGenerator();
         $this->currentData = $this->generator->current();

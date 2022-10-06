@@ -26,7 +26,6 @@ use MongoDB\Collection;
  */
 class Repository
 {
-
     /**
      * Document manager
      * @var DocumentManager
@@ -130,7 +129,7 @@ class Repository
      */
     public function count($filters = [], $options = [])
     {
-        return $this->collection->count($this->castQuery($filters), $options);
+        return $this->collection->countDocuments($this->castQuery($filters), $options);
     }
 
     /**
@@ -214,7 +213,7 @@ class Repository
             return $objects;
         } else {
             $iteratorClass = $options['iterator'];
-            $iterator = $iteratorClass === true ? new DocumentIterator($result, $this->modelName, $this) : new $iteratorClass($result, $this->modelName, $this);
+            $iterator = $iteratorClass === true ? new DocumentIterator($result, $this->modelName, $this, $filters, $options) : new $iteratorClass($result, $this->modelName, $this, $filters, $options);
             if (isset($options['readOnly']) && $options['readOnly'] == true) {
                 $iterator->readOnly();
             }
@@ -254,7 +253,7 @@ class Repository
             return $objects;
         } else {
             $iteratorClass = $options['iterator'];
-            $iterator = $iteratorClass === true ? new DocumentIterator($result, $this->modelName, $this, $filters) : new $iteratorClass($result, $this->modelName, $this, $filters);
+            $iterator = $iteratorClass === true ? new DocumentIterator($result, $this->modelName, $this, $filters, $options) : new $iteratorClass($result, $this->modelName, $this, $filters, $options);
             if (isset($options['readOnly']) && $options['readOnly'] == true) {
                 $iterator->readOnly();
             }
@@ -304,7 +303,6 @@ class Repository
      */
     public function findAndModifyOneBy($filters = [], $update = [], $projections = [], $sorts = [], $options = [])
     {
-
         $options = $this->createOption($projections, $sorts, $options);
 
         $filters = $this->castQuery($filters);
