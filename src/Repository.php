@@ -32,7 +32,6 @@ use Symfony\Component\EventDispatcher\EventDispatcher;
  */
 class Repository
 {
-
     /**
      * Document manager
      * @var DocumentManager
@@ -149,7 +148,7 @@ class Repository
             $this->documentManager->getEventDispatcher()->dispatch($event, BeforeQueryEvent::NAME);
         }
 
-        return $this->collection->count($this->castQuery($filter), $options);
+        return $this->collection->countDocuments($this->castQuery($filter), $options);
     }
 
     /**
@@ -349,7 +348,6 @@ class Repository
      */
     public function findAndModifyOneBy($filter = [], $update = [], $projections = [], $sorts = [], $options = [])
     {
-
         $options = $this->createOption($projections, $sorts, $options);
 
         $filter = $this->castQuery($filter);
@@ -624,7 +622,7 @@ class Repository
             if (!$isReadOnly && null !== $this->documentManager->getObject($id)) {
                 $softHydrate = true;
                 $object = $this->documentManager->getObject($id);
-            } else if ($this->classMetadata->getBypassConstructorOnFind()) {
+            } elseif ($this->classMetadata->getBypassConstructorOnFind()) {
                 $reflectionClass = new \ReflectionClass($this->modelName);
                 $object = $reflectionClass->newInstanceWithoutConstructor();
             } else {

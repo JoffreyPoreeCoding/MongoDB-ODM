@@ -14,7 +14,6 @@ use Traversable;
  */
 class DocumentIterator implements Iterator, \Countable
 {
-
     /**
      * Data
      *
@@ -92,6 +91,11 @@ class DocumentIterator implements Iterator, \Countable
      * @var boolean
      */
     protected $firstCross = true;
+
+    /**
+     * @var array
+     */
+    protected $options = [];
 
     /**
      * Create a new cursor

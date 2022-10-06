@@ -10,7 +10,6 @@ use JPC\MongoDB\ODM\Repository;
  */
 class GridFSDocumentIterator extends DocumentIterator
 {
-
     /**
      * Returns the current element.
      *
@@ -18,7 +17,9 @@ class GridFSDocumentIterator extends DocumentIterator
      */
     public function current(): mixed
     {
-        $this->currentData['stream'] = $this->repository->getBucket()->openDownloadStream($this->currentData['_id']);
+        if (!isset($this->options['noStream']) || !$this->options['noStream']) {
+            $this->currentData['stream'] = $this->repository->getBucket()->openDownloadStream($this->currentData['_id']);
+        }
         return parent::current();
     }
 
@@ -27,7 +28,7 @@ class GridFSDocumentIterator extends DocumentIterator
      *
      * @return void
      */
-    public function next() :void
+    public function next(): void
     {
         $this->position++;
         $this->generator->next();
