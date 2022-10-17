@@ -131,6 +131,7 @@ class Repository extends BaseRepository
 
             $objects = parent::findAll($projections, $sorts, $options);
             foreach ($objects as $object) {
+                $data = [];
                 if ($this->getStreamProjection($projections)) {
                     $data["stream"] = $this->bucket->openDownloadStream($object->getId());
                 }
