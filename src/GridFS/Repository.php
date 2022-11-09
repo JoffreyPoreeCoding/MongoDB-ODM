@@ -105,7 +105,7 @@ class Repository extends BaseRepository
 
         if (null !== ($object = parent::find($id, $projections, $options))) {
             $data = [];
-            if ($this->$streamProjection($projections)) {
+            if ($streamProjection) {
                 $data["stream"] = $this->bucket->openDownloadStream($object->getId());
             }
             $this->hydrator->hydrate($object, $data, true);
