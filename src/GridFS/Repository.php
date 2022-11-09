@@ -98,9 +98,14 @@ class Repository extends BaseRepository
         $event = new BeforeQueryEvent($this->documentManager, $this, null);
         $this->documentManager->getEventDispatcher()->dispatch($event, BeforeQueryEvent::NAME);
 
+        $streamProjection = $this->getStreamProjection($projections);
+        if (isset($projections['stream'])) {
+            unset($projections['stream']);
+        }
+
         if (null !== ($object = parent::find($id, $projections, $options))) {
             $data = [];
-            if ($this->getStreamProjection($projections)) {
+            if ($this->$streamProjection($projections)) {
                 $data["stream"] = $this->bucket->openDownloadStream($object->getId());
             }
             $this->hydrator->hydrate($object, $data, true);
@@ -125,14 +130,22 @@ class Repository extends BaseRepository
     public function findAll($projections = array(), $sorts = array(), $options = array())
     {
         $options = $this->createOption($projections, $sorts, $options);
+
+        $streamProjection = $this->getStreamProjection($projections);
+        if (isset($projections['stream'])) {
+            unset($projections['stream']);
+        }
+
         if (!isset($options['iterator']) || $options['iterator'] === false) {
             $event = new BeforeQueryEvent($this->documentManager, $this, null);
             $this->documentManager->getEventDispatcher()->dispatch($event, BeforeQueryEvent::NAME);
 
+
+
             $objects = parent::findAll($projections, $sorts, $options);
             foreach ($objects as $object) {
                 $data = [];
-                if ($this->getStreamProjection($projections)) {
+                if ($streamProjection) {
                     $data["stream"] = $this->bucket->openDownloadStream($object->getId());
                 }
                 $this->hydrator->hydrate($object, $data, true);
@@ -143,7 +156,7 @@ class Repository extends BaseRepository
                 $options['iterator'] = GridFSDocumentIterator::class;
             }
 
-            if (!$this->getStreamProjection($projections)) {
+            if (!$streamProjection) {
                 $options["noStream"] = true;
             }
 
@@ -172,6 +185,12 @@ class Repository extends BaseRepository
     public function findBy($filter, $projections = array(), $sorts = array(), $options = array())
     {
         $options = $this->createOption($projections, $sorts, $options);
+
+        $streamProjection = $this->getStreamProjection($projections);
+        if (isset($projections['stream'])) {
+            unset($projections['stream']);
+        }
+
         if (!isset($options['iterator']) || $options['iterator'] === false) {
             $event = new BeforeQueryEvent($this->documentManager, $this, null);
             $this->documentManager->getEventDispatcher()->dispatch($event, BeforeQueryEvent::NAME);
@@ -179,7 +198,7 @@ class Repository extends BaseRepository
             $objects = parent::findBy($filter, $projections, $sorts, $options);
             foreach ($objects as $object) {
                 $data = [];
-                if ($this->getStreamProjection($projections)) {
+                if ($streamProjection) {
                     $data["stream"] = $this->bucket->openDownloadStream($object->getId());
                 }
                 $this->hydrator->hydrate($object, $data, true);
@@ -190,7 +209,7 @@ class Repository extends BaseRepository
                 $options['iterator'] = GridFSDocumentIterator::class;
             }
 
-            if (!$this->getStreamProjection($projections)) {
+            if (!$streamProjection) {
                 $options["noStream"] = true;
             }
 
@@ -220,11 +239,16 @@ class Repository extends BaseRepository
         $event = new BeforeQueryEvent($this->documentManager, $this, null);
         $this->documentManager->getEventDispatcher()->dispatch($event, BeforeQueryEvent::NAME);
 
+        $streamProjection = $this->getStreamProjection($projections);
+        if (isset($projections['stream'])) {
+            unset($projections['stream']);
+        }
+
         $object = parent::findOneBy($filter, $projections, $sorts, $options);
         if (isset($object)) {
             $data = [];
 
-            if ($this->getStreamProjection($projections)) {
+            if ($streamProjection) {
                 $data["stream"] = $this->bucket->openDownloadStream($object->getId());
                 $this->hydrator->hydrate($object, $data, true);
             }
@@ -254,9 +278,14 @@ class Repository extends BaseRepository
 
         $object = parent::findAndModifyOneBy($filter, $update, $projections, $sorts, $options);
 
+        $streamProjection = $this->getStreamProjection($projections);
+        if (isset($projections['stream'])) {
+            unset($projections['stream']);
+        }
+
         if (isset($object)) {
             $data = [];
-            if ($this->getStreamProjection($projections)) {
+            if ($streamProjection) {
                 $data["stream"] = $this->bucket->openDownloadStream($object->getId());
             }
             $this->hydrator->hydrate($object, $data, true);
@@ -426,7 +455,7 @@ class Repository extends BaseRepository
      * @param   array   $projections    Projection of query
      * @return  boolean
      */
-    private function getStreamProjection($projections)
+    protected function getStreamProjection($projections)
     {
         if (isset($projections['stream'])) {
             return $projections['stream'];
