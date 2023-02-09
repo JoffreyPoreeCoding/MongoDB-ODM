@@ -13,7 +13,6 @@ use Symfony\Component\EventDispatcher\EventDispatcher;
  */
 class DocumentManagerFactory
 {
-
     /**
      * Repository factory class
      * @var string
@@ -63,9 +62,8 @@ class DocumentManagerFactory
      */
     public function createDocumentManager($mongouri, $dbName, $debug = false, $managerId = "", $newConnection = false, $options = [])
     {
-
         $newClient = false;
-        if (!isset($this->connexions[$mongouri])) {
+        if (!isset($this->connexions[$mongouri]) || $newConnection) {
             $this->connexions[$mongouri] = new Client($mongouri);
             $newClient = true;
         }

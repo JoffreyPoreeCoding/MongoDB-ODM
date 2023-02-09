@@ -106,6 +106,8 @@ class Repository extends BaseRepository
         if (null !== ($object = parent::find($id, $projections, $options))) {
             $data = [];
             if ($streamProjection) {
+                $this->bucket = $this->documentManager->getDatabase()->selectGridFSBucket(array_merge($options, ["bucketName" => $this->classMetadata->getBucketName()]));
+
                 $data["stream"] = $this->bucket->openDownloadStream($object->getId());
             }
             $this->hydrator->hydrate($object, $data, true);
@@ -146,6 +148,8 @@ class Repository extends BaseRepository
             foreach ($objects as $object) {
                 $data = [];
                 if ($streamProjection) {
+                    $this->bucket = $this->documentManager->getDatabase()->selectGridFSBucket(array_merge($options, ["bucketName" => $this->classMetadata->getBucketName()]));
+
                     $data["stream"] = $this->bucket->openDownloadStream($object->getId());
                 }
                 $this->hydrator->hydrate($object, $data, true);
@@ -199,6 +203,8 @@ class Repository extends BaseRepository
             foreach ($objects as $object) {
                 $data = [];
                 if ($streamProjection) {
+                    $this->bucket = $this->documentManager->getDatabase()->selectGridFSBucket(array_merge($options, ["bucketName" => $this->classMetadata->getBucketName()]));
+
                     $data["stream"] = $this->bucket->openDownloadStream($object->getId());
                 }
                 $this->hydrator->hydrate($object, $data, true);
@@ -249,6 +255,8 @@ class Repository extends BaseRepository
             $data = [];
 
             if ($streamProjection) {
+                $this->bucket = $this->documentManager->getDatabase()->selectGridFSBucket(array_merge($options, ["bucketName" => $this->classMetadata->getBucketName()]));
+
                 $data["stream"] = $this->bucket->openDownloadStream($object->getId());
                 $this->hydrator->hydrate($object, $data, true);
             }
@@ -286,6 +294,8 @@ class Repository extends BaseRepository
         if (isset($object)) {
             $data = [];
             if ($streamProjection) {
+                $this->bucket = $this->documentManager->getDatabase()->selectGridFSBucket(array_merge($options, ["bucketName" => $this->classMetadata->getBucketName()]));
+
                 $data["stream"] = $this->bucket->openDownloadStream($object->getId());
             }
             $this->hydrator->hydrate($object, $data, true);
