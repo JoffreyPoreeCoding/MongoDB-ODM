@@ -60,11 +60,10 @@ class InsertOne extends Query
 
         $queryResult = $this->repository->getCollection()->insertOne($insertQuery, $this->options);
         $this->rawResult = $queryResult;
-        
-        $result = $queryResult;
 
+        $result = [];
 
-        if ($queryResult->isAcknowledged()) {
+        if ($queryResult->getInsertedId()) {
             $id = $queryResult->getInsertedId();
             if ($id instanceof \stdClass) {
                 $id = (array) $id;
@@ -80,7 +79,7 @@ class InsertOne extends Query
     {
         $modelName = $this->repository->getModelName();
         if ($this->document instanceof $modelName) {
-            if (isset($result['_id'])) {
+            if (isset($result['id'])) {
                 if ($result['id'] instanceof \stdClass) {
                     $result['id'] = (array) $result['id'];
                 }
